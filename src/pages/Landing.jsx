@@ -242,6 +242,58 @@ const FEATURES = [
   },
 ]
 
+// ── Feature block — IntersectionObserver activates each one as it scrolls
+//    into the centre of the viewport. No sticky, no scroll events, no rAF. ────
+function FeatureBlock({ feat, index, isActive, setActive }) {
+  const ref = useRef(null)
+
+  useEffect(() => {
+    const el = ref.current
+    if (!el) return
+    // rootMargin shrinks the "visible zone" to the middle 40% of the viewport,
+    // so each block fires when it is centred on screen, not just in view.
+    const obs = new IntersectionObserver(
+      ([entry]) => { if (entry.isIntersecting) setActive(index) },
+      { rootMargin: '-30% 0px -30% 0px' }
+    )
+    obs.observe(el)
+    return () => obs.disconnect()
+  }, [index, setActive])
+
+  return (
+    <motion.div
+      ref={ref}
+      className="min-h-screen flex items-center py-24"
+      animate={{ opacity: isActive ? 1 : 0.2 }}
+      transition={{ duration: 0.5, ease }}
+    >
+      <div>
+        <motion.div
+          animate={{
+            background: isActive ? blue : '#EFF6FF',
+            color:      isActive ? 'white' : '#93C5FD',
+          }}
+          transition={{ duration: 0.4 }}
+          className="w-11 h-11 rounded-2xl flex items-center justify-center text-sm font-black mb-8"
+        >
+          {index + 1}
+        </motion.div>
+
+        <h3
+          className="text-3xl lg:text-4xl font-black mb-5"
+          style={{ color: isActive ? text : '#CBD5E1', transition: 'color 0.4s' }}
+        >
+          {feat.title}
+        </h3>
+
+        <p className="text-slate-500 text-lg leading-relaxed max-w-sm">
+          {feat.desc}
+        </p>
+      </div>
+    </motion.div>
+  )
+}
+
 // ── Landing page ──────────────────────────────────────────────────────────────
 export default function Landing() {
   const [email,     setEmail]     = useState('')
@@ -253,39 +305,7 @@ export default function Landing() {
   const phoneY       = useTransform(scrollY, [0, 700], [0, -60])
   const heroOpacity  = useTransform(scrollY, [0, 500], [1, 0])
 
-  // Apple sticky scroll
-  const featuresRef = useRef(null)
-  const { scrollYProgress: featProg } = useScroll({
-    target: featuresRef,
-    offset: ['start start', 'end end'],
-  })
-  const smoothProg = useSpring(featProg, { stiffness: 80, damping: 20 })
-  const phoneScale = useTransform(smoothProg, [0, 0.15, 0.85, 1], [0.9, 1, 1, 0.9])
-
   const [activeFeature, setActiveFeature] = useState(0)
-  useEffect(() => {
-    // Use rAF polling — reads DOM position every frame, works regardless of
-    // which element is the scroll container or any offsetHeight quirks.
-    let raf
-    let prev = -1
-    const tick = () => {
-      const section = featuresRef.current
-      if (section) {
-        const rect  = section.getBoundingClientRect()
-        const viewH = window.innerHeight
-        // Use viewH * 4 directly (matches our 400vh inline style) so we are
-        // never at the mercy of offsetHeight returning a wrong value.
-        const total = viewH * 4 - viewH   // = 3 × viewH
-        const scrolled = Math.max(0, -rect.top)
-        const p = Math.min(1, scrolled / total)
-        const next = p < 0.33 ? 0 : p < 0.66 ? 1 : 2
-        if (next !== prev) { prev = next; setActiveFeature(next) }
-      }
-      raf = requestAnimationFrame(tick)
-    }
-    raf = requestAnimationFrame(tick)
-    return () => cancelAnimationFrame(raf)
-  }, [])
 
   async function handleWaitlist(e) {
     e.preventDefault()
@@ -297,7 +317,7 @@ export default function Landing() {
   }
 
   return (
-    <div style={{ background: bg, color: text }} className="overflow-x-hidden">
+    <div style={{ background: bg, color: text }}>
 
       {/* ── Navbar ─────────────────────────────────────────────────────────── */}
       <motion.nav
@@ -509,64 +529,44 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* ── How it works — Apple sticky scroll ─────────────────────────────── */}
-      <section
-        ref={featuresRef}
-        style={{ height: '400vh', background: 'white' }}
-        className="relative"
-      >
-        <div
-          className="sticky top-0 h-screen flex items-center"
-          style={{ background: 'white' }}
-        >
-          <div className="max-w-7xl mx-auto w-full px-8 grid lg:grid-cols-2 gap-20 items-center">
+      {/* ── How it works — two-column: sticky phone + IO-driven feature blocks ── */}
+      {/*
+          Architecture: the phone column uses position:sticky inside a normal
+          flex row. Each feature block uses IntersectionObserver to fire when
+          it enters the centre of the viewport — no scroll events, no rAF,
+          no 400vh height hacks. Works regardless of any parent overflow.
+      */}
+      <section style={{ background: 'white' }}>
+        <div className="max-w-7xl mx-auto px-8">
 
-            {/* Phone */}
-            <div className="hidden lg:flex justify-center">
-              <PhoneMockup activeIndex={activeFeature} scale={phoneScale} />
+          {/* Section label */}
+          <div className="pt-32 pb-4 text-center">
+            <p className="text-xs font-semibold text-slate-400 uppercase tracking-widest">
+              How it works
+            </p>
+          </div>
+
+          {/* Two-column layout */}
+          <div className="lg:flex lg:gap-20 lg:items-start">
+
+            {/* Left — sticky phone (desktop only) */}
+            <div
+              className="hidden lg:flex justify-center flex-shrink-0"
+              style={{ position: 'sticky', top: 'calc(50vh - 260px)' }}
+            >
+              <PhoneMockup activeIndex={activeFeature} />
             </div>
 
-            {/* Feature list */}
-            <div>
-              <p className="text-xs font-semibold text-slate-400 uppercase tracking-widest mb-14">
-                How it works
-              </p>
-
+            {/* Right — one FeatureBlock per feature, each ~100vh */}
+            <div className="flex-1 pb-32">
               {FEATURES.map((feat, i) => (
-                <motion.div
+                <FeatureBlock
                   key={feat.title}
-                  animate={{ opacity: activeFeature === i ? 1 : 0.3 }}
-                  transition={{ duration: 0.5, ease }}
-                  className="flex items-start gap-5 py-8 border-b border-slate-100"
-                >
-                  {/* Number circle */}
-                  <motion.div
-                    animate={{
-                      background: activeFeature === i ? blue : '#F1F5F9',
-                      color:      activeFeature === i ? 'white' : '#94A3B8',
-                    }}
-                    transition={{ duration: 0.4 }}
-                    className="w-9 h-9 rounded-full flex items-center justify-center text-xs font-black flex-shrink-0 mt-0.5"
-                  >
-                    {i + 1}
-                  </motion.div>
-
-                  {/* Text */}
-                  <div className="min-w-0">
-                    <h3
-                      className="text-2xl font-black mb-3"
-                      style={{ color: activeFeature === i ? text : '#CBD5E1' }}
-                    >
-                      {feat.title}
-                    </h3>
-                    <p
-                      className="text-slate-500 text-base leading-relaxed"
-                      style={{ opacity: activeFeature === i ? 1 : 0, transition: 'opacity 0.4s' }}
-                    >
-                      {feat.desc}
-                    </p>
-                  </div>
-                </motion.div>
+                  feat={feat}
+                  index={i}
+                  isActive={activeFeature === i}
+                  setActive={setActiveFeature}
+                />
               ))}
             </div>
 
