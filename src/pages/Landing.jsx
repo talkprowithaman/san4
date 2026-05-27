@@ -264,19 +264,27 @@ export default function Landing() {
 
   const [activeFeature, setActiveFeature] = useState(0)
   useEffect(() => {
-    const section = featuresRef.current
-    if (!section) return
-    function update() {
-      const rect   = section.getBoundingClientRect()
-      const total  = section.offsetHeight - window.innerHeight
-      if (total <= 0) return
-      const scrolled  = Math.max(0, -rect.top)
-      const progress  = Math.min(1, scrolled / total)
-      setActiveFeature(progress < 0.33 ? 0 : progress < 0.66 ? 1 : 2)
+    // Use rAF polling — reads DOM position every frame, works regardless of
+    // which element is the scroll container or any offsetHeight quirks.
+    let raf
+    let prev = -1
+    const tick = () => {
+      const section = featuresRef.current
+      if (section) {
+        const rect  = section.getBoundingClientRect()
+        const viewH = window.innerHeight
+        // Use viewH * 4 directly (matches our 400vh inline style) so we are
+        // never at the mercy of offsetHeight returning a wrong value.
+        const total = viewH * 4 - viewH   // = 3 × viewH
+        const scrolled = Math.max(0, -rect.top)
+        const p = Math.min(1, scrolled / total)
+        const next = p < 0.33 ? 0 : p < 0.66 ? 1 : 2
+        if (next !== prev) { prev = next; setActiveFeature(next) }
+      }
+      raf = requestAnimationFrame(tick)
     }
-    window.addEventListener('scroll', update, { passive: true })
-    update()
-    return () => window.removeEventListener('scroll', update)
+    raf = requestAnimationFrame(tick)
+    return () => cancelAnimationFrame(raf)
   }, [])
 
   async function handleWaitlist(e) {
@@ -527,7 +535,7 @@ export default function Landing() {
               {FEATURES.map((feat, i) => (
                 <motion.div
                   key={feat.title}
-                  animate={{ opacity: activeFeature === i ? 1 : 0.18 }}
+                  animate={{ opacity: activeFeature === i ? 1 : 0.3 }}
                   transition={{ duration: 0.5, ease }}
                   className="flex items-start gap-5 py-8 border-b border-slate-100"
                 >
