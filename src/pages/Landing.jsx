@@ -242,6 +242,43 @@ const FEATURES = [
   },
 ]
 
+// ── Pain-point card data (headline + expand content) ─────────────────────────
+const PROBLEMS = [
+  {
+    emoji: '😰',
+    headline: 'You go blank',
+    body: 'Five things to say. The meeting starts. You remember two.',
+    expandTitle: 'Why you freeze up',
+    bullets: [
+      'Adrenaline shuts down the part of the brain that forms sentences',
+      'You rehearsed answers — not real back-and-forth conversations',
+      'Without pressure reps, confidence cannot be built before the day',
+    ],
+  },
+  {
+    emoji: '🔇',
+    headline: 'No real feedback',
+    body: '"Be more confident" is not something you can act on.',
+    expandTitle: 'Why vague advice fails you',
+    bullets: [
+      '"Speak slower" and "be confident" give you nothing to actually practise',
+      'You cannot hear yourself the way a room hears you',
+      'One bad round quietly shakes your confidence for the next three',
+    ],
+  },
+  {
+    emoji: '🌍',
+    headline: 'Wrong tools',
+    body: 'Every coaching app was built for California, not Bengaluru.',
+    expandTitle: 'Why they were not built for you',
+    bullets: [
+      'Calibrated for US English and American interview formats',
+      'No scenarios for Indian MNCs, startups, or group discussions',
+      'Dollar pricing, Western examples, zero local context',
+    ],
+  },
+]
+
 // ── Feature block — IntersectionObserver activates each one as it scrolls
 //    into the centre of the viewport. No sticky, no scroll events, no rAF. ────
 function FeatureBlock({ feat, index, isActive, setActive }) {
@@ -299,6 +336,7 @@ export default function Landing() {
   const [email,     setEmail]     = useState('')
   const [submitted, setSubmitted] = useState(false)
   const [loading,   setLoading]   = useState(false)
+  const [openCard,  setOpenCard]  = useState(null)   // which pain-point card is expanded
 
   // Hero parallax
   const { scrollY }  = useScroll()
@@ -498,34 +536,88 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* ── Pain points ────────────────────────────────────────────────────── */}
+      {/* ── Pain points — expandable accordion cards ───────────────────────── */}
       <section className="pb-16 lg:pb-40 px-8" style={{ background: bg }}>
-        <div className="max-w-5xl mx-auto grid md:grid-cols-3 gap-6">
-          {[
-            {
-              emoji: '😰',
-              headline: 'You go blank',
-              body: 'Five things to say. The meeting starts. You remember two.',
-            },
-            {
-              emoji: '🔇',
-              headline: 'No real feedback',
-              body: '"Be more confident" is not something you can act on.',
-            },
-            {
-              emoji: '🌍',
-              headline: 'Wrong tools',
-              body: 'Every coaching app was built for California, not Bengaluru.',
-            },
-          ].map(({ emoji, headline, body }, i) => (
-            <FadeUp key={headline} delay={i * 0.12}>
-              <div className="bg-white rounded-2xl p-8 h-full border border-slate-100 shadow-sm hover:shadow-md transition-shadow">
-                <div className="text-3xl mb-5">{emoji}</div>
-                <h3 className="text-lg font-bold mb-3" style={{ color: text }}>{headline}</h3>
-                <p className="text-slate-500 text-sm leading-relaxed">{body}</p>
-              </div>
-            </FadeUp>
-          ))}
+        <div className="max-w-5xl mx-auto grid md:grid-cols-3 gap-6 items-start">
+          {PROBLEMS.map((card, i) => {
+            const isOpen = openCard === i
+            return (
+              <FadeUp key={card.headline} delay={i * 0.12}>
+                <motion.div
+                  className="bg-white rounded-2xl border border-slate-100 overflow-hidden cursor-pointer select-none"
+                  style={{ boxShadow: isOpen ? `0 8px 32px rgba(37,99,235,0.10)` : '0 1px 4px rgba(0,0,0,0.06)' }}
+                  onClick={() => setOpenCard(isOpen ? null : i)}
+                  whileHover={{ y: -3 }}
+                  whileTap={{ scale: 0.99 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  {/* Card header */}
+                  <div className="p-7">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex-1 min-w-0">
+                        <div className="text-3xl mb-4">{card.emoji}</div>
+                        <h3 className="text-base font-bold mb-2" style={{ color: text }}>
+                          {card.headline}
+                        </h3>
+                        <p className="text-slate-500 text-sm leading-relaxed">{card.body}</p>
+                      </div>
+
+                      {/* + / − toggle icon */}
+                      <motion.div
+                        animate={{ rotate: isOpen ? 45 : 0 }}
+                        transition={{ duration: 0.25, ease }}
+                        className="flex-shrink-0 w-7 h-7 rounded-full border-2 flex items-center justify-center mt-0.5"
+                        style={{
+                          borderColor: isOpen ? blue : '#E2E8F0',
+                          color:       isOpen ? blue : '#CBD5E1',
+                        }}
+                      >
+                        {/* Plus icon (rotates 45° to become × ) */}
+                        <svg width="10" height="10" viewBox="0 0 10 10" fill="none" aria-hidden="true">
+                          <path d="M5 1v8M1 5h8" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/>
+                        </svg>
+                      </motion.div>
+                    </div>
+                  </div>
+
+                  {/* Expandable bullets */}
+                  <AnimatePresence initial={false}>
+                    {isOpen && (
+                      <motion.div
+                        key="expand"
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: 'auto', opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={{ duration: 0.32, ease }}
+                        className="overflow-hidden"
+                      >
+                        <div className="px-7 pb-7">
+                          <div className="pt-4 border-t border-slate-100">
+                            <p className="text-xs font-bold uppercase tracking-wider mb-4" style={{ color: blue }}>
+                              {card.expandTitle}
+                            </p>
+                            <ul className="space-y-3">
+                              {card.bullets.map((b, j) => (
+                                <li key={j} className="flex items-start gap-3">
+                                  <span
+                                    className="flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center text-xs font-black text-white mt-0.5"
+                                    style={{ background: blue }}
+                                  >
+                                    {j + 1}
+                                  </span>
+                                  <span className="text-slate-600 text-sm leading-relaxed">{b}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </motion.div>
+              </FadeUp>
+            )
+          })}
         </div>
       </section>
 
