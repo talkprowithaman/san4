@@ -31,11 +31,14 @@ CREATE POLICY "Users can update own profile" ON profiles FOR UPDATE USING (auth.
 CREATE POLICY "Users can insert own profile" ON profiles FOR INSERT WITH CHECK (auth.uid() = id);
 
 -- Auto-create profile on signup
-CREATE OR REPLACE FUNCTION handle_new_user()
-RETURNS TRIGGER LANGUAGE plpgsql SECURITY DEFINER AS $$
+-- SET search_path = public is required for SECURITY DEFINER functions in Supabase;
+-- without it, unqualified table names like "profiles" cannot be resolved.
+CREATE OR REPLACE FUNCTION public.handle_new_user()
+RETURNS TRIGGER LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
 BEGIN
-  INSERT INTO profiles (id, name)
-  VALUES (NEW.id, NEW.raw_user_meta_data->>'name');
+  INSERT INTO public.profiles (id, name)
+  VALUES (NEW.id, COALESCE(NEW.raw_user_meta_data->>'name', ''))
+  ON CONFLICT (id) DO NOTHING;
   RETURN NEW;
 END;
 $$;
@@ -43,7 +46,7 @@ $$;
 DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
 CREATE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
-  FOR EACH ROW EXECUTE FUNCTION handle_new_user();
+  FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
 
 -- ── 3. SUBSCRIPTIONS ──────────────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS subscriptions (
@@ -68,19 +71,20 @@ CREATE POLICY "Users can view own subscription"   ON subscriptions FOR SELECT US
 CREATE POLICY "Users can update own subscription" ON subscriptions FOR UPDATE USING (auth.uid() = user_id);
 
 -- Auto-create free subscription when profile is created
-CREATE OR REPLACE FUNCTION handle_new_profile()
-RETURNS TRIGGER LANGUAGE plpgsql SECURITY DEFINER AS $$
+CREATE OR REPLACE FUNCTION public.handle_new_profile()
+RETURNS TRIGGER LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
 BEGIN
-  INSERT INTO subscriptions (user_id, plan, sessions_limit)
-  VALUES (NEW.id, 'free', 3);
+  INSERT INTO public.subscriptions (user_id, plan, sessions_used, sessions_limit, status)
+  VALUES (NEW.id, 'free', 0, 3, 'active')
+  ON CONFLICT (user_id) DO NOTHING;
   RETURN NEW;
 END;
 $$;
 
-DROP TRIGGER IF EXISTS on_profile_created ON profiles;
+DROP TRIGGER IF EXISTS on_profile_created ON public.profiles;
 CREATE TRIGGER on_profile_created
-  AFTER INSERT ON profiles
-  FOR EACH ROW EXECUTE FUNCTION handle_new_profile();
+  AFTER INSERT ON public.profiles
+  FOR EACH ROW EXECUTE FUNCTION public.handle_new_profile();
 
 -- ── 4. PRACTICE SESSIONS ──────────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS practice_sessions (
