@@ -263,7 +263,7 @@ function FeatureBlock({ feat, index, isActive, setActive }) {
   return (
     <motion.div
       ref={ref}
-      className="min-h-screen flex items-center py-24"
+      className="py-14 lg:min-h-screen lg:flex lg:items-center lg:py-24"
       animate={{ opacity: isActive ? 1 : 0.2 }}
       transition={{ duration: 0.5, ease }}
     >
@@ -415,7 +415,7 @@ export default function Landing() {
                 <>
                   <input
                     type="email"
-                    placeholder="your@email.com"
+                    placeholder="you@email.com"
                     value={email}
                     onChange={e => setEmail(e.target.value)}
                     className="flex-1 text-white rounded-full px-5 py-3 text-sm focus:outline-none transition-colors"
@@ -476,7 +476,7 @@ export default function Landing() {
       </section>
 
       {/* ── Problem ────────────────────────────────────────────────────────── */}
-      <section className="py-40 px-8" style={{ background: bg }}>
+      <section className="py-20 lg:py-40 px-8" style={{ background: bg }}>
         <div className="max-w-4xl mx-auto text-center">
           <FadeUp>
             <p className="text-xs font-semibold text-slate-400 uppercase tracking-widest mb-10">
@@ -499,7 +499,7 @@ export default function Landing() {
       </section>
 
       {/* ── Pain points ────────────────────────────────────────────────────── */}
-      <section className="pb-40 px-8" style={{ background: bg }}>
+      <section className="pb-16 lg:pb-40 px-8" style={{ background: bg }}>
         <div className="max-w-5xl mx-auto grid md:grid-cols-3 gap-6">
           {[
             {
@@ -702,7 +702,7 @@ export default function Landing() {
               >
                 <input
                   type="email"
-                  placeholder="your@email.com"
+                  placeholder="you@email.com"
                   value={email}
                   onChange={e => setEmail(e.target.value)}
                   className="text-white rounded-full px-6 py-4 text-sm focus:outline-none transition-colors sm:w-72"
