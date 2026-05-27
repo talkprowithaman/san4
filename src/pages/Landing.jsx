@@ -6,6 +6,7 @@ import {
   useTransform,
   useInView,
   useSpring,
+  useMotionValue,
   AnimatePresence,
 } from 'framer-motion'
 import { supabase } from '../lib/supabase'
@@ -43,7 +44,7 @@ const PHONE_SCREENS = [
           <p className="text-white text-xs leading-relaxed">Tell me about a time you handled a difficult stakeholder. Walk me through it.</p>
         </div>
         <div className="bg-[#FF6B35] rounded-2xl rounded-tr-sm p-3 max-w-[80%] self-end">
-          <p className="text-white text-xs leading-relaxed">In my last project at Deloitte, I had a client who kept changing scope...</p>
+          <p className="text-white text-xs leading-relaxed">In my last role, I had a client who kept changing scope mid-project...</p>
         </div>
         <div className="bg-slate-700/60 rounded-2xl rounded-tl-sm p-3 max-w-[80%]">
           <p className="text-white text-xs leading-relaxed">Good. What was the outcome, and what would you do differently?</p>
@@ -113,10 +114,35 @@ const PHONE_SCREENS = [
   },
 ]
 
-function PhoneMockup({ activeIndex, rotateY = 0, scale = 1 }) {
+function PhoneMockup({ activeIndex, scale = 1 }) {
+  const containerRef = useRef(null)
+  const mouseX = useMotionValue(0)
+  const mouseY = useMotionValue(0)
+  const rotX = useSpring(mouseY, { stiffness: 200, damping: 25 })
+  const rotY = useSpring(mouseX, { stiffness: 200, damping: 25 })
+
+  function handleMouseMove(e) {
+    if (!containerRef.current) return
+    const rect = containerRef.current.getBoundingClientRect()
+    const cx = rect.left + rect.width / 2
+    const cy = rect.top + rect.height / 2
+    const dx = (e.clientX - cx) / (rect.width / 2)   // −1 → +1
+    const dy = (e.clientY - cy) / (rect.height / 2)  // −1 → +1
+    mouseX.set(dx * 14)    // up to ±14° horizontal
+    mouseY.set(-dy * 9)    // up to ±9° vertical (inverted so it leans toward cursor)
+  }
+
+  function handleMouseLeave() {
+    mouseX.set(0)
+    mouseY.set(0)
+  }
+
   return (
     <motion.div
-      style={{ rotateY, scale, transformPerspective: 1200 }}
+      ref={containerRef}
+      onMouseMove={handleMouseMove}
+      onMouseLeave={handleMouseLeave}
+      style={{ rotateX: rotX, rotateY: rotY, scale, transformPerspective: 1200 }}
       className="relative"
     >
       {/* Glow */}
@@ -344,7 +370,7 @@ export default function Landing() {
             animate={{ opacity: 1, scale: 1, y: 0 }}
             transition={{ duration: 1, delay: 0.3, ease }}
           >
-            <PhoneMockup activeIndex={0} rotateY={4} />
+            <PhoneMockup activeIndex={0} />
           </motion.div>
         </div>
 
@@ -413,7 +439,6 @@ export default function Landing() {
             <div className="hidden lg:flex justify-center">
               <PhoneMockup
                 activeIndex={activeFeature}
-                rotateY={phoneRotate}
                 scale={phoneScale}
               />
             </div>
@@ -549,20 +574,28 @@ export default function Landing() {
       <section className="py-40 px-8">
         <div className="max-w-3xl mx-auto text-center">
           <FadeUp>
-            <div className="w-16 h-16 rounded-full bg-[#FF6B35]/20 border border-[#FF6B35]/30 flex items-center justify-center text-2xl mx-auto mb-8">
-              👋
+            <div className="relative inline-block mb-10">
+              <img
+                src="/aman.jpg"
+                alt="Aman Jindal"
+                className="w-28 h-28 rounded-full object-cover object-top mx-auto ring-4 ring-[#FF6B35]/30"
+              />
+              <div
+                className="absolute inset-0 rounded-full blur-xl opacity-30 -z-10 scale-110"
+                style={{ background: 'radial-gradient(circle, #FF6B35 0%, transparent 70%)' }}
+              />
             </div>
           </FadeUp>
 
           <FadeUp delay={0.1}>
             <h2 className="text-4xl font-black mb-6">
-              Built by Aman Jindal.
+              Built by Aman
             </h2>
           </FadeUp>
 
           <FadeUp delay={0.2}>
             <p className="text-slate-400 text-lg leading-relaxed max-w-xl mx-auto">
-              I've spent years coaching people on professional communication. San4 is everything I know, available whenever you need it, for a fraction of what a coach would cost.
+              A teacher and a student of communication. San4 brings years of coaching, communication frameworks, and hiring insights into one AI copilot designed to help you speak smarter, interview better, and get hired faster.
             </p>
           </FadeUp>
         </div>
