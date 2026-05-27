@@ -1,0 +1,44 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-navy-900 text-white font-sans antialiased;
+  }
+  * { @apply box-border; }
+}
+
+@layer components {
+  .btn-primary {
+    @apply bg-primary text-white font-semibold px-6 py-3 rounded-xl hover:bg-orange-500 transition-all duration-200 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+  .btn-secondary {
+    @apply border border-navy-500 text-white font-semibold px-6 py-3 rounded-xl hover:border-primary hover:text-primary transition-all duration-200 active:scale-95;
+  }
+  .btn-ghost {
+    @apply text-muted font-medium px-4 py-2 rounded-lg hover:text-white hover:bg-navy-700 transition-all duration-200;
+  }
+  .card {
+    @apply bg-navy-700 border border-navy-600 rounded-2xl p-6;
+  }
+  .input {
+    @apply w-full bg-navy-800 border border-navy-600 text-white placeholder-muted rounded-xl px-4 py-3 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all duration-200;
+  }
+  .badge {
+    @apply inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold;
+  }
+  .badge-orange { @apply badge bg-primary/20 text-primary; }
+  .badge-teal   { @apply badge bg-teal/20 text-teal; }
+  .badge-blue   { @apply badge bg-blue-500/20 text-blue-400; }
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { @apply bg-navy-500 rounded-full; }
+::-webkit-scrollbar-thumb:hover { @apply bg-navy-400; }
+
+/* Chat bubbles */
+.bubble-ai   { @apply bg-navy-700 border border-navy-600 text-white rounded-2xl rounded-tl-sm px-4 py-3 max-w-lg; }
+.bubble-user { @apply bg-primary text-white rounded-2xl rounded-tr-sm px-4 py-3 max-w-lg ml-auto; }

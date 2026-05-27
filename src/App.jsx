@@ -1,0 +1,29 @@
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import ProtectedRoute from './components/ProtectedRoute'
+import Landing        from './pages/Landing'
+import Auth           from './pages/Auth'
+import Dashboard      from './pages/Dashboard'
+import Practice       from './pages/Practice'
+import PracticeSession from './pages/PracticeSession'
+import MeetingPrep    from './pages/MeetingPrep'
+
+export default function App() {
+  return (
+    <BrowserRouter>
+      <Routes>
+        {/* Public */}
+        <Route path="/"     element={<Landing />} />
+        <Route path="/auth" element={<Auth />} />
+
+        {/* Protected */}
+        <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+        <Route path="/practice"  element={<ProtectedRoute><Practice /></ProtectedRoute>} />
+        <Route path="/practice/:scenarioId" element={<ProtectedRoute><PracticeSession /></ProtectedRoute>} />
+        <Route path="/meeting-prep" element={<ProtectedRoute><MeetingPrep /></ProtectedRoute>} />
+
+        {/* Fallback */}
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </BrowserRouter>
+  )
+}
