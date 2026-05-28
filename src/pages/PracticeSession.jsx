@@ -1,9 +1,11 @@
 import { useState, useEffect, useRef } from 'react'
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
-import { useAuth } from '../hooks/useAuth'
-import { supabase } from '../lib/supabase'
+import { useAuth }     from '../hooks/useAuth'
+import { useProgress } from '../hooks/useProgress'
+import { supabase }    from '../lib/supabase'
 import { sendPracticeMessage, analyzeSession } from '../lib/gemini'
-import Navbar from '../components/Navbar'
+import Navbar      from '../components/Navbar'
+import RewardCard  from '../components/RewardCard'
 
 export default function PracticeSession() {
   const { scenarioId }    = useParams()
@@ -15,11 +17,14 @@ export default function PracticeSession() {
 
   const scenario = state?.scenario || { id: scenarioId, title: scenarioId, icon: '🎭' }
 
+  const { awardXP } = useProgress()
+
   const [messages,  setMessages]  = useState([])
   const [input,     setInput]     = useState('')
   const [aiThinking,setAiThinking]= useState(false)
   const [analyzing, setAnalyzing] = useState(false)
   const [report,    setReport]    = useState(null)
+  const [reward,    setReward]    = useState(null)
   const [seconds,   setSeconds]   = useState(0)
   const [started,   setStarted]   = useState(false)
 
@@ -102,15 +107,21 @@ export default function PracticeSession() {
         })
       }
 
+      // Award XP and update streak
+      const rewardResult = await awardXP(analysis.overall_score)
+      setReward(rewardResult)
       setReport(analysis)
     } catch {
-      setReport({
+      const fallback = {
         overall_score: 70, confidence_score: 70, pacing_score: 70,
         filler_word_count: 0, top_filler_words: [],
         strengths: ['You completed the session'], improvements: ['Keep practicing daily'],
         action_item: 'Try this scenario again tomorrow.',
         summary: 'Session completed. Regular practice builds real confidence.',
-      })
+      }
+      const rewardResult = await awardXP(fallback.overall_score)
+      setReward(rewardResult)
+      setReport(fallback)
     }
     setAnalyzing(false)
   }
@@ -136,6 +147,9 @@ export default function PracticeSession() {
           <h1 className="text-2xl font-black text-white">Session Complete</h1>
           <p className="text-muted text-sm mt-1">{scenario.title} · {fmt(seconds)}</p>
         </div>
+
+        {/* XP + Streak reward */}
+        <RewardCard reward={reward} />
 
         {/* Score cards */}
         <div className="grid grid-cols-3 gap-4 mb-6">

@@ -1,5 +1,6 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom'
-import { useAuth } from '../hooks/useAuth'
+import { useAuth }     from '../hooks/useAuth'
+import { useProgress } from '../hooks/useProgress'
 
 const NAV = [
   { to: '/dashboard',    label: 'Dashboard',     icon: '⬡' },
@@ -9,6 +10,7 @@ const NAV = [
 
 export default function Navbar() {
   const { signOut, profile } = useAuth()
+  const { progress, levelInfo } = useProgress()
   const location = useLocation()
   const navigate = useNavigate()
 
@@ -43,8 +45,30 @@ export default function Navbar() {
 
         {/* Right side */}
         <div className="flex items-center gap-3">
-          <span className="text-sm text-muted hidden sm:block">
-            {profile?.name || 'Welcome'}
+          {/* Streak pill */}
+          {progress && progress.streak_count > 0 && (
+            <div
+              className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-bold"
+              style={{ background: 'rgba(255,107,53,0.12)', color: '#FF6B35' }}
+            >
+              <span>🔥</span>
+              <span>{progress.streak_count}</span>
+            </div>
+          )}
+
+          {/* Level badge */}
+          {levelInfo && (
+            <div
+              className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold"
+              style={{ background: 'rgba(255,255,255,0.05)', color: levelInfo.current.color, border: `1px solid ${levelInfo.current.color}30` }}
+            >
+              <span>{levelInfo.current.icon}</span>
+              <span>{levelInfo.current.name}</span>
+            </div>
+          )}
+
+          <span className="text-sm text-muted hidden lg:block">
+            {profile?.name?.split(' ')[0] || 'Welcome'}
           </span>
           <button onClick={handleSignOut} className="btn-ghost text-sm">
             Sign out

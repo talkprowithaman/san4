@@ -137,8 +137,32 @@ BEGIN
   );
 
   RAISE NOTICE 'Seeded 6 practice sessions ✓';
-  RAISE NOTICE '─────────────────────────────────────────';
-  RAISE NOTICE 'Done! Profile is now Pro with full history.';
-  RAISE NOTICE 'Sign in at san4.vercel.app with: %', v_email;
+
+  -- ── 4. Seed gamification progress ──────────────────────────────────────────
+  -- XP earned across the 6 sessions (formula: 50 + floor(score*1.5) + excellence):
+  --   84→176, 73→159, 90→210, 63→144, 78→167, 86→179  =  1035 XP  →  Level 3 (Expressive)
+  -- last_practice_date = yesterday so you can extend the streak by practicing today.
+  INSERT INTO public.user_progress
+    (user_id, total_xp, level, streak_count, longest_streak, last_practice_date)
+  VALUES (
+    v_user_id,
+    1035,
+    3,                                                  -- Expressive
+    3,                                                  -- 3-day streak
+    7,                                                  -- best ever streak
+    (CURRENT_DATE - INTERVAL '1 day')::DATE             -- yesterday → extend today
+  )
+  ON CONFLICT (user_id) DO UPDATE
+    SET total_xp           = 1035,
+        level              = 3,
+        streak_count       = 3,
+        longest_streak     = 7,
+        last_practice_date = (CURRENT_DATE - INTERVAL '1 day')::DATE,
+        updated_at         = NOW();
+
+  RAISE NOTICE 'Gamification progress seeded ✓  (1035 XP · Level 3 Expressive · 3-day streak)';
+  RAISE NOTICE '─────────────────────────────────────────────────────────────';
+  RAISE NOTICE 'Done! Sign in at san4.vercel.app with: %', v_email;
+  RAISE NOTICE 'Practice one session today to see the streak extend to 4 🔥';
 
 END $$;

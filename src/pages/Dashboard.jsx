@@ -1,13 +1,15 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import { useAuth } from '../hooks/useAuth'
-import { supabase } from '../lib/supabase'
-import Navbar from '../components/Navbar'
+import { useAuth }     from '../hooks/useAuth'
+import { useProgress } from '../hooks/useProgress'
+import { supabase }    from '../lib/supabase'
+import Navbar          from '../components/Navbar'
 
 export default function Dashboard() {
-  const { user, profile } = useAuth()
-  const [sessions, setSessions] = useState([])
-  const [loading, setLoading]   = useState(true)
+  const { user, profile }        = useAuth()
+  const { progress, levelInfo }  = useProgress()
+  const [sessions, setSessions]  = useState([])
+  const [loading, setLoading]    = useState(true)
 
   useEffect(() => {
     if (user) fetchSessions()
@@ -45,16 +47,76 @@ export default function Dashboard() {
           <p className="text-muted mt-1">Ready to practice? Your next great conversation is one session away.</p>
         </div>
 
+        {/* XP Progress Bar */}
+        {levelInfo && (
+          <div className="card mb-6 animate-fade-in">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <span className="text-xl">{levelInfo.current.icon}</span>
+                <span className="font-bold text-white">{levelInfo.current.name}</span>
+                <span className="text-xs px-2 py-0.5 rounded-full font-semibold"
+                  style={{ background: `${levelInfo.current.color}18`, color: levelInfo.current.color }}>
+                  Lv.{levelInfo.current.level}
+                </span>
+              </div>
+              {levelInfo.next && (
+                <span className="text-xs text-muted">
+                  {levelInfo.xpIntoLevel} / {levelInfo.xpForLevel} XP → {levelInfo.next.icon} {levelInfo.next.name}
+                </span>
+              )}
+            </div>
+
+            <div className="h-3 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.06)' }}>
+              <div
+                className="h-full rounded-full transition-all duration-1000 ease-out"
+                style={{
+                  width: `${levelInfo.progressPercent}%`,
+                  background: `linear-gradient(90deg, ${levelInfo.current.color}aa, ${levelInfo.current.color})`,
+                  boxShadow: `0 0 10px ${levelInfo.current.color}60`,
+                }}
+              />
+            </div>
+
+            {!levelInfo.next && (
+              <p className="text-xs mt-2 font-semibold" style={{ color: levelInfo.current.color }}>
+                🦚 Maximum level reached — Vaksiddha
+              </p>
+            )}
+          </div>
+        )}
+
         {/* Stats row */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
           {[
-            { label: 'Sessions Done',   value: sessions.length,             suffix: '',    color: 'text-white' },
-            { label: 'Sessions Left',    value: sessionsLeft,                suffix: '',    color: 'text-teal' },
-            { label: 'Avg Score',        value: avgScore ? `${avgScore}%` : '—', suffix: '', color: 'text-primary' },
-            { label: 'Current Plan',     value: planName.charAt(0).toUpperCase() + planName.slice(1), suffix: '', color: 'text-white' },
-          ].map(({ label, value, color }) => (
+            {
+              label: 'Day Streak',
+              value: progress?.streak_count ?? 0,
+              suffix: '🔥',
+              color: 'text-primary',
+            },
+            {
+              label: 'Sessions Left',
+              value: sessionsLeft,
+              suffix: '',
+              color: 'text-teal',
+            },
+            {
+              label: 'Avg Score',
+              value: avgScore ? `${avgScore}%` : '—',
+              suffix: '',
+              color: 'text-primary',
+            },
+            {
+              label: 'Total XP',
+              value: progress?.total_xp ?? 0,
+              suffix: '',
+              color: 'text-white',
+            },
+          ].map(({ label, value, suffix, color }) => (
             <div key={label} className="card text-center">
-              <div className={`text-3xl font-black ${color} mb-1`}>{value}</div>
+              <div className={`text-3xl font-black ${color} mb-1`}>
+                {value}{suffix && <span className="ml-1 text-2xl">{suffix}</span>}
+              </div>
               <div className="text-muted text-xs">{label}</div>
             </div>
           ))}
