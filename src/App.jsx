@@ -6,14 +6,16 @@ import Dashboard      from './pages/Dashboard'
 import Practice       from './pages/Practice'
 import PracticeSession from './pages/PracticeSession'
 import MeetingPrep    from './pages/MeetingPrep'
+import AuthCallback   from './pages/AuthCallback'
 
 export default function App() {
   return (
     <BrowserRouter>
       <Routes>
         {/* Public */}
-        <Route path="/"     element={<Landing />} />
-        <Route path="/auth" element={<Auth />} />
+        <Route path="/"              element={<Landing />} />
+        <Route path="/auth"          element={<Auth />} />
+        <Route path="/auth/callback" element={<AuthCallback />} />
 
         {/* Protected */}
         <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />

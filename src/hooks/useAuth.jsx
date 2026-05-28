@@ -47,7 +47,10 @@ export function useAuth() {
   async function signUp(email, password, name) {
     const { data, error } = await supabase.auth.signUp({
       email, password,
-      options: { data: { name } },
+      options: {
+        data: { name },
+        emailRedirectTo: `${window.location.origin}/auth/callback`,
+      },
     })
     return { data, error }
   }
