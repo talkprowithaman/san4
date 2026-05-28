@@ -9,14 +9,17 @@ import {
   useMotionValue,
   AnimatePresence,
 } from 'framer-motion'
-import { supabase } from '../lib/supabase'
+import { supabase }  from '../lib/supabase'
+import VakMascot     from '../components/VakMascot'
 
 // ── Palette ───────────────────────────────────────────────────────────────────
-const navy  = '#0F172A'
-const blue  = '#2563EB'
-const green = '#10B981'
-const bg    = '#F8FAFC'
-const text  = '#111827'
+const navy   = '#060E1A'
+const blue   = '#FF6B35'   // "blue" var kept for compat — now brand orange
+const green  = '#00C49A'
+const gold   = '#F59E0B'
+const purple = '#8B5CF6'
+const bg     = '#080F1C'
+const text   = '#E2E8F0'
 
 // ── Easing ────────────────────────────────────────────────────────────────────
 const ease = [0.25, 0.1, 0.25, 1]
@@ -38,32 +41,53 @@ function FadeUp({ children, delay = 0, className = '' }) {
   )
 }
 
-// ── Phone mockup screens ──────────────────────────────────────────────────────
+// ── Phone mockup screens — gamified ──────────────────────────────────────────
 const PHONE_SCREENS = [
   {
+    // Screen 1: Live practice session with Vak
     content: (
-      <div className="flex flex-col gap-3 p-4 h-full overflow-hidden">
-        <div className="text-xs text-slate-400 font-medium text-center pb-2 border-b border-white/5">
-          HR Interview · 3:42
+      <div className="flex flex-col gap-2.5 p-3 h-full overflow-hidden">
+        <div className="flex items-center justify-between pb-2 border-b border-white/5">
+          <span className="text-xs text-slate-400">HR Interview · 3:42</span>
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-bold" style={{ color: '#FF6B35' }}>🔥 3</span>
+            <span className="text-xs font-bold" style={{ color: '#F59E0B' }}>⭐ 450</span>
+          </div>
         </div>
-        <div className="bg-slate-700/60 rounded-2xl rounded-tl-sm p-3 max-w-[80%]">
+        {/* Vak message */}
+        <div className="flex items-start gap-2">
+          <div className="w-7 h-7 rounded-full flex items-center justify-center shrink-0 text-base"
+            style={{ background: 'rgba(139,92,246,0.2)' }}>
+            🦢
+          </div>
+          <div className="bg-slate-700/60 rounded-2xl rounded-tl-sm p-2.5 max-w-[75%]">
+            <p className="text-white text-xs leading-relaxed">
+              Tell me about a time you handled a difficult stakeholder.
+            </p>
+          </div>
+        </div>
+        {/* User reply */}
+        <div className="rounded-2xl rounded-tr-sm p-2.5 max-w-[75%] self-end"
+          style={{ background: '#FF6B35' }}>
           <p className="text-white text-xs leading-relaxed">
-            Tell me about a time you handled a difficult stakeholder.
+            In my last role, I had a client who kept changing scope…
           </p>
         </div>
-        <div className="rounded-2xl rounded-tr-sm p-3 max-w-[80%] self-end" style={{ background: blue }}>
-          <p className="text-white text-xs leading-relaxed">
-            In my last role, I had a client who kept changing scope mid-project...
-          </p>
-        </div>
-        <div className="bg-slate-700/60 rounded-2xl rounded-tl-sm p-3 max-w-[80%]">
-          <p className="text-white text-xs leading-relaxed">
-            Good. What was the outcome, and what would you do differently?
-          </p>
+        <div className="flex items-start gap-2">
+          <div className="w-7 h-7 rounded-full flex items-center justify-center shrink-0 text-base"
+            style={{ background: 'rgba(139,92,246,0.2)' }}>
+            🦢
+          </div>
+          <div className="bg-slate-700/60 rounded-2xl rounded-tl-sm p-2.5 max-w-[75%]">
+            <p className="text-white text-xs leading-relaxed">
+              Good structure. What was the outcome?
+            </p>
+          </div>
         </div>
         <div className="mt-auto border border-white/10 rounded-xl px-3 py-2 flex items-center gap-2">
           <span className="text-slate-500 text-xs flex-1">Your response…</span>
-          <div className="w-6 h-6 rounded-full flex items-center justify-center" style={{ background: blue }}>
+          <div className="w-6 h-6 rounded-full flex items-center justify-center"
+            style={{ background: '#FF6B35' }}>
             <span className="text-white text-xs">↑</span>
           </div>
         </div>
@@ -71,61 +95,92 @@ const PHONE_SCREENS = [
     ),
   },
   {
+    // Screen 2: Dashboard with Vak mascot + gamified stats
     content: (
-      <div className="flex flex-col gap-3 p-4 h-full overflow-hidden">
-        <div className="text-xs text-slate-400 font-medium pb-2 border-b border-white/5">
-          Q3 Client Review · 6 talking points
+      <div className="flex flex-col gap-2 p-3 h-full overflow-hidden">
+        {/* Mini Vak + level */}
+        <div className="text-center pt-1">
+          <div className="text-3xl">🦢</div>
+          <div className="text-xs font-black text-white mt-0.5">Vak · Expressive 💎</div>
         </div>
-        {[
-          { p: 'Open with delivery summary', t: 'Lead with the win before the challenges', high: true },
-          { p: 'Address the Q2 delay directly', t: 'Name it before they do', high: true },
-          { p: 'Present the revised Q3 plan', t: 'Show three options, not one', high: true },
-          { p: 'Confirm budget alignment', t: 'Ask, do not assume', high: false },
-        ].map((item, i) => (
-          <div
-            key={i}
-            className="border-l-2 pl-3"
-            style={{ borderColor: item.high ? blue : '#334155' }}
-          >
-            <p className="text-white text-xs font-medium">{item.p}</p>
-            <p className="text-slate-500 text-xs mt-0.5">{item.t}</p>
+        {/* XP bar */}
+        <div className="px-1">
+          <div className="flex justify-between text-xs mb-1" style={{ color: 'rgba(107,140,174,0.8)' }}>
+            <span>450 XP</span><span>→ Influential ⚡</span>
           </div>
-        ))}
+          <div className="h-2 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.08)' }}>
+            <div className="h-full rounded-full" style={{ width: '25%', background: 'linear-gradient(90deg, #8B5CF6aa, #8B5CF6)' }}/>
+          </div>
+        </div>
+        {/* Stats */}
+        <div className="grid grid-cols-3 gap-1.5">
+          {[['🔥','3d','Streak'],['⭐','450','XP'],['🎭','6','Done']].map(([ic,v,l])=>(
+            <div key={l} className="rounded-xl p-2 text-center" style={{ background: 'rgba(255,255,255,0.05)' }}>
+              <div className="text-sm">{ic}</div>
+              <div className="text-white font-black text-sm">{v}</div>
+              <div className="text-xs" style={{ color: '#6B8CAE' }}>{l}</div>
+            </div>
+          ))}
+        </div>
+        {/* Play */}
+        <div className="rounded-2xl py-2.5 text-center text-white font-bold text-sm"
+          style={{ background: 'linear-gradient(135deg, #FF6B35, #FF8F4F)' }}>
+          🎮 Start Practice
+        </div>
+        {/* Missions */}
+        <div className="rounded-xl p-2.5" style={{ background: 'rgba(255,255,255,0.05)' }}>
+          <div className="text-xs font-bold text-white mb-1.5">📋 Daily Missions</div>
+          {[['Complete a session','#00C49A',true],[' Score 75%+','#F59E0B',false]].map(([m,c,done])=>(
+            <div key={m} className="flex items-center gap-1.5 mb-1">
+              <div className="w-3.5 h-3.5 rounded-full flex items-center justify-center text-xs"
+                style={{ border: `1.5px solid ${done ? c : 'rgba(255,255,255,0.2)'}`, color: c }}>
+                {done ? '✓' : ''}
+              </div>
+              <span className="text-xs" style={{ color: done ? '#6B8CAE' : 'white', textDecoration: done ? 'line-through' : 'none' }}>
+                {m}
+              </span>
+            </div>
+          ))}
+        </div>
       </div>
     ),
   },
   {
+    // Screen 3: Session report with XP reward
     content: (
-      <div className="flex flex-col gap-3 p-4 h-full overflow-hidden">
-        <div className="text-xs text-slate-400 font-medium pb-2 border-b border-white/5">
-          Session report · HR Interview
+      <div className="flex flex-col gap-2 p-3 h-full overflow-hidden">
+        <div className="text-xs text-slate-400 pb-1.5 border-b border-white/5">
+          Session Complete · HR Interview
         </div>
-        <div className="grid grid-cols-3 gap-2">
-          {[
-            { label: 'Overall',     val: '84%', color: green },
-            { label: 'Confidence', val: '78%', color: blue  },
-            { label: 'Pacing',     val: '91%', color: green },
-          ].map(s => (
-            <div key={s.label} className="bg-white/5 rounded-xl p-2 text-center">
-              <div className="text-base font-black" style={{ color: s.color }}>{s.val}</div>
-              <div className="text-slate-500 text-xs">{s.label}</div>
+        {/* XP earned */}
+        <div className="rounded-xl p-3 text-center"
+          style={{ background: 'rgba(255,107,53,0.1)', border: '1px solid rgba(255,107,53,0.25)' }}>
+          <div className="text-2xl font-black" style={{ color: '#FF6B35' }}>+176 XP</div>
+          <div className="text-xs font-semibold mt-0.5" style={{ color: '#FF6B35' }}>🔥 4-day streak!</div>
+        </div>
+        {/* Scores */}
+        <div className="grid grid-cols-3 gap-1.5">
+          {[['84%','#00C49A','Overall'],['78%','#FF6B35','Confidence'],['91%','#00C49A','Pacing']].map(([v,c,l])=>(
+            <div key={l} className="rounded-xl p-2 text-center" style={{ background: 'rgba(255,255,255,0.05)' }}>
+              <div className="font-black text-sm" style={{ color: c }}>{v}</div>
+              <div className="text-slate-500 text-xs">{l}</div>
             </div>
           ))}
         </div>
-        <div className="bg-white/5 rounded-xl p-3">
-          <div className="text-slate-400 text-xs mb-1">Filler words</div>
+        {/* Filler words */}
+        <div className="rounded-xl p-2.5" style={{ background: 'rgba(255,255,255,0.05)' }}>
+          <div className="text-slate-400 text-xs mb-0.5">Filler words</div>
           <div className="flex items-baseline gap-1.5">
-            <span className="text-2xl font-black" style={{ color: green }}>3</span>
-            <span className="text-slate-500 text-xs">this session vs 14 last week</span>
+            <span className="text-xl font-black" style={{ color: '#00C49A' }}>3</span>
+            <span className="text-slate-500 text-xs">vs 14 last week</span>
           </div>
         </div>
-        <div
-          className="rounded-xl p-3"
-          style={{ background: `${blue}18`, border: `1px solid ${blue}35` }}
-        >
-          <div className="text-xs font-semibold mb-1" style={{ color: blue }}>Action item</div>
-          <p className="text-white text-xs">
-            Pause before answering. Your best answers came after a 2-second pause.
+        {/* Action item */}
+        <div className="rounded-xl p-2.5"
+          style={{ background: 'rgba(255,107,53,0.08)', border: '1px solid rgba(255,107,53,0.2)' }}>
+          <div className="text-xs font-semibold mb-0.5" style={{ color: '#FF6B35' }}>🎯 Action item</div>
+          <p className="text-white text-xs leading-relaxed">
+            Pause 2 seconds before answering. Your best answers came after a pause.
           </p>
         </div>
       </div>
@@ -307,8 +362,8 @@ function FeatureBlock({ feat, index, isActive, setActive }) {
       <div>
         <motion.div
           animate={{
-            background: isActive ? blue : '#EFF6FF',
-            color:      isActive ? 'white' : '#93C5FD',
+            background: isActive ? blue : 'rgba(255,107,53,0.08)',
+            color:      isActive ? 'white' : 'rgba(255,107,53,0.4)',
           }}
           transition={{ duration: 0.4 }}
           className="w-11 h-11 rounded-2xl flex items-center justify-center text-sm font-black mb-8"
@@ -318,12 +373,12 @@ function FeatureBlock({ feat, index, isActive, setActive }) {
 
         <h3
           className="text-3xl lg:text-4xl font-black mb-5"
-          style={{ color: isActive ? text : '#CBD5E1', transition: 'color 0.4s' }}
+          style={{ color: isActive ? '#FFFFFF' : 'rgba(255,255,255,0.25)', transition: 'color 0.4s' }}
         >
           {feat.title}
         </h3>
 
-        <p className="text-slate-500 text-lg leading-relaxed max-w-sm">
+        <p className="text-lg leading-relaxed max-w-sm" style={{ color: '#6B8CAE' }}>
           {feat.desc}
         </p>
       </div>
@@ -362,16 +417,19 @@ export default function Landing() {
         initial={{ opacity: 0, y: -16 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6, ease }}
-        className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-8 h-16 border-b border-slate-100"
-        style={{ background: 'rgba(248,250,252,0.88)', backdropFilter: 'blur(20px)' }}
+        className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-8 h-16 border-b"
+        style={{ background: 'rgba(6,14,26,0.88)', backdropFilter: 'blur(20px)', borderColor: 'rgba(255,255,255,0.07)' }}
       >
-        <span className="text-xl font-black tracking-tight" style={{ color: navy }}>
+        <span className="text-xl font-black tracking-tight text-white">
           San<span style={{ color: blue }}>4</span>
         </span>
         <div className="flex items-center gap-4">
           <Link
             to="/auth"
-            className="text-sm font-medium text-slate-500 hover:text-slate-900 transition-colors"
+            className="text-sm font-medium transition-colors"
+            style={{ color: '#6B8CAE' }}
+            onMouseEnter={e => e.currentTarget.style.color = 'white'}
+            onMouseLeave={e => e.currentTarget.style.color = '#6B8CAE'}
           >
             Sign in
           </Link>
@@ -388,34 +446,65 @@ export default function Landing() {
       {/* ── Hero ───────────────────────────────────────────────────────────── */}
       <section
         className="relative min-h-screen flex items-center pt-16 px-8 overflow-hidden"
-        style={{ background: 'linear-gradient(135deg, #0F172A 0%, #2563EB 100%)' }}
+        style={{ background: 'linear-gradient(135deg, #060E1A 0%, #0D1B33 60%, #111E3A 100%)' }}
       >
         {/* Subtle grid */}
         <div
           className="absolute inset-0 pointer-events-none"
           style={{
             backgroundImage:
-              'linear-gradient(rgba(255,255,255,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.04) 1px, transparent 1px)',
+              'linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px)',
             backgroundSize: '64px 64px',
           }}
         />
-        {/* Radial bloom top-right */}
+        {/* Radial bloom top-right — orange */}
         <div
           className="absolute -top-40 -right-40 w-[700px] h-[700px] rounded-full pointer-events-none"
-          style={{ background: 'radial-gradient(circle, rgba(59,130,246,0.35) 0%, transparent 65%)' }}
+          style={{ background: 'radial-gradient(circle, rgba(255,107,53,0.18) 0%, transparent 65%)' }}
+        />
+        {/* Radial bloom bottom-left — purple */}
+        <div
+          className="absolute -bottom-60 -left-40 w-[600px] h-[600px] rounded-full pointer-events-none"
+          style={{ background: 'radial-gradient(circle, rgba(139,92,246,0.12) 0%, transparent 65%)' }}
         />
 
         <div className="max-w-7xl mx-auto w-full grid lg:grid-cols-2 gap-16 items-center relative z-10">
           {/* Text */}
           <div>
+            {/* Vak mascot floating — hero centrepiece */}
             <motion.div
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.1, ease }}
-              className="inline-flex items-center gap-2 text-xs font-semibold tracking-widest uppercase mb-8"
-              style={{ color: '#93C5FD' }}
+              transition={{ duration: 0.7, delay: 0.05, ease }}
+              className="flex items-center gap-5 mb-6"
             >
-              India's first AI communication coach
+              <div className="animate-float relative">
+                {/* Glow behind Vak */}
+                <div className="absolute inset-0 pointer-events-none -z-10"
+                  style={{
+                    background: 'radial-gradient(circle, rgba(139,92,246,0.3) 0%, transparent 60%)',
+                    transform: 'scale(1.4)',
+                  }} />
+                <VakMascot level={3} size={130} />
+              </div>
+              <div>
+                <div className="flex items-baseline gap-2 mb-1">
+                  <span className="text-2xl font-black text-white">Vak</span>
+                  <span className="text-lg font-semibold" style={{ color: '#8B5CF6' }}>वाक्</span>
+                </div>
+                <div
+                  className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full mb-1.5"
+                  style={{ background: 'rgba(255,107,53,0.15)', border: '1px solid rgba(255,107,53,0.3)', color: '#FF8F4F' }}
+                >
+                  🦢 Your AI communication coach
+                </div>
+                <div
+                  className="text-xs font-semibold tracking-widest uppercase"
+                  style={{ color: 'rgba(107,140,174,0.6)' }}
+                >
+                  India's first · Built for Indian voices
+                </div>
+              </div>
             </motion.div>
 
             <motion.h1
@@ -425,7 +514,7 @@ export default function Landing() {
               className="text-6xl lg:text-7xl font-black leading-[1.05] tracking-tight mb-6 text-white"
             >
               Speak with<br />
-              <span style={{ color: '#93C5FD' }}>confidence</span>
+              <span style={{ color: '#00C49A' }}>confidence</span>
             </motion.h1>
 
             <motion.p
@@ -433,10 +522,10 @@ export default function Landing() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.7, delay: 0.35, ease }}
               className="text-lg leading-relaxed mb-10 max-w-md"
-              style={{ color: '#BFDBFE' }}
+              style={{ color: 'rgba(255,255,255,0.55)' }}
             >
               Practice interviews, meetings, and negotiations with AI.
-              Get better every session.
+              Earn XP, build streaks, level up your communication.
             </motion.p>
 
             <motion.div
@@ -458,17 +547,17 @@ export default function Landing() {
                     onChange={e => setEmail(e.target.value)}
                     className="flex-1 text-white rounded-full px-5 py-3 text-sm focus:outline-none transition-colors"
                     style={{
-                      background: 'rgba(255,255,255,0.10)',
-                      border: '1px solid rgba(255,255,255,0.20)',
+                      background: 'rgba(255,255,255,0.08)',
+                      border: '1px solid rgba(255,255,255,0.15)',
                     }}
                   />
                   <button
                     onClick={handleWaitlist}
                     disabled={loading || !email}
                     className="font-bold px-6 py-3 rounded-full text-sm transition-all active:scale-95 disabled:opacity-50 whitespace-nowrap hover:opacity-90"
-                    style={{ background: 'white', color: navy }}
+                    style={{ background: blue, color: 'white' }}
                   >
-                    {loading ? '…' : 'Join free'}
+                    {loading ? '…' : 'Join free →'}
                   </button>
                 </>
               )}
@@ -479,10 +568,26 @@ export default function Landing() {
               animate={{ opacity: 1 }}
               transition={{ duration: 0.6, delay: 0.7 }}
               className="text-xs mt-4"
-              style={{ color: 'rgba(147,197,253,0.55)' }}
+              style={{ color: 'rgba(255,255,255,0.25)' }}
             >
-              No credit card. 3 free sessions included.
+              No credit card. 3 free sessions included. ⭐ +150 XP on signup.
             </motion.p>
+
+            {/* iOS + Android teaser */}
+            <motion.div
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.9, ease }}
+              className="flex items-center gap-2 mt-5"
+            >
+              <span
+                className="inline-flex items-center gap-1.5 text-xs font-semibold px-4 py-2 rounded-full"
+                style={{ background: 'rgba(139,92,246,0.12)', border: '1px solid rgba(139,92,246,0.25)', color: '#A78BFA' }}
+              >
+                📱 Coming to iOS & Android
+              </span>
+              <span className="text-xs" style={{ color: 'rgba(255,255,255,0.2)' }}>Live meeting feedback in your pocket</span>
+            </motion.div>
           </div>
 
           {/* Phone */}
@@ -513,22 +618,161 @@ export default function Landing() {
         </motion.div>
       </section>
 
+      {/* ── Meet Vak ──────────────────────────────────────────────────────── */}
+      <section className="py-28 px-8 relative overflow-hidden" style={{ background: '#07111F' }}>
+        {/* Purple glow behind Vak */}
+        <div className="absolute top-1/2 left-1/4 -translate-y-1/2 w-[500px] h-[500px] rounded-full pointer-events-none"
+          style={{ background: 'radial-gradient(circle, rgba(139,92,246,0.12) 0%, transparent 65%)' }} />
+        <div className="absolute top-1/2 right-0 -translate-y-1/2 w-[400px] h-[400px] rounded-full pointer-events-none"
+          style={{ background: 'radial-gradient(circle, rgba(255,107,53,0.07) 0%, transparent 65%)' }} />
+
+        <div className="max-w-6xl mx-auto">
+
+          {/* Two-column: Vak + story */}
+          <div className="grid lg:grid-cols-2 gap-16 items-center mb-20">
+
+            {/* Left — big Vak floating */}
+            <FadeUp className="flex flex-col items-center justify-center">
+              <div className="relative flex justify-center">
+                {/* Glow aura ring */}
+                <div className="absolute inset-0 pointer-events-none"
+                  style={{
+                    background: 'radial-gradient(circle, rgba(139,92,246,0.22) 0%, transparent 60%)',
+                    transform: 'scale(1.6)',
+                  }} />
+                <div className="animate-float relative z-10">
+                  <VakMascot level={4} size={220} />
+                </div>
+              </div>
+              <div className="mt-5 text-center">
+                <div className="flex items-baseline justify-center gap-3">
+                  <span className="text-4xl font-black text-white tracking-tight">Vak</span>
+                  <span className="text-2xl font-bold" style={{ color: '#8B5CF6' }}>वाक्</span>
+                </div>
+                <p className="text-sm mt-1.5 font-medium" style={{ color: '#6B8CAE' }}>
+                  Sanskrit · <em>"Speech"</em> · Vehicle of Saraswati
+                </p>
+              </div>
+            </FadeUp>
+
+            {/* Right — story */}
+            <FadeUp delay={0.15}>
+              <div
+                className="inline-flex items-center gap-2 text-xs font-semibold px-3 py-1.5 rounded-full mb-6"
+                style={{ background: 'rgba(139,92,246,0.12)', border: '1px solid rgba(139,92,246,0.28)', color: '#A78BFA' }}
+              >
+                🦢 The Hamsa of Saraswati
+              </div>
+
+              <h2 className="text-4xl lg:text-5xl font-black text-white leading-tight mb-6">
+                Your AI coach,<br />
+                <span style={{ color: blue }}>built for Indian voices</span>
+              </h2>
+
+              <p className="text-lg leading-relaxed mb-5" style={{ color: '#6B8CAE' }}>
+                The Hamsa — the sacred swan — is the mount of Saraswati, goddess of speech,
+                learning, and expression. In ancient tradition, the swan separates milk from water,
+                truth from noise.
+              </p>
+
+              <p className="text-lg leading-relaxed mb-8" style={{ color: '#6B8CAE' }}>
+                We named our AI coach <strong className="text-white font-bold">Vak</strong> — the
+                Sanskrit word for speech — because great communication isn't a Western import.
+                It's ancient, it's Indian, and it starts with your voice.
+              </p>
+
+              <div className="flex flex-wrap gap-3">
+                {[
+                  { icon: '🎓', text: 'Built for Indian professionals' },
+                  { icon: '🗣️', text: 'Knows GD rounds & MNC culture' },
+                  { icon: '🌏', text: 'Indian scenarios, not US formats' },
+                ].map(item => (
+                  <div key={item.text}
+                    className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium"
+                    style={{
+                      background: 'rgba(255,255,255,0.04)',
+                      border: '1px solid rgba(255,255,255,0.08)',
+                      color: '#CBD5E1',
+                    }}>
+                    <span>{item.icon}</span> {item.text}
+                  </div>
+                ))}
+              </div>
+            </FadeUp>
+          </div>
+
+          {/* Level progression — Vak evolution */}
+          <FadeUp delay={0.25}>
+            <div
+              className="rounded-3xl p-8"
+              style={{ background: 'rgba(255,255,255,0.025)', border: '1px solid rgba(255,255,255,0.07)' }}
+            >
+              <p className="text-center text-sm font-semibold mb-2 text-white">
+                Vak grows as you practice
+              </p>
+              <p className="text-center text-xs mb-10" style={{ color: '#6B8CAE' }}>
+                Every session earns XP. Watch your swan spread its wings.
+              </p>
+              <div className="grid grid-cols-5 gap-3 sm:gap-6">
+                {[
+                  { level: 1, name: 'Hesitant',   xp: '0 XP',    color: '#6B8CAE' },
+                  { level: 2, name: 'Aware',       xp: '300 XP',  color: '#00C49A' },
+                  { level: 3, name: 'Expressive',  xp: '800 XP',  color: '#FF6B35' },
+                  { level: 4, name: 'Influential', xp: '1,800 XP', color: '#8B5CF6' },
+                  { level: 5, name: 'Vaksiddha',  xp: '4,000 XP', color: '#F59E0B' },
+                ].map(({ level, name, xp, color }, i) => (
+                  <motion.div
+                    key={level}
+                    className="flex flex-col items-center gap-2"
+                    initial={{ opacity: 0, y: 16 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.5, delay: i * 0.1, ease }}
+                  >
+                    {/* Subtle glow under each swan */}
+                    <div className="relative flex justify-center">
+                      <div className="absolute bottom-0 w-12 h-4 rounded-full blur-md"
+                        style={{ background: color, opacity: 0.25 }} />
+                      <VakMascot level={level} size={68} />
+                    </div>
+                    <div className="text-xs font-bold text-center hidden sm:block" style={{ color }}>
+                      {name}
+                    </div>
+                    <div className="text-xs font-bold text-center sm:hidden" style={{ color }}>
+                      Lv{level}
+                    </div>
+                    <div className="text-xs text-center" style={{ color: 'rgba(107,140,174,0.6)' }}>
+                      {xp}
+                    </div>
+                    {i < 4 && (
+                      <div className="hidden sm:block text-xs mt-1" style={{ color: 'rgba(255,255,255,0.1)' }}>
+                        →
+                      </div>
+                    )}
+                  </motion.div>
+                ))}
+              </div>
+            </div>
+          </FadeUp>
+        </div>
+      </section>
+
       {/* ── Problem ────────────────────────────────────────────────────────── */}
       <section className="py-20 lg:py-40 px-8" style={{ background: bg }}>
         <div className="max-w-4xl mx-auto text-center">
           <FadeUp>
-            <p className="text-xs font-semibold text-slate-400 uppercase tracking-widest mb-10">
+            <p className="text-xs font-semibold uppercase tracking-widest mb-10" style={{ color: '#6B8CAE' }}>
               The problem
             </p>
           </FadeUp>
           <FadeUp delay={0.1}>
-            <h2 className="text-4xl lg:text-5xl font-black leading-tight mb-5" style={{ color: text }}>
+            <h2 className="text-4xl lg:text-5xl font-black leading-tight mb-5 text-white">
               Most training tells you{' '}
               <span style={{ color: blue }}>what</span> to do.
             </h2>
           </FadeUp>
           <FadeUp delay={0.2}>
-            <h2 className="text-4xl lg:text-5xl font-black leading-tight" style={{ color: text }}>
+            <h2 className="text-4xl lg:text-5xl font-black leading-tight text-white">
               San4 makes you{' '}
               <span style={{ color: blue }}>actually do it.</span>
             </h2>
@@ -544,8 +788,12 @@ export default function Landing() {
             return (
               <FadeUp key={card.headline} delay={i * 0.12}>
                 <motion.div
-                  className="bg-white rounded-2xl border border-slate-100 overflow-hidden cursor-pointer select-none"
-                  style={{ boxShadow: isOpen ? `0 8px 32px rgba(37,99,235,0.10)` : '0 1px 4px rgba(0,0,0,0.06)' }}
+                  className="rounded-2xl overflow-hidden cursor-pointer select-none"
+                  style={{
+                    background: 'linear-gradient(135deg, #0F1E35, #0A1628)',
+                    border: isOpen ? '1px solid rgba(255,107,53,0.3)' : '1px solid rgba(255,255,255,0.07)',
+                    boxShadow: isOpen ? `0 8px 32px rgba(255,107,53,0.12)` : '0 1px 4px rgba(0,0,0,0.3)',
+                  }}
                   onClick={() => setOpenCard(isOpen ? null : i)}
                   whileHover={{ y: -3 }}
                   whileTap={{ scale: 0.99 }}
@@ -556,10 +804,10 @@ export default function Landing() {
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex-1 min-w-0">
                         <div className="text-3xl mb-4">{card.emoji}</div>
-                        <h3 className="text-base font-bold mb-2" style={{ color: text }}>
+                        <h3 className="text-base font-bold mb-2 text-white">
                           {card.headline}
                         </h3>
-                        <p className="text-slate-500 text-sm leading-relaxed">{card.body}</p>
+                        <p className="text-sm leading-relaxed" style={{ color: '#6B8CAE' }}>{card.body}</p>
                       </div>
 
                       {/* + / − toggle icon */}
@@ -592,7 +840,7 @@ export default function Landing() {
                         className="overflow-hidden"
                       >
                         <div className="px-7 pb-7">
-                          <div className="pt-4 border-t border-slate-100">
+                          <div className="pt-4" style={{ borderTop: '1px solid rgba(255,255,255,0.07)' }}>
                             <p className="text-xs font-bold uppercase tracking-wider mb-4" style={{ color: blue }}>
                               {card.expandTitle}
                             </p>
@@ -605,7 +853,7 @@ export default function Landing() {
                                   >
                                     {j + 1}
                                   </span>
-                                  <span className="text-slate-600 text-sm leading-relaxed">{b}</span>
+                                  <span className="text-sm leading-relaxed" style={{ color: '#94A3B8' }}>{b}</span>
                                 </li>
                               ))}
                             </ul>
@@ -628,12 +876,12 @@ export default function Landing() {
           it enters the centre of the viewport — no scroll events, no rAF,
           no 400vh height hacks. Works regardless of any parent overflow.
       */}
-      <section style={{ background: 'white' }}>
+      <section style={{ background: bg }}>
         <div className="max-w-7xl mx-auto px-8">
 
           {/* Section label */}
           <div className="pt-32 pb-4 text-center">
-            <p className="text-xs font-semibold text-slate-400 uppercase tracking-widest">
+            <p className="text-xs font-semibold uppercase tracking-widest" style={{ color: '#6B8CAE' }}>
               How it works
             </p>
           </div>
@@ -670,7 +918,7 @@ export default function Landing() {
       <section className="py-40 px-8" style={{ background: bg }}>
         <div className="max-w-5xl mx-auto">
           <FadeUp className="text-center mb-20">
-            <p className="text-xs font-semibold text-slate-400 uppercase tracking-widest">
+            <p className="text-xs font-semibold uppercase tracking-widest" style={{ color: '#6B8CAE' }}>
               Why San4
             </p>
           </FadeUp>
@@ -685,8 +933,8 @@ export default function Landing() {
                 <div className="text-6xl font-black mb-3" style={{ color: blue }}>
                   <Counter to={number} suffix={suffix} />
                 </div>
-                <div className="font-semibold mb-1" style={{ color: text }}>{label}</div>
-                <div className="text-slate-500 text-sm">{sub}</div>
+                <div className="font-semibold mb-1 text-white">{label}</div>
+                <div className="text-sm" style={{ color: '#6B8CAE' }}>{sub}</div>
               </FadeUp>
             ))}
           </div>
@@ -694,9 +942,9 @@ export default function Landing() {
       </section>
 
       {/* ── Scenarios strip ────────────────────────────────────────────────── */}
-      <section className="py-20 overflow-hidden" style={{ background: 'white' }}>
+      <section className="py-20 overflow-hidden" style={{ background: bg }}>
         <FadeUp className="text-center mb-12 px-8">
-          <p className="text-xs font-semibold text-slate-400 uppercase tracking-widest">
+          <p className="text-xs font-semibold uppercase tracking-widest" style={{ color: '#6B8CAE' }}>
             What you can practice
           </p>
         </FadeUp>
@@ -709,9 +957,9 @@ export default function Landing() {
           >
             {[...Array(2)].flatMap(() =>
               [
-                'HR Interview', 'Client Presentation', 'Salary Negotiation',
-                'Performance Review', 'Team Meeting', 'Group Discussion',
-                'Cold Call', 'Project Kickoff', 'Stakeholder Update',
+                '💼 HR Interview', '📊 Client Presentation', '💰 Salary Negotiation',
+                '⭐ Performance Review', '👥 Team Meeting', '🗣️ Group Discussion',
+                '💬 Social Conversation', '❤️ First Date', '📞 Cold Call', '🚀 Project Kickoff',
               ].map((s, i) => (
                 <div
                   key={`${s}-${i}`}
@@ -752,13 +1000,13 @@ export default function Landing() {
           </FadeUp>
 
           <FadeUp delay={0.1}>
-            <h2 className="text-4xl font-black mb-6" style={{ color: text }}>
+            <h2 className="text-4xl font-black mb-6 text-white">
               Built by Aman
             </h2>
           </FadeUp>
 
           <FadeUp delay={0.2}>
-            <p className="text-slate-500 text-lg leading-relaxed max-w-xl mx-auto">
+            <p className="text-lg leading-relaxed max-w-xl mx-auto" style={{ color: '#6B8CAE' }}>
               A teacher and a student of communication. San4 brings years of coaching,
               communication frameworks, and hiring insights into one AI copilot designed
               to help you speak smarter, interview better, and get hired faster.
@@ -777,9 +1025,21 @@ export default function Landing() {
           </FadeUp>
 
           <FadeUp delay={0.1}>
-            <p className="text-lg mb-12" style={{ color: '#93C5FD' }}>
+            <p className="text-lg mb-4" style={{ color: 'rgba(255,255,255,0.5)' }}>
               Three free sessions. No card needed.
             </p>
+          </FadeUp>
+          <FadeUp delay={0.15}>
+            <div className="flex items-center justify-center gap-3 mb-10">
+              <span className="inline-flex items-center gap-1.5 text-xs font-semibold px-4 py-2 rounded-full"
+                style={{ background: 'rgba(0,196,154,0.12)', border: '1px solid rgba(0,196,154,0.25)', color: '#00C49A' }}>
+                🔥 Streaks · ⭐ XP · 🏆 Levels
+              </span>
+              <span className="inline-flex items-center gap-1.5 text-xs font-semibold px-4 py-2 rounded-full"
+                style={{ background: 'rgba(139,92,246,0.12)', border: '1px solid rgba(139,92,246,0.25)', color: '#A78BFA' }}>
+                📱 iOS & Android coming soon
+              </span>
+            </div>
           </FadeUp>
 
           <FadeUp delay={0.2}>
@@ -823,11 +1083,14 @@ export default function Landing() {
         className="py-10 px-8 text-center"
         style={{ background: navy, borderTop: '1px solid rgba(255,255,255,0.06)' }}
       >
-        <div className="text-lg font-black mb-2 text-white">
-          San<span style={{ color: blue }}>4</span>
+        <div className="flex items-center justify-center gap-3 mb-2">
+          <VakMascot level={2} size={36} />
+          <span className="text-lg font-black text-white">
+            San<span style={{ color: blue }}>4</span>
+          </span>
         </div>
-        <p className="text-xs text-slate-600">
-          Sanchaar (सञ्चार) · Communicate with Confidence · Made in India 🇮🇳
+        <p className="text-xs" style={{ color: '#374151' }}>
+          Powered by Vak (वाक्) · Sanchaar (सञ्चार) · Communicate with Confidence · Made in India 🇮🇳
         </p>
 
         {/* Social links */}
