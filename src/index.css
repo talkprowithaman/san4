@@ -10,35 +10,143 @@
 }
 
 @layer components {
+
+  /* ── Buttons ─────────────────────────────────────────────────────────────── */
   .btn-primary {
-    @apply bg-primary text-white font-semibold px-6 py-3 rounded-xl hover:bg-orange-500 transition-all duration-200 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed;
+    @apply bg-primary text-white font-bold px-6 py-3 rounded-2xl
+           hover:brightness-110 transition-all duration-200
+           active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed;
   }
   .btn-secondary {
-    @apply border border-navy-500 text-white font-semibold px-6 py-3 rounded-xl hover:border-primary hover:text-primary transition-all duration-200 active:scale-95;
+    @apply border border-navy-500 text-white font-semibold px-6 py-3 rounded-2xl
+           hover:border-primary hover:text-primary transition-all duration-200 active:scale-95;
   }
   .btn-ghost {
-    @apply text-muted font-medium px-4 py-2 rounded-lg hover:text-white hover:bg-navy-700 transition-all duration-200;
+    @apply text-muted font-medium px-4 py-2 rounded-xl
+           hover:text-white hover:bg-navy-700 transition-all duration-200;
   }
+
+  /* ── Play / CTA ──────────────────────────────────────────────────────────── */
+  .btn-play {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.65rem;
+    width: 100%;
+    padding: 1.15rem 1.5rem;
+    background: linear-gradient(135deg, #FF6B35 0%, #FF8F4F 100%);
+    border-radius: 20px;
+    font-size: 1.15rem;
+    font-weight: 900;
+    color: white;
+    letter-spacing: 0.01em;
+    transition: all 0.22s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    box-shadow: 0 6px 28px rgba(255,107,53,0.38);
+    cursor: pointer;
+    border: none;
+    text-decoration: none;
+  }
+  .btn-play:hover {
+    transform: translateY(-3px) scale(1.01);
+    box-shadow: 0 10px 36px rgba(255,107,53,0.48);
+  }
+  .btn-play:active { transform: scale(0.97); }
+
+  /* ── Cards ───────────────────────────────────────────────────────────────── */
   .card {
-    @apply bg-navy-700 border border-navy-600 rounded-2xl p-6;
+    @apply rounded-2xl p-6;
+    background: linear-gradient(135deg, #0F1E35 0%, #0A1628 100%);
+    border: 1px solid rgba(255,255,255,0.07);
   }
+
+  /* Game card — slightly elevated with glow border */
+  .game-card {
+    border-radius: 24px;
+    padding: 1.5rem;
+    background: linear-gradient(145deg, #0F1E35 0%, #091522 100%);
+    border: 1px solid rgba(255,255,255,0.08);
+    transition: box-shadow 0.3s;
+  }
+  .game-card:hover { box-shadow: 0 0 0 1px rgba(255,107,53,0.15); }
+
+  /* Quest card — scenario picker cards */
+  .quest-card {
+    border-radius: 22px;
+    padding: 1.35rem;
+    background: linear-gradient(145deg, #0F1E35 0%, #091522 100%);
+    border: 1px solid rgba(255,255,255,0.07);
+    cursor: pointer;
+    transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    text-align: left;
+    width: 100%;
+  }
+  .quest-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 36px rgba(0,0,0,0.35);
+    border-color: rgba(255,107,53,0.35);
+  }
+
+  /* ── Stat gem ────────────────────────────────────────────────────────────── */
+  .stat-gem {
+    border-radius: 18px;
+    padding: 1rem 0.75rem;
+    text-align: center;
+    background: linear-gradient(145deg, #0F1E35, #091522);
+    border: 1px solid rgba(255,255,255,0.07);
+  }
+
+  /* ── XP bar ──────────────────────────────────────────────────────────────── */
+  .xp-bar-track {
+    height: 10px;
+    border-radius: 999px;
+    background: rgba(255,255,255,0.07);
+    overflow: hidden;
+  }
+  .xp-bar-fill {
+    height: 100%;
+    border-radius: 999px;
+    transition: width 1s ease-out;
+  }
+
+  /* ── Inputs ──────────────────────────────────────────────────────────────── */
   .input {
-    @apply w-full bg-navy-800 border border-navy-600 text-white placeholder-muted rounded-xl px-4 py-3 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all duration-200;
+    @apply w-full text-white placeholder-muted rounded-2xl px-4 py-3
+           focus:outline-none transition-all duration-200;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.1);
   }
-  .badge {
-    @apply inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold;
+  .input:focus {
+    border-color: #FF6B35;
+    box-shadow: 0 0 0 3px rgba(255,107,53,0.15);
   }
-  .badge-orange { @apply badge bg-primary/20 text-primary; }
-  .badge-teal   { @apply badge bg-teal/20 text-teal; }
-  .badge-blue   { @apply badge bg-blue-500/20 text-blue-400; }
+
+  /* ── Badges ──────────────────────────────────────────────────────────────── */
+  .badge           { @apply inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold; }
+  .badge-orange    { @apply badge bg-primary/20 text-primary; }
+  .badge-teal      { @apply badge bg-teal/20 text-teal; }
+  .badge-blue      { @apply badge bg-blue-500/20 text-blue-400; }
+  .badge-gold      { @apply badge; background: rgba(245,158,11,0.15); color: #F59E0B; }
+  .badge-purple    { @apply badge; background: rgba(139,92,246,0.15); color: #A78BFA; }
 }
 
-/* Scrollbar */
-::-webkit-scrollbar { width: 6px; }
+/* ── Scrollbar ───────────────────────────────────────────────────────────────── */
+::-webkit-scrollbar       { width: 5px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { @apply bg-navy-500 rounded-full; }
-::-webkit-scrollbar-thumb:hover { @apply bg-navy-400; }
+::-webkit-scrollbar-thumb { background: #1A2E4A; border-radius: 999px; }
+::-webkit-scrollbar-thumb:hover { background: #243D5F; }
 
-/* Chat bubbles */
-.bubble-ai   { @apply bg-navy-700 border border-navy-600 text-white rounded-2xl rounded-tl-sm px-4 py-3 max-w-lg; }
-.bubble-user { @apply bg-primary text-white rounded-2xl rounded-tr-sm px-4 py-3 max-w-lg ml-auto; }
+/* ── Chat bubbles ─────────────────────────────────────────────────────────────── */
+.bubble-ai   {
+  background: linear-gradient(135deg, #0F1E35, #0A1628);
+  border: 1px solid rgba(255,255,255,0.08);
+  @apply text-white rounded-2xl rounded-tl-sm px-4 py-3 max-w-lg;
+}
+.bubble-user {
+  background: linear-gradient(135deg, #FF6B35, #FF8F4F);
+  @apply text-white rounded-2xl rounded-tr-sm px-4 py-3 max-w-lg ml-auto;
+}
+
+/* ── Utility ──────────────────────────────────────────────────────────────────── */
+.text-glow-orange { text-shadow: 0 0 20px rgba(255,107,53,0.5); }
+.text-glow-gold   { text-shadow: 0 0 20px rgba(245,158,11,0.5); }
+.text-glow-teal   { text-shadow: 0 0 20px rgba(0,196,154,0.45); }

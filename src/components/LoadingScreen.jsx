@@ -1,16 +1,33 @@
+import VakMascot from './VakMascot'
+
 export default function LoadingScreen() {
   return (
-    <div className="min-h-screen bg-navy-900 flex items-center justify-center">
-      <div className="text-center">
-        <div className="text-4xl font-black text-white mb-2">
-          San<span className="text-primary">4</span>
+    <div
+      className="min-h-screen flex items-center justify-center"
+      style={{ background: '#060E1A' }}
+    >
+      <div className="text-center animate-fade-in">
+        {/* Vak floating */}
+        <div className="flex justify-center mb-5 animate-float">
+          <VakMascot level={1} size={96} />
         </div>
-        <div className="flex gap-1 justify-center mt-4">
-          {[0,1,2].map(i => (
+
+        {/* Logo */}
+        <div className="text-3xl font-black text-white mb-5 tracking-tight">
+          San<span style={{ color: '#FF6B35' }}>4</span>
+        </div>
+
+        {/* Loading dots */}
+        <div className="flex gap-2 justify-center">
+          {[0, 1, 2].map(i => (
             <div
               key={i}
-              className="w-2 h-2 rounded-full bg-primary animate-pulse"
-              style={{ animationDelay: `${i * 0.2}s` }}
+              className="w-2 h-2 rounded-full animate-bounce-slow"
+              style={{
+                background: '#FF6B35',
+                animationDelay: `${i * 0.18}s`,
+                opacity: 0.8,
+              }}
             />
           ))}
         </div>

@@ -81,13 +81,17 @@ export default function MeetingPrep() {
   }
 
   return (
-    <div className="min-h-screen bg-navy-900">
+    <div className="min-h-screen" style={{ background: '#060E1A' }}>
       <Navbar />
 
       <main className="max-w-3xl mx-auto px-4 py-8">
         <div className="mb-8 animate-fade-in">
-          <h1 className="text-3xl font-black text-white">Meeting Prep</h1>
-          <p className="text-muted mt-1">Paste your agenda. Get AI-generated talking points in 90 seconds.</p>
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full mb-3 text-sm font-semibold"
+            style={{ background: 'rgba(0,196,154,0.12)', color: '#00C49A', border: '1px solid rgba(0,196,154,0.2)' }}>
+            📋 Meeting Prep
+          </div>
+          <h1 className="text-3xl font-black text-white">Prep smarter, speak better</h1>
+          <p className="mt-1" style={{ color: '#6B8CAE' }}>Paste your agenda. Get AI talking points in 90 seconds.</p>
         </div>
 
         {!result ? (
