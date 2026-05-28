@@ -1,6 +1,7 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom'
-import { useAuth }     from '../hooks/useAuth'
-import { useProgress } from '../hooks/useProgress'
+import { useAuth }          from '../hooks/useAuth'
+import { useProgress }      from '../hooks/useProgress'
+import { useSubscription }  from '../hooks/useSubscription'
 
 const NAV = [
   { to: '/dashboard',    label: 'Home',     icon: '🏠' },
@@ -11,6 +12,7 @@ const NAV = [
 export default function Navbar() {
   const { signOut, profile }    = useAuth()
   const { progress, levelInfo } = useProgress()
+  const { isPro }               = useSubscription()
   const location  = useLocation()
   const navigate  = useNavigate()
 
@@ -103,6 +105,31 @@ export default function Navbar() {
               <p className="text-center mt-0.5" style={{ fontSize: '9px', color: '#6B8CAE' }}>
                 {levelInfo.progressPercent}%
               </p>
+            </div>
+          )}
+
+          {/* Upgrade CTA (free users only) */}
+          {!isPro && (
+            <Link
+              to="/pricing"
+              className="hidden sm:flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-full transition-all hover:opacity-90"
+              style={{
+                background: 'linear-gradient(135deg, #FF6B35, #FF8F4F)',
+                color: 'white',
+                boxShadow: '0 2px 12px rgba(255,107,53,0.35)',
+              }}
+            >
+              ⚡ Upgrade
+            </Link>
+          )}
+
+          {/* Pro badge */}
+          {isPro && (
+            <div
+              className="hidden sm:flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-full"
+              style={{ background: 'rgba(245,158,11,0.12)', color: '#F59E0B', border: '1px solid rgba(245,158,11,0.25)' }}
+            >
+              ⚡ Pro
             </div>
           )}
 

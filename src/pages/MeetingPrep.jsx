@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react'
-import { useAuth } from '../hooks/useAuth'
-import { supabase } from '../lib/supabase'
+import { Link } from 'react-router-dom'
+import { useAuth }         from '../hooks/useAuth'
+import { useSubscription } from '../hooks/useSubscription'
+import { supabase }        from '../lib/supabase'
 import { generateTalkingPoints } from '../lib/gemini'
 import Navbar from '../components/Navbar'
 
@@ -14,6 +16,7 @@ const PRIORITY_COLOR = { high: 'text-primary', medium: 'text-teal', low: 'text-m
 
 export default function MeetingPrep() {
   const { user } = useAuth()
+  const { isPro, canStartPrep, prepsRemaining, weeklyPrepCount } = useSubscription()
 
   const [form, setForm] = useState({ title: '', agenda: '' })
   const [result, setResult]   = useState(null)
@@ -39,6 +42,7 @@ export default function MeetingPrep() {
   async function handleGenerate(e) {
     e.preventDefault()
     if (!form.agenda.trim()) return
+    if (!isPro && !canStartPrep) return   // gate enforced in UI too
     setLoading(true)
     setResult(null)
     setSaved(false)
@@ -92,9 +96,70 @@ export default function MeetingPrep() {
           </div>
           <h1 className="text-3xl font-black text-white">Prep smarter, speak better</h1>
           <p className="mt-1" style={{ color: '#6B8CAE' }}>Paste your agenda. Get AI talking points in 90 seconds.</p>
+
+          {/* Weekly prep limit (free users) */}
+          {!isPro && (
+            <div className="mt-4 flex items-center gap-3 flex-wrap">
+              <div
+                className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold"
+                style={{
+                  background: canStartPrep ? 'rgba(0,196,154,0.08)' : 'rgba(239,68,68,0.08)',
+                  border: `1px solid ${canStartPrep ? 'rgba(0,196,154,0.25)' : 'rgba(239,68,68,0.25)'}`,
+                  color: canStartPrep ? '#00C49A' : '#F87171',
+                }}
+              >
+                {canStartPrep ? '🟢' : '🔴'}
+                {canStartPrep
+                  ? `${prepsRemaining} meeting prep left this week`
+                  : 'Weekly prep limit reached — resets Sunday'}
+                <span style={{ opacity: 0.6 }}>({weeklyPrepCount}/1)</span>
+              </div>
+              {!canStartPrep && (
+                <Link
+                  to="/pricing"
+                  className="text-xs font-bold px-3 py-1.5 rounded-full hover:opacity-90 transition-all"
+                  style={{ background: '#FF6B35', color: 'white' }}
+                >
+                  Upgrade for unlimited →
+                </Link>
+              )}
+            </div>
+          )}
         </div>
 
-        {!result ? (
+        {/* Locked state for free users who hit the limit */}
+        {!isPro && !canStartPrep && !result ? (
+          <div
+            className="rounded-3xl p-8 text-center animate-fade-in"
+            style={{
+              background: 'linear-gradient(145deg, #0F1E35, #091522)',
+              border: '1px solid rgba(255,107,53,0.25)',
+            }}
+          >
+            <div className="text-4xl mb-4">🔒</div>
+            <h3 className="text-white font-black text-xl mb-3">Weekly prep limit reached</h3>
+            <p className="text-sm mb-6 max-w-xs mx-auto" style={{ color: '#6B8CAE' }}>
+              Free tier includes 1 meeting prep per week. Upgrade to Vak Pro for unlimited prep sessions.
+            </p>
+            <div
+              className="rounded-2xl p-4 mb-6 text-left max-w-xs mx-auto"
+              style={{ background: 'rgba(255,107,53,0.07)', border: '1px solid rgba(255,107,53,0.2)' }}
+            >
+              <p className="text-xs font-bold uppercase tracking-widest mb-3" style={{ color: '#FF6B35' }}>
+                Vak Pro — ₹399/month
+              </p>
+              {['Unlimited meeting prep', 'Deep coaching reports', 'Unlimited sessions', '8 scenarios'].map(f => (
+                <div key={f} className="flex items-center gap-2 mb-1.5">
+                  <span style={{ color: '#00C49A' }}>✓</span>
+                  <span className="text-xs text-white">{f}</span>
+                </div>
+              ))}
+            </div>
+            <Link to="/pricing" className="btn-primary text-sm">
+              See plans →
+            </Link>
+          </div>
+        ) : !result ? (
           /* ── Input Form ── */
           <form onSubmit={handleGenerate} className="space-y-5 animate-fade-in">
             <div>

@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import { useAuth }     from '../hooks/useAuth'
-import { useProgress } from '../hooks/useProgress'
-import { supabase }    from '../lib/supabase'
-import Navbar          from '../components/Navbar'
-import VakMascot       from '../components/VakMascot'
-import DailyMissions   from '../components/DailyMissions'
+import { useAuth }          from '../hooks/useAuth'
+import { useProgress }      from '../hooks/useProgress'
+import { useSubscription }  from '../hooks/useSubscription'
+import { supabase }         from '../lib/supabase'
+import Navbar               from '../components/Navbar'
+import VakMascot            from '../components/VakMascot'
+import DailyMissions        from '../components/DailyMissions'
 
 export default function Dashboard() {
   const { user, profile }       = useAuth()
@@ -28,11 +29,12 @@ export default function Dashboard() {
     setLoading(false)
   }
 
-  const sub          = profile?.subscriptions?.[0]
-  const sessionsLeft = sub
-    ? (sub.sessions_limit === -1 ? '∞' : sub.sessions_limit - sub.sessions_used)
-    : 3
-  const isPro = sub?.plan === 'pro'
+  const {
+    isPro,
+    sessionsRemaining,
+    canStartSession,
+    weeklySessionCount,
+  } = useSubscription()
 
   const avgScore = sessions.length
     ? Math.round(sessions.reduce((a, s) => a + (s.overall_score || 0), 0) / sessions.length)
@@ -244,10 +246,34 @@ export default function Dashboard() {
           )}
         </div>
 
+        {/* ── Weekly sessions pill (free users) ────────────────────────────── */}
+        {!isPro && (
+          <div
+            className="mt-4 rounded-2xl px-4 py-3 flex items-center justify-between gap-3"
+            style={{
+              background: canStartSession ? 'rgba(0,196,154,0.06)' : 'rgba(239,68,68,0.06)',
+              border: `1px solid ${canStartSession ? 'rgba(0,196,154,0.2)' : 'rgba(239,68,68,0.2)'}`,
+            }}
+          >
+            <div className="flex items-center gap-2">
+              <span>{canStartSession ? '🟢' : '🔴'}</span>
+              <span className="text-sm font-medium" style={{ color: canStartSession ? '#00C49A' : '#F87171' }}>
+                {canStartSession
+                  ? `${sessionsRemaining} free session${sessionsRemaining !== 1 ? 's' : ''} left this week`
+                  : 'Weekly limit reached — resets Sunday'}
+              </span>
+              <span className="text-xs" style={{ color: '#6B8CAE' }}>({weeklySessionCount}/3)</span>
+            </div>
+            <Link to="/pricing" className="text-xs font-bold" style={{ color: '#FF6B35' }}>
+              Upgrade →
+            </Link>
+          </div>
+        )}
+
         {/* ── Upgrade banner (free plan) ────────────────────────────────────── */}
         {!isPro && (
           <div
-            className="mt-6 rounded-2xl p-5"
+            className="mt-4 rounded-2xl p-5"
             style={{
               background: 'linear-gradient(135deg, rgba(255,107,53,0.08), rgba(255,107,53,0.04))',
               border: '1px solid rgba(255,107,53,0.25)',
@@ -255,13 +281,20 @@ export default function Dashboard() {
           >
             <div className="flex items-center justify-between flex-wrap gap-3">
               <div>
-                <div className="badge-orange mb-2">⚡ Founding Member Offer</div>
-                <h3 className="text-white font-bold">Upgrade to Pro — ₹299/month</h3>
+                <div
+                  className="inline-flex items-center gap-1.5 text-xs font-bold px-2.5 py-1 rounded-full mb-2"
+                  style={{ background: 'rgba(245,158,11,0.15)', color: '#F59E0B' }}
+                >
+                  🎉 Founding Member Offer
+                </div>
+                <h3 className="text-white font-bold">Upgrade to Vak Pro — ₹399/month</h3>
                 <p className="text-sm mt-0.5" style={{ color: '#6B8CAE' }}>
-                  Unlimited sessions · Full reports · {sessionsLeft} sessions left on free
+                  Unlimited sessions · Deep reports · Full scenario library
                 </p>
               </div>
-              <button className="btn-primary text-sm py-2.5 px-5">Upgrade →</button>
+              <Link to="/pricing" className="btn-primary text-sm py-2.5 px-5">
+                See plans →
+              </Link>
             </div>
           </div>
         )}
