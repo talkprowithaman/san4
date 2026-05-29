@@ -104,16 +104,17 @@ export default function PracticeSession() {
   useEffect(() => {
     if (!SR_Class) return
     const rec = new SR_Class()
-    rec.lang            = 'en-IN'   // Indian English — better for Indian accents
-    rec.continuous      = false
-    rec.interimResults  = true
+    rec.lang             = 'en-IN'  // Indian English — better for Indian accents
+    rec.continuous       = true     // keep alive until we explicitly call stop()
+    rec.interimResults   = true
+    rec.maxAlternatives  = 1
 
     rec.onresult = (e) => {
       let finalChunk = ''
       let interimChunk = ''
       for (let i = e.resultIndex; i < e.results.length; i++) {
         const t = e.results[i][0].transcript
-        if (e.results[i].isFinal) finalChunk += t
+        if (e.results[i].isFinal) finalChunk += t + ' '
         else interimChunk += t
       }
 
@@ -121,54 +122,107 @@ export default function PracticeSession() {
         accRef.current = (accRef.current + ' ' + finalChunk).trim()
         setLiveText(accRef.current)
 
-        // Reset auto-send timer after each chunk
+        // Auto-send after 1.8 s of silence following the last final chunk
         clearTimeout(autoSendTimer.current)
         autoSendTimer.current = setTimeout(() => {
           if (isListeningRef.current && accRef.current.trim()) {
             stopAndSend()
           }
-        }, 1800) // 1.8s silence → auto-send
-      } else {
-        // Show interim text (greyed out) while still speaking
+        }, 1800)
+      } else if (interimChunk) {
         setLiveText((accRef.current + ' ' + interimChunk).trim())
       }
     }
 
     rec.onend = () => {
-      // Restart recognition if still in listening mode (it times out ~5s of silence)
+      // continuous:true means onend fires only when stop()/abort() is called
+      // OR if the browser forcibly closes it (network timeout, ~60 s silence).
+      // If we still want to be listening, restart after a brief safety delay.
       if (isListeningRef.current) {
-        try { rec.start() } catch (_) {}
-      }
-    }
-
-    rec.onerror = (e) => {
-      if (e.error === 'not-allowed') {
-        alert('Microphone permission denied. Please allow microphone access in your browser settings.')
-        setVoiceMode(false)
-      }
-      if (e.error !== 'no-speech') {
-        isListeningRef.current = false
+        setTimeout(() => {
+          if (isListeningRef.current) {
+            try { rec.start() } catch (err) {
+              // Could not restart — give up gracefully
+              console.warn('STT restart failed:', err.message)
+              isListeningRef.current = false
+              setListening(false)
+            }
+          }
+        }, 120) // 120 ms gap lets the browser fully reset before re-starting
+      } else {
         setListening(false)
       }
     }
 
+    rec.onerror = (e) => {
+      console.warn('STT error:', e.error)
+      switch (e.error) {
+        case 'not-allowed':
+        case 'permission-denied':
+          alert('Microphone access denied.\n\nOpen your browser settings → Site permissions → Microphone → Allow.')
+          isListeningRef.current = false
+          setListening(false)
+          setVoiceMode(false)
+          break
+
+        case 'audio-capture':
+          alert('No microphone detected. Please plug in a mic and try again.')
+          isListeningRef.current = false
+          setListening(false)
+          setVoiceMode(false)
+          break
+
+        case 'no-speech':
+        case 'aborted':
+          // no-speech: user hasn't spoken yet — keep listening
+          // aborted: we called rec.abort() ourselves — onend will handle cleanup
+          break
+
+        case 'network':
+          // Transient network blip — onend will fire and restart automatically
+          break
+
+        default:
+          // Unknown error — don't panic, let onend handle the restart
+          console.warn('Unhandled STT error:', e.error)
+      }
+    }
+
     recRef.current = rec
-    return () => { try { rec.abort() } catch (_) {} }
+
+    return () => {
+      isListeningRef.current = false
+      clearTimeout(autoSendTimer.current)
+      try { rec.abort() } catch (_) {}
+    }
   }, [])
 
   function startListening() {
-    if (!recRef.current || listening || aiThinking || vakSpeaking) return
+    if (!recRef.current || listening) return
 
-    // Stop TTS so Vak doesn't speak while user is talking
+    // Stop Vak's TTS immediately — user wants to speak
     window.speechSynthesis?.cancel()
     setVakSpeaking(false)
 
     accRef.current = ''
     setLiveText('')
     speechStart.current = Date.now()
-    isListeningRef.current = true
-    setListening(true)
-    try { recRef.current.start() } catch (_) {}
+
+    try {
+      recRef.current.start()
+      // Only flip state after start() succeeds
+      isListeningRef.current = true
+      setListening(true)
+    } catch (err) {
+      console.error('Could not start microphone:', err.message)
+      // Most likely cause: recognition is already running (double-tap)
+      // or browser blocked it. Show user a helpful message.
+      if (err.name === 'InvalidStateError') {
+        // Already running — abort and restart cleanly
+        try { recRef.current.abort() } catch (_) {}
+        setTimeout(() => startListening(), 200)
+      }
+    }
   }
 
   function stopAndSend() {
