@@ -3,7 +3,7 @@ import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import { useAuth }     from '../hooks/useAuth'
 import { useProgress } from '../hooks/useProgress'
 import { supabase }    from '../lib/supabase'
-import { sendPracticeMessage, analyzeSession } from '../lib/gemini'
+import { sendPracticeMessage, analyzeSession, analyzeSessionFromAudio } from '../lib/gemini'
 import Navbar      from '../components/Navbar'
 import RewardCard  from '../components/RewardCard'
 import VakMascot   from '../components/VakMascot'
@@ -16,6 +16,28 @@ const VOICE_SUPPORTED = !!SR_Class && !!window.speechSynthesis
 function fmt(s) {
   const m = Math.floor(s / 60)
   return `${m}:${(s % 60).toString().padStart(2, '0')}`
+}
+
+// Convert ArrayBuffer → base64 safely (avoids call-stack overflow on large buffers)
+function arrayBufferToBase64(buffer) {
+  const bytes = new Uint8Array(buffer)
+  let binary  = ''
+  const chunk = 8192
+  for (let i = 0; i < bytes.length; i += chunk) {
+    binary += String.fromCharCode(...bytes.subarray(i, i + chunk))
+  }
+  return btoa(binary)
+}
+
+// Pick the best supported audio MIME type for MediaRecorder
+function pickMime() {
+  const types = [
+    'audio/webm;codecs=opus',
+    'audio/webm',
+    'audio/ogg;codecs=opus',
+    'audio/ogg',
+  ]
+  return types.find(t => MediaRecorder.isTypeSupported(t)) || 'audio/webm'
 }
 function scoreColor(s) {
   if (s >= 80) return '#00C49A'
@@ -79,6 +101,12 @@ export default function PracticeSession() {
   const speechStart     = useRef(null)
   const voiceMetaRef    = useRef({ wpmSamples: [], totalSpeakingSeconds: 0 })
 
+  // ── MediaRecorder — records full session audio as Gemini analysis backup ──
+  const mediaRecRef    = useRef(null)
+  const audioChunksRef = useRef([])
+  const audioStreamRef = useRef(null)
+  const audioMimeRef   = useRef('audio/webm')
+
   const bottomRef = useRef(null)
   const textRef   = useRef(null)
 
@@ -99,6 +127,23 @@ export default function PracticeSession() {
 
   async function beginSession() {
     setStarted(true)
+
+    // ── Start MediaRecorder silently — this is the assessment backup ─────────
+    // Even if Web Speech API fails to transcribe, we always have the raw audio
+    // and Gemini can analyse it directly at the end of the session.
+    try {
+      const stream  = await navigator.mediaDevices.getUserMedia({ audio: true, video: false })
+      audioStreamRef.current = stream
+      const mime    = pickMime()
+      audioMimeRef.current = mime
+      const rec = new MediaRecorder(stream, { mimeType: mime, audioBitsPerSecond: 32000 })
+      rec.ondataavailable = e => { if (e.data.size > 0) audioChunksRef.current.push(e.data) }
+      rec.start(1000)  // collect in 1-second chunks
+      mediaRecRef.current = rec
+    } catch (err) {
+      console.warn('MediaRecorder unavailable — will rely on STT only:', err.message)
+    }
+
     setAiThinking(true)
     try {
       const opening = await sendPracticeMessage(scenario.id, [], 'Start the session now.', { eslMode })
@@ -117,7 +162,7 @@ export default function PracticeSession() {
   useEffect(() => {
     if (!SR_Class) return
     const rec = new SR_Class()
-    rec.lang             = 'en-IN'  // Indian English — better for Indian accents
+    rec.lang             = 'en-US'  // en-US is universally supported; handles Indian accents well
     rec.continuous       = true     // keep alive until we explicitly call stop()
     rec.interimResults   = true
     rec.maxAlternatives  = 1
@@ -328,17 +373,57 @@ export default function PracticeSession() {
     const msgList = finalMessages || messages
     setAnalyzing(true)
 
+    // ── Stop MediaRecorder and collect audio ──────────────────────────────
+    let audioPayload = null
+    if (mediaRecRef.current && mediaRecRef.current.state !== 'inactive') {
+      await new Promise(resolve => {
+        mediaRecRef.current.onstop = resolve
+        mediaRecRef.current.stop()
+      })
+    }
+    audioStreamRef.current?.getTracks().forEach(t => t.stop())
+    if (audioChunksRef.current.length > 0) {
+      try {
+        const blob   = new Blob(audioChunksRef.current, { type: audioMimeRef.current })
+        const buffer = await blob.arrayBuffer()
+        audioPayload = {
+          base64:   arrayBufferToBase64(buffer),
+          mimeType: audioMimeRef.current.split(';')[0],  // strip codec suffix for Gemini
+        }
+      } catch (err) {
+        console.warn('Audio encoding failed:', err.message)
+      }
+    }
+
     // Build voice metadata for analysis
     const wpmSamples = voiceMetaRef.current.wpmSamples
     const voiceMeta  = wpmSamples.length
       ? {
-          avgWpm:              Math.round(wpmSamples.reduce((a, b) => a + b, 0) / wpmSamples.length),
+          avgWpm:               Math.round(wpmSamples.reduce((a, b) => a + b, 0) / wpmSamples.length),
           totalSpeakingSeconds: Math.round(voiceMetaRef.current.totalSpeakingSeconds),
         }
       : null
 
+    // ── Choose analysis path ──────────────────────────────────────────────
+    // If STT didn't capture any user messages AND we have audio, use Gemini
+    // audio analysis (it transcribes + coaches in one shot). Otherwise fall
+    // back to the transcript-based path.
+    const hasUserMessages = msgList.some(m => m.role === 'user')
+
     try {
-      const analysis = await analyzeSession(scenario.title, msgList, voiceMeta, { eslMode })
+      let analysis = null
+
+      if (!hasUserMessages && audioPayload) {
+        // Primary path: audio-first analysis — STT didn't work but we have the recording
+        analysis = await analyzeSessionFromAudio(
+          scenario.title, audioPayload.base64, audioPayload.mimeType
+        )
+      }
+
+      if (!analysis) {
+        // Transcript-based path (STT worked, or audio analysis also failed)
+        analysis = await analyzeSession(scenario.title, msgList, voiceMeta, { eslMode })
+      }
 
       if (user) {
         await supabase.from('practice_sessions').insert({
@@ -671,20 +756,39 @@ export default function PracticeSession() {
               </div>
             )}
 
-            {/* Live transcript preview */}
-            {liveText && (
-              <div
-                className="w-full rounded-2xl px-4 py-3 mb-2"
-                style={{ background: 'rgba(255,107,53,0.07)', border: '1px solid rgba(255,107,53,0.2)' }}
-              >
-                <div className="text-xs mb-1 font-semibold" style={{ color: '#FF6B35' }}>You're saying…</div>
-                <p className="text-white text-sm italic leading-relaxed">{liveText}</p>
+            {/* Live transcript — always visible so user knows voice is being captured */}
+            <div
+              className="w-full rounded-2xl px-4 py-3 mb-2 min-h-[60px] transition-all"
+              style={{
+                background: liveText ? 'rgba(255,107,53,0.08)' : 'rgba(255,255,255,0.03)',
+                border: `1px solid ${liveText ? 'rgba(255,107,53,0.3)' : 'rgba(255,255,255,0.06)'}`,
+              }}
+            >
+              <div className="flex items-center gap-2 mb-1">
+                <span className="text-xs font-semibold" style={{ color: '#FF6B35' }}>
+                  🎤 What Vak hears
+                </span>
+                {mediaRecRef.current && (
+                  <span className="flex items-center gap-1 text-xs" style={{ color: '#00C49A' }}>
+                    <span className="w-1.5 h-1.5 rounded-full bg-red-500 inline-block animate-pulse" />
+                    Recording
+                  </span>
+                )}
               </div>
-            )}
+              {liveText ? (
+                <p className="text-white text-sm italic leading-relaxed">{liveText}</p>
+              ) : (
+                <p className="text-sm italic" style={{ color: 'rgba(107,140,174,0.6)' }}>
+                  {listening
+                    ? 'Speak now — your words will appear here…'
+                    : 'Tap the mic below and start speaking'}
+                </p>
+              )}
+            </div>
           </div>
 
-          {/* Mic button */}
-          <div className="flex flex-col items-center gap-4 w-full">
+          {/* Mic button + text fallback */}
+          <div className="flex flex-col items-center gap-3 w-full">
             <button
               onClick={listening ? stopAndSend : startListening}
               disabled={aiThinking || vakSpeaking}
@@ -705,14 +809,40 @@ export default function PracticeSession() {
             </button>
             <p className="text-xs text-center" style={{ color: '#6B8CAE' }}>
               {listening
-                ? 'Tap to stop & send — or just pause for 2 seconds'
-                : 'Tap to speak • Vak hears you in Indian English'}
+                ? 'Tap to stop & send — or pause for 2 seconds to auto-send'
+                : 'Tap to speak · your voice is always recorded for analysis'}
             </p>
+
+            {/* Text fallback — always visible so user can type if mic doesn't transcribe */}
+            <div className="w-full flex gap-2 items-center">
+              <input
+                value={textInput}
+                onChange={e => setTextInput(e.target.value)}
+                onKeyDown={e => {
+                  if (e.key === 'Enter' && textInput.trim()) {
+                    if (listening) { isListeningRef.current = false; try { recRef.current?.stop() } catch (_) {} }
+                    submitMessage(textInput.trim())
+                  }
+                }}
+                placeholder="Or type your response here…"
+                className="input flex-1 text-sm"
+                style={{ height: 40, paddingTop: 0, paddingBottom: 0 }}
+                disabled={aiThinking}
+              />
+              <button
+                onClick={() => { submitMessage(textInput.trim()) }}
+                disabled={!textInput.trim() || aiThinking}
+                className="btn-primary text-sm px-4"
+                style={{ height: 40 }}
+              >
+                Send
+              </button>
+            </div>
 
             {/* TTS toggle */}
             <button
               onClick={() => { setTtsOn(v => !v); window.speechSynthesis?.cancel(); setVakSpeaking(false) }}
-              className="text-xs px-4 py-2 rounded-full transition-all"
+              className="text-xs px-4 py-1.5 rounded-full transition-all"
               style={{
                 background: ttsOn ? 'rgba(0,196,154,0.1)' : 'rgba(255,255,255,0.05)',
                 color: ttsOn ? '#00C49A' : '#6B8CAE',

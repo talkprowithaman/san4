@@ -296,6 +296,95 @@ Return JSON only (no markdown, no code fences):
   }
 }
 
+// ── Audio-based session analysis ─────────────────────────────────────────────
+// Used when Web Speech API fails or as the primary analysis path.
+// Gemini receives the raw audio, transcribes it, and coaches in one call.
+export async function analyzeSessionFromAudio(scenarioTitle, audioBase64, mimeType = 'audio/webm') {
+  const model  = genAI.getGenerativeModel({ model: MODEL })
+  const prompt = `You are a professional communication coach.
+Listen to this audio recording from a "${scenarioTitle}" practice session.
+The user was practising spoken communication. Ignore any AI/automated voice you hear — focus only on the human speaker.
+
+Transcribe what the human said, then analyse their spoken communication.
+
+Return JSON only (no markdown, no code fences):
+{
+  "overall_score": <integer 0-100>,
+  "confidence_score": <integer 0-100, based on pace, clarity, hedging>,
+  "pacing_score": <integer 0-100, based on WPM and flow>,
+  "filler_word_count": <integer count of um/uh/ah/like/basically/you know>,
+  "top_filler_words": ["list", "of", "fillers"],
+  "strengths": ["specific observation from what they said"],
+  "improvements": ["specific improvement with example from what they said"],
+  "action_item": "One precise, actionable drill for next session",
+  "summary": "2-sentence honest assessment — cite something specific they said",
+  "pacing_note": "One sentence on their speaking pace and what to adjust"
+}`
+
+  const result = await model.generateContent([
+    { inlineData: { mimeType, data: audioBase64 } },
+    { text: prompt },
+  ])
+  const text = result.response.text().trim()
+  try {
+    return JSON.parse(text.replace(/^```json\s*/i, '').replace(/\s*```$/i, ''))
+  } catch {
+    return null
+  }
+}
+
+// ── Audio-based script-reading analysis ───────────────────────────────────────
+// Primary analysis for ScriptReading — Gemini hears the audio directly,
+// compares it to the original script, and coaches the user.
+export async function analyzeScriptReadingFromAudio(
+  scriptTitle, scriptText, audioBase64, mimeType = 'audio/webm'
+) {
+  const model  = genAI.getGenerativeModel({ model: MODEL })
+  const prompt = `You are a professional voice and speech coach.
+Listen to this audio of someone reading a script aloud.
+
+SCRIPT TITLE: "${scriptTitle}"
+ORIGINAL SCRIPT:
+---
+${scriptText}
+---
+
+Compare what they actually said against the script above. Evaluate:
+1. ACCURACY — did they follow the script or skip/change key phrases?
+2. FLUENCY — smooth, natural delivery without unnatural hesitations or false starts?
+3. PACING — ideal is 120–150 WPM for most scripts; IPL/sports commentary can be faster
+4. FILLER WORDS — um, uh, ah, hmm, "you know", "basically", "I mean", "sort of"
+5. LONG PAUSES — gaps of 2+ seconds mid-sentence (nervous) vs deliberate dramatic pauses (good)
+
+Return JSON only (no markdown, no code fences):
+{
+  "overall_score": <integer 0-100>,
+  "accuracy_score": <integer 0-100>,
+  "fluency_score": <integer 0-100>,
+  "pacing_score": <integer 0-100>,
+  "filler_word_count": <integer>,
+  "top_filler_words": ["um", "uh", ...],
+  "missed_phrases": ["key phrases from script they skipped or significantly changed"],
+  "pause_note": "One sentence on their pausing pattern — deliberate or nervous?",
+  "pacing_note": "One sentence on speaking speed with WPM estimate",
+  "strengths": ["specific observed strength from their reading"],
+  "improvements": ["specific improvement with example from their reading"],
+  "action_item": "One precise drill to do before the next reading session",
+  "summary": "2-sentence honest coaching assessment — cite specifics from their reading"
+}`
+
+  const result = await model.generateContent([
+    { inlineData: { mimeType, data: audioBase64 } },
+    { text: prompt },
+  ])
+  const text = result.response.text().trim()
+  try {
+    return JSON.parse(text.replace(/^```json\s*/i, '').replace(/\s*```$/i, ''))
+  } catch {
+    return null
+  }
+}
+
 // ── Meeting prep ──────────────────────────────────────────────────────────────
 export async function generateTalkingPoints(meetingTitle, agenda) {
   const model = genAI.getGenerativeModel({ model: MODEL })
