@@ -39,8 +39,8 @@ const PLANS = [
     id:        'pro',
     name:      'Vak Pro',
     tagline:   'For professionals who mean business',
-    price:     '₹399',
-    original:  '₹599',
+    price:     '₹299',
+    original:  '₹399',
     period:    '/ month',
     badge:     '⚡ MOST POPULAR',
     badgeColor:'#FF6B35',
@@ -94,7 +94,6 @@ export default function Pricing() {
 
   function handleCta(plan) {
     if (plan.comingSoon) {
-      // TODO: wire to waitlist form / email
       window.open('mailto:aman@san4.in?subject=Vak Pro Plus Waitlist', '_blank')
       return
     }
@@ -103,8 +102,12 @@ export default function Pricing() {
       return
     }
     if (plan.id === 'pro') {
-      // TODO: replace with Razorpay payment link
-      window.open('https://wa.me/919999999999?text=I%20want%20to%20upgrade%20to%20Vak%20Pro', '_blank')
+      // Pre-fill email so you can match payment to account in Razorpay dashboard
+      const base = 'https://rzp.io/rzp/m54y50n'
+      const url  = user?.email
+        ? `${base}?prefill[email]=${encodeURIComponent(user.email)}`
+        : base
+      window.open(url, '_blank')
     }
   }
 
@@ -170,7 +173,7 @@ export default function Pricing() {
             className="inline-flex items-center gap-2 mt-5 px-5 py-2.5 rounded-2xl text-sm font-semibold"
             style={{ background: 'rgba(245,158,11,0.1)', border: '1px solid rgba(245,158,11,0.25)', color: '#F59E0B' }}
           >
-            🎉 Founding Member Offer — Pro at ₹399 instead of ₹599. Lock it in before we scale.
+            🎉 Early Bird Offer — Pro at ₹299 instead of ₹399. Lock it in before we scale.
           </div>
         </div>
 
@@ -306,7 +309,7 @@ function PlanCard({ plan, isCurrent, onCta }) {
         {plan.original && (
           <div className="text-xs mt-1" style={{ color: '#6B8CAE' }}>
             <s>{plan.original}</s>
-            <span className="ml-2 font-bold" style={{ color: '#00C49A' }}>33% off</span>
+            <span className="ml-2 font-bold" style={{ color: '#00C49A' }}>25% off</span>
           </div>
         )}
       </div>
@@ -339,23 +342,34 @@ function PlanCard({ plan, isCurrent, onCta }) {
           ✓ Your current plan
         </div>
       ) : (
-        <button
-          onClick={onCta}
-          disabled={plan.comingSoon}
-          className={`w-full py-3.5 rounded-2xl text-sm font-bold transition-all hover:opacity-90 active:scale-95 ${
-            plan.ctaStyle === 'primary' ? 'text-white' :
-            plan.ctaStyle === 'secondary' ? '' : ''
-          }`}
-          style={
-            plan.ctaStyle === 'primary'
-              ? { background: 'linear-gradient(135deg, #FF6B35, #FF8F4F)', boxShadow: '0 4px 20px rgba(255,107,53,0.35)', color: 'white' }
-              : plan.ctaStyle === 'secondary'
-              ? { background: 'rgba(0,196,154,0.12)', border: '1px solid rgba(0,196,154,0.3)', color: '#00C49A' }
-              : { background: 'rgba(139,92,246,0.12)', border: '1px solid rgba(139,92,246,0.3)', color: '#A78BFA' }
-          }
-        >
-          {plan.cta} {plan.comingSoon ? '' : '→'}
-        </button>
+        <>
+          <button
+            onClick={onCta}
+            disabled={plan.comingSoon}
+            className={`w-full py-3.5 rounded-2xl text-sm font-bold transition-all hover:opacity-90 active:scale-95 ${
+              plan.ctaStyle === 'primary' ? 'text-white' :
+              plan.ctaStyle === 'secondary' ? '' : ''
+            }`}
+            style={
+              plan.ctaStyle === 'primary'
+                ? { background: 'linear-gradient(135deg, #FF6B35, #FF8F4F)', boxShadow: '0 4px 20px rgba(255,107,53,0.35)', color: 'white' }
+                : plan.ctaStyle === 'secondary'
+                ? { background: 'rgba(0,196,154,0.12)', border: '1px solid rgba(0,196,154,0.3)', color: '#00C49A' }
+                : { background: 'rgba(139,92,246,0.12)', border: '1px solid rgba(139,92,246,0.3)', color: '#A78BFA' }
+            }
+          >
+            {plan.cta} {plan.comingSoon ? '' : '→'}
+          </button>
+          {plan.id === 'pro' && (
+            <p className="text-center text-xs mt-3" style={{ color: '#6B8CAE' }}>
+              After payment, email your receipt to{' '}
+              <a href="mailto:aman@san4.in" style={{ color: '#00C49A', fontWeight: 600 }}>
+                aman@san4.in
+              </a>
+              {' '}to activate Pro within 2 hours.
+            </p>
+          )}
+        </>
       )}
     </div>
   )

@@ -148,7 +148,7 @@ function UpgradeModal({ reason, onClose }) {
           style={{ background: 'rgba(255,107,53,0.07)', border: '1px solid rgba(255,107,53,0.2)' }}
         >
           <p className="text-xs font-bold uppercase tracking-widest mb-3" style={{ color: '#FF6B35' }}>
-            Vak Pro — ₹399/month
+            Vak Pro — ₹299/month
           </p>
           {[
             'Unlimited sessions',
@@ -303,7 +303,7 @@ export default function Practice() {
         {/* ── Pro tier scenarios ───────────────────────────────────────────── */}
         <div className="mb-3 flex items-center gap-3">
           <div className="text-xs font-bold uppercase tracking-widest" style={{ color: '#FF6B35' }}>
-            ⚡ Vak Pro — ₹399/month
+            ⚡ Vak Pro — ₹299/month
           </div>
           <div className="flex-1 h-px" style={{ background: 'rgba(255,255,255,0.07)' }} />
           {!isPro && (
@@ -343,7 +343,7 @@ export default function Practice() {
               <h3 className="text-white font-black text-lg mb-1">Unlock all 8 scenarios with Vak Pro</h3>
               <p className="text-sm" style={{ color: '#6B8CAE' }}>
                 Salary negotiation, client objections, performance reviews, GD rounds + deep coaching reports.
-                ₹399/month — cancel anytime.
+                ₹299/month — cancel anytime.
               </p>
             </div>
             <Link to="/pricing" className="btn-primary text-sm py-3 px-6 shrink-0">

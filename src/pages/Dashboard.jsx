@@ -287,7 +287,7 @@ export default function Dashboard() {
                 >
                   🎉 Founding Member Offer
                 </div>
-                <h3 className="text-white font-bold">Upgrade to Vak Pro — ₹399/month</h3>
+                <h3 className="text-white font-bold">Upgrade to Vak Pro — ₹299/month</h3>
                 <p className="text-sm mt-0.5" style={{ color: '#6B8CAE' }}>
                   Unlimited sessions · Deep reports · Full scenario library
                 </p>
