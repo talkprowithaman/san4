@@ -129,6 +129,79 @@ Return JSON only (no markdown, no code fences):
   }
 }
 
+// ── Script reading / teleprompter analysis ────────────────────────────────────
+// voiceMeta: { avgWpm, totalSpeakingSeconds, fillerCount, pauseCount }
+export async function analyzeScriptReading(scriptTitle, scriptText, transcript, voiceMeta = null) {
+  const model = genAI.getGenerativeModel({ model: MODEL })
+
+  const pacingNote = voiceMeta
+    ? `Speaking pace: ${voiceMeta.avgWpm} WPM (ideal for clear speech: 120–150 WPM). Total reading time: ${voiceMeta.totalSpeakingSeconds}s. Real-time filler count: ${voiceMeta.fillerCount}. Long pauses detected: ${voiceMeta.pauseCount}.`
+    : ''
+
+  const prompt = `You are a professional voice and speech coach analysing a script reading session.
+
+The user was given the following script to read aloud:
+
+SCRIPT TITLE: "${scriptTitle}"
+---
+${scriptText}
+---
+
+WHAT THE USER ACTUALLY SAID (captured by speech recognition):
+---
+${transcript || '[No speech detected — microphone may not have worked]'}
+---
+
+${pacingNote}
+
+Analyse the user's spoken delivery against the original script. Consider:
+1. ACCURACY: Did they follow the script? Note key phrases skipped, altered, or added
+2. FLUENCY: Was delivery smooth? Look for repeated words, false starts, stumbles
+3. FILLER WORDS: Count all fillers in the transcript — um, uh, ah, hmm, aa, eh, you know, like, basically, I mean, sort of, kind of
+4. PACING: Was their WPM appropriate for the script context (${scriptTitle})?
+5. PAUSES: Were pauses natural/deliberate or nervous/hesitant?
+
+Return JSON only (no markdown, no code fences):
+{
+  "overall_score": <integer 0-100>,
+  "accuracy_score": <integer 0-100, how closely they followed the script>,
+  "fluency_score": <integer 0-100, smoothness and naturalness of delivery>,
+  "pacing_score": <integer 0-100>,
+  "filler_word_count": <integer>,
+  "top_filler_words": ["word1", "word2"],
+  "missed_phrases": ["important phrase they skipped or significantly altered"],
+  "pause_note": "One sentence about their pausing — was it deliberate or nervous?",
+  "strengths": ["specific strength with example from their reading", "another strength"],
+  "improvements": ["specific improvement with example from transcript", "another improvement"],
+  "action_item": "One precise drill for their next reading session",
+  "summary": "2-sentence honest assessment of their delivery — be specific, not generic",
+  "pacing_note": "One sentence on their speaking pace and what to adjust"
+}`
+
+  const result = await model.generateContent(prompt)
+  const text   = result.response.text().trim()
+
+  try {
+    const clean = text.replace(/^```json\s*/i, '').replace(/\s*```$/i, '')
+    return JSON.parse(clean)
+  } catch {
+    return {
+      overall_score: 70, accuracy_score: 70, fluency_score: 70, pacing_score: 70,
+      filler_word_count: voiceMeta?.fillerCount ?? 0,
+      top_filler_words: [],
+      missed_phrases: [],
+      pause_note: `${voiceMeta?.pauseCount ?? 0} long pause(s) detected during reading.`,
+      strengths: ['Completed the full script reading'],
+      improvements: ['Focus on maintaining consistent pace throughout'],
+      action_item: 'Read the same script again tomorrow and record yourself to hear the difference.',
+      summary: 'Session completed. Script reading is one of the fastest ways to improve diction, pace, and confidence.',
+      pacing_note: voiceMeta?.avgWpm
+        ? `You spoke at approximately ${voiceMeta.avgWpm} WPM — aim for 120–150 WPM for clear, confident delivery.`
+        : 'Aim for 120–150 WPM for clear, confident delivery.',
+    }
+  }
+}
+
 // ── Meeting prep ──────────────────────────────────────────────────────────────
 export async function generateTalkingPoints(meetingTitle, agenda) {
   const model = genAI.getGenerativeModel({ model: MODEL })

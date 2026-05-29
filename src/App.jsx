@@ -8,6 +8,7 @@ import PracticeSession from './pages/PracticeSession'
 import MeetingPrep    from './pages/MeetingPrep'
 import AuthCallback   from './pages/AuthCallback'
 import Pricing        from './pages/Pricing'
+import ScriptReading  from './pages/ScriptReading'
 
 export default function App() {
   return (
@@ -23,7 +24,8 @@ export default function App() {
         <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
         <Route path="/practice"  element={<ProtectedRoute><Practice /></ProtectedRoute>} />
         <Route path="/practice/:scenarioId" element={<ProtectedRoute><PracticeSession /></ProtectedRoute>} />
-        <Route path="/meeting-prep" element={<ProtectedRoute><MeetingPrep /></ProtectedRoute>} />
+        <Route path="/meeting-prep"    element={<ProtectedRoute><MeetingPrep /></ProtectedRoute>} />
+        <Route path="/script-reading" element={<ProtectedRoute><ScriptReading /></ProtectedRoute>} />
 
         {/* Fallback */}
         <Route path="*" element={<Navigate to="/" replace />} />

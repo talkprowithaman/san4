@@ -352,6 +352,30 @@ export default function Practice() {
           </div>
         )}
 
+        {/* ── Teleprompter Mode entry ── */}
+        <Link
+          to="/script-reading"
+          className="flex items-center gap-4 rounded-3xl p-5 mb-5 transition-all hover:brightness-110"
+          style={{
+            background: 'linear-gradient(135deg, rgba(139,92,246,0.1), rgba(139,92,246,0.05))',
+            border: '1px solid rgba(139,92,246,0.25)',
+          }}
+        >
+          <div
+            className="shrink-0 w-12 h-12 flex items-center justify-center rounded-2xl text-2xl"
+            style={{ background: 'rgba(139,92,246,0.15)' }}
+          >
+            📜
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="text-white font-black text-sm mb-0.5">Teleprompter Mode</div>
+            <div className="text-xs" style={{ color: '#6B8CAE' }}>
+              Read real scripts aloud — Vak catches every filler, pause, and pace issue live
+            </div>
+          </div>
+          <span style={{ color: '#A78BFA', fontSize: '1.1rem' }}>→</span>
+        </Link>
+
         {/* Bottom tip */}
         <div
           className="rounded-2xl px-5 py-4 flex items-start gap-3"
