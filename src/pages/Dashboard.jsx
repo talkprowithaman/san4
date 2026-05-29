@@ -7,6 +7,7 @@ import { supabase }         from '../lib/supabase'
 import Navbar               from '../components/Navbar'
 import VakMascot            from '../components/VakMascot'
 import DailyMissions        from '../components/DailyMissions'
+import SituationOfTheDay    from '../components/SituationOfTheDay'
 
 export default function Dashboard() {
   const { user, profile }       = useAuth()
@@ -187,6 +188,9 @@ export default function Dashboard() {
           </div>
           <span style={{ color: '#00C49A', fontSize: '1.1rem' }}>→</span>
         </Link>
+
+        {/* ── Situation of the Day ─────────────────────────────────────────── */}
+        <SituationOfTheDay />
 
         {/* ── Daily Missions ────────────────────────────────────────────────── */}
         <DailyMissions />

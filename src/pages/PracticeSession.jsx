@@ -55,6 +55,19 @@ export default function PracticeSession() {
   const [ttsOn,       setTtsOn]       = useState(true)
   const [vakSpeaking, setVakSpeaking] = useState(false)
 
+  // ── ESL mode state ────────────────────────────────────────────────────────
+  const [eslMode, setEslMode] = useState(() => {
+    try { return localStorage.getItem('san4_esl_mode') === 'true' } catch { return false }
+  })
+
+  function toggleEsl() {
+    setEslMode(v => {
+      const next = !v
+      try { localStorage.setItem('san4_esl_mode', String(next)) } catch {}
+      return next
+    })
+  }
+
   // ── Text mode state ───────────────────────────────────────────────────────
   const [textInput, setTextInput] = useState('')
 
@@ -88,7 +101,7 @@ export default function PracticeSession() {
     setStarted(true)
     setAiThinking(true)
     try {
-      const opening = await sendPracticeMessage(scenario.id, [], 'Start the session now.')
+      const opening = await sendPracticeMessage(scenario.id, [], 'Start the session now.', { eslMode })
       setMessages([{ role: 'ai', content: opening }])
       speak(opening)
     } catch (err) {
@@ -278,7 +291,7 @@ export default function PracticeSession() {
     setAiThinking(true)
 
     try {
-      const response = await sendPracticeMessage(scenario.id, messages, text)
+      const response = await sendPracticeMessage(scenario.id, messages, text, { eslMode })
 
       if (response.includes('[SESSION_ENDED]')) {
         const clean = response.replace('[SESSION_ENDED]', '').trim()
@@ -325,7 +338,7 @@ export default function PracticeSession() {
       : null
 
     try {
-      const analysis = await analyzeSession(scenario.title, msgList, voiceMeta)
+      const analysis = await analyzeSession(scenario.title, msgList, voiceMeta, { eslMode })
 
       if (user) {
         await supabase.from('practice_sessions').insert({
@@ -535,6 +548,20 @@ export default function PracticeSession() {
           </div>
         </div>
         <div className="flex items-center gap-2">
+          {/* ESL mode toggle */}
+          <button
+            onClick={toggleEsl}
+            className="text-xs px-3 py-1.5 rounded-full transition-all"
+            style={{
+              background: eslMode ? 'rgba(245,158,11,0.12)' : 'rgba(255,255,255,0.07)',
+              color: eslMode ? '#F59E0B' : '#6B8CAE',
+              border: `1px solid ${eslMode ? 'rgba(245,158,11,0.3)' : 'rgba(255,255,255,0.1)'}`,
+            }}
+            title="ESL / Indian English mode — Vak adapts feedback for non-native speakers"
+          >
+            {eslMode ? '🇮🇳 ESL on' : '🌐 ESL'}
+          </button>
+
           {/* Voice / Text toggle */}
           {VOICE_SUPPORTED && (
             <button

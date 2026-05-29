@@ -7,6 +7,7 @@ const NAV = [
   { to: '/dashboard',    label: 'Home',     icon: '🏠' },
   { to: '/practice',     label: 'Practice', icon: '🎮' },
   { to: '/meeting-prep', label: 'Prep',     icon: '📋' },
+  { to: '/progress',     label: 'Progress', icon: '📊' },
 ]
 
 export default function Navbar() {

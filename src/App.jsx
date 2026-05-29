@@ -9,6 +9,9 @@ import MeetingPrep    from './pages/MeetingPrep'
 import AuthCallback   from './pages/AuthCallback'
 import Pricing        from './pages/Pricing'
 import ScriptReading  from './pages/ScriptReading'
+import DailyChallenge from './pages/DailyChallenge'
+import MicroDrill     from './pages/MicroDrill'
+import Progress       from './pages/Progress'
 
 export default function App() {
   return (
@@ -25,7 +28,10 @@ export default function App() {
         <Route path="/practice"  element={<ProtectedRoute><Practice /></ProtectedRoute>} />
         <Route path="/practice/:scenarioId" element={<ProtectedRoute><PracticeSession /></ProtectedRoute>} />
         <Route path="/meeting-prep"    element={<ProtectedRoute><MeetingPrep /></ProtectedRoute>} />
-        <Route path="/script-reading" element={<ProtectedRoute><ScriptReading /></ProtectedRoute>} />
+        <Route path="/script-reading"  element={<ProtectedRoute><ScriptReading /></ProtectedRoute>} />
+        <Route path="/daily-challenge" element={<ProtectedRoute><DailyChallenge /></ProtectedRoute>} />
+        <Route path="/micro-drill"     element={<ProtectedRoute><MicroDrill /></ProtectedRoute>} />
+        <Route path="/progress"        element={<ProtectedRoute><Progress /></ProtectedRoute>} />
 
         {/* Fallback */}
         <Route path="*" element={<Navigate to="/" replace />} />

@@ -52,13 +52,50 @@ Start with: "Hi! It's nice to finally meet in person. How was the commute?"
 Keep the conversation natural and flowing. Ask follow-ups. Share a little about yourself too.
 Gently reflect back if they seem nervous or give very short answers.
 When the user says "end session", write: [SESSION_ENDED]`,
+
+  say_no_professionally: `You are a demanding manager or client in an Indian workplace. The user must practise saying no, pushing back, and setting limits without sounding lazy, rude, or uncooperative.
+Rotate through these opening requests: "I need this done by tonight — drop everything else.", "Can you take on three more projects this sprint?", or "I need you to cancel your leave next week for a client visit."
+If the user agrees too easily — push harder. If they give a firm but professional no with a reason, acknowledge it warmly. The goal is to make them find the middle ground: assertive, not aggressive.
+When the user says "end session", write: [SESSION_ENDED]`,
+
+  leadership_update: `You are a senior VP or CXO in a fast 5-minute leadership sync. The user must give you a crisp, no-fluff update.
+Start with: "Okay — you've got two minutes. What's the situation and what do you need from me?"
+If they ramble, cut them off: "Can you get to the point?", "What's the one number I should care about?", or "Skip the context — what's the decision?"
+If they're sharp and clear, ask a smart follow-up. Reward clarity, punish padding.
+When the user says "end session", write: [SESSION_ENDED]`,
+
+  pitch_skeptic: `You are a defensive, budget-conscious senior stakeholder at a large Indian company. The user is pitching a new idea, process change, or product.
+Start with: "I'll be honest — I'm not convinced we need this. We're already stretched thin. What have you got?"
+Raise real objections: "What's the ROI?", "We tried something like this in 2022 and it failed", "My team can't take on more right now." Don't cave easily. But if they respond with data and empathy, warm up gradually.
+When the user says "end session", write: [SESSION_ENDED]`,
+
+  cold_networking: `You are a highly accomplished professional — a senior VC, successful founder, or industry veteran — at a professional event in India. You're polite but your time is valuable.
+Start with: "Hi — I don't think we've met. Are you enjoying the event?"
+See if the user can make themselves interesting and memorable in a natural, non-transactional way. Give short responses to generic or boring conversation. Open up and ask follow-up questions only when they say something genuinely interesting. Reward curiosity, not flattery.
+When the user says "end session", write: [SESSION_ENDED]`,
+
+  conflict_mediation: `You are playing TWO sides of a workplace conflict. "Priya" and "Rahul" are colleagues in a dispute about project ownership and credit. The user is their team lead trying to de-escalate.
+Start as Priya: "I'm glad you called this meeting. Rahul keeps presenting my work as his own and I've had enough."
+Alternate between Priya and Rahul's perspectives as the conversation unfolds. Escalate slightly if the user doesn't actively de-escalate. Reward responses that acknowledge both sides, identify the root issue, and move toward a practical solution.
+When the user says "end session", write: [SESSION_ENDED]`,
+
+  sensitive_conversation: `You are a colleague, teammate, or manager. The user must practise raising a sensitive topic — giving difficult feedback, addressing a personal issue at work, or communicating something uncomfortable without damaging the relationship.
+Start with: "Hey — you mentioned you wanted to talk about something? What's up?"
+React authentically based on how the user frames it: defensive if they're blunt, open if they're empathetic, confused if they're vague. Reward emotionally intelligent, respectful phrasing. If they're too indirect, gently say you're not sure what they're getting at.
+When the user says "end session", write: [SESSION_ENDED]`,
 }
 
 // ── Main chat function ────────────────────────────────────────────────────────
-export async function sendPracticeMessage(scenarioId, history, userMessage) {
+// options: { eslMode: false }
+export async function sendPracticeMessage(scenarioId, history, userMessage, options = {}) {
+  const basePrompt = SCENARIO_PROMPTS[scenarioId] || SCENARIO_PROMPTS.hr_interview
+  const eslNote    = options.eslMode
+    ? '\n\nIMPORTANT: This user is practising in English as a second language (they may think primarily in Hindi, Marathi, or another Indian language). Be warm and patient. If they fumble for a word, gently offer it. Do NOT correct grammar or pronunciation — focus only on communication clarity and confidence.'
+    : ''
+
   const model = genAI.getGenerativeModel({
     model: MODEL,
-    systemInstruction: SCENARIO_PROMPTS[scenarioId] || SCENARIO_PROMPTS.hr_interview,
+    systemInstruction: basePrompt + eslNote,
   })
 
   const geminiHistory = history.map(msg => ({
@@ -73,7 +110,8 @@ export async function sendPracticeMessage(scenarioId, history, userMessage) {
 
 // ── Session analysis — voice-aware ────────────────────────────────────────────
 // voiceMeta: { avgWpm, totalSpeakingSeconds } — optional, pass null for text mode
-export async function analyzeSession(scenarioTitle, messages, voiceMeta = null) {
+// options: { eslMode: false }
+export async function analyzeSession(scenarioTitle, messages, voiceMeta = null, options = {}) {
   const model = genAI.getGenerativeModel({ model: MODEL })
 
   const userMessages = messages.filter(m => m.role === 'user')
@@ -83,7 +121,12 @@ export async function analyzeSession(scenarioTitle, messages, voiceMeta = null) 
     ? `The user was speaking aloud (not typing). Their average speaking pace was ${voiceMeta.avgWpm} words per minute (ideal range: 120–160 WPM). Total speaking time: ${voiceMeta.totalSpeakingSeconds}s.`
     : 'This was a text-based session (not voice).'
 
+  const eslNote = options.eslMode
+    ? 'IMPORTANT: This is an Indian English / ESL session. The user thinks in another language (Hindi, Marathi, etc.) and is practising in English. Do NOT penalise Indian English sentence structures, accents, or minor grammar. Focus exclusively on communication effectiveness, clarity, and confidence. Note their ESL effort positively in strengths if relevant.'
+    : ''
+
   const prompt = `You are a professional communication coach analysing a spoken practice session.
+${eslNote}
 Scenario: "${scenarioTitle}"
 ${pacingNote}
 
@@ -125,6 +168,57 @@ Return JSON only (no markdown, no code fences):
       improvements: ['Keep practicing daily'],
       action_item: 'Practice this scenario again tomorrow.',
       summary: 'Session completed. Regular practice builds real confidence.',
+    }
+  }
+}
+
+// ── Quick drill + daily challenge analysis ────────────────────────────────────
+// drillType: 'bluf' | 'unexpected_question' | 'daily_challenge'
+export async function analyzeQuickDrill(drillType, prompt, userResponse, timeTaken = 0) {
+  const model = genAI.getGenerativeModel({ model: MODEL })
+
+  const drillContext = {
+    bluf: `The user was given a complex situation and had to explain it starting with the BOTTOM LINE UP FRONT (BLUF) — conclusion first, then context. Check: did they lead with the key point, or did they bury it?`,
+    unexpected_question: `The user was hit with an unexpected, high-pressure question and had to answer on the spot. Check: were they coherent, did they structure a response under pressure, did they avoid panicking?`,
+    daily_challenge: `The user was given a real-world communication situation and had to respond as they would in real life. Evaluate overall communication quality.`,
+  }[drillType] || 'Evaluate the user\'s spoken response.'
+
+  const fullPrompt = `You are a sharp communication coach reviewing a 60-90 second spoken response.
+
+DRILL TYPE: ${drillType.replace(/_/g, ' ').toUpperCase()}
+DRILL CONTEXT: ${drillContext}
+
+THE PROMPT/SITUATION GIVEN TO THE USER:
+"${prompt}"
+
+THE USER'S RESPONSE (from speech recognition):
+"${userResponse || '[No speech detected]'}"
+
+Time taken: ${timeTaken}s
+
+Be specific, direct, and concise. Return JSON only (no markdown):
+{
+  "score": <integer 0-100>,
+  "led_with_point": <boolean, only relevant for BLUF — did they start with the conclusion?>,
+  "clarity": <integer 0-100>,
+  "confidence": <integer 0-100>,
+  "best_moment": "Quote the single best thing they said (under 15 words), or null",
+  "one_fix": "The single most important thing to improve — one sentence, very specific",
+  "encouragement": "One warm, specific sentence of encouragement"
+}`
+
+  const result = await model.generateContent(fullPrompt)
+  const text   = result.response.text().trim()
+
+  try {
+    const clean = text.replace(/^```json\s*/i, '').replace(/\s*```$/i, '')
+    return JSON.parse(clean)
+  } catch {
+    return {
+      score: 70, led_with_point: null, clarity: 70, confidence: 70,
+      best_moment: null,
+      one_fix: 'Try to be more specific with examples in your next response.',
+      encouragement: 'Great effort completing the drill — consistency is what builds the skill.',
     }
   }
 }

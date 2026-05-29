@@ -104,6 +104,80 @@ const SCENARIOS = [
     borderHover:'rgba(239,68,68,0.4)',
     tier:       'pro',
   },
+
+  // ── Advanced Pro scenarios ────────────────────────────────────────────────
+  {
+    id:         'say_no_professionally',
+    icon:       '🚫',
+    title:      'Say No Professionally',
+    desc:       'Decline unreasonable requests from your boss or client — firm, polite, and without burning bridges.',
+    duration:   '5–10 min',
+    difficulty: 2,
+    tags:       ['Assertiveness', 'Workplace'],
+    glowColor:  'rgba(239,68,68,0.18)',
+    borderHover:'rgba(239,68,68,0.4)',
+    tier:       'pro',
+  },
+  {
+    id:         'leadership_update',
+    icon:       '📈',
+    title:      '2-Minute Leadership Update',
+    desc:       'Give a sharp, no-fluff update to a senior VP or CXO. No rambling. Bottom line first.',
+    duration:   '5–8 min',
+    difficulty: 2,
+    tags:       ['Executive presence', 'Corporate'],
+    glowColor:  'rgba(99,102,241,0.2)',
+    borderHover:'rgba(99,102,241,0.4)',
+    tier:       'pro',
+  },
+  {
+    id:         'pitch_skeptic',
+    icon:       '🎯',
+    title:      'Pitch to a Skeptic',
+    desc:       'Convince a defensive, budget-conscious stakeholder. Handle objections with data and composure.',
+    duration:   '10–15 min',
+    difficulty: 3,
+    tags:       ['Influence', 'Sales', 'Strategy'],
+    glowColor:  'rgba(245,158,11,0.2)',
+    borderHover:'rgba(245,158,11,0.4)',
+    tier:       'pro',
+  },
+  {
+    id:         'cold_networking',
+    icon:       '🤝',
+    title:      'Cold Networking',
+    desc:       'Walk up to a VIP at a professional event and make yourself genuinely memorable.',
+    duration:   '5–10 min',
+    difficulty: 3,
+    tags:       ['Networking', 'Career growth'],
+    glowColor:  'rgba(0,196,154,0.2)',
+    borderHover:'rgba(0,196,154,0.4)',
+    tier:       'pro',
+  },
+  {
+    id:         'conflict_mediation',
+    icon:       '⚖️',
+    title:      'Conflict Mediation',
+    desc:       'Two colleagues are fighting. You\'re the team lead — de-escalate without taking sides.',
+    duration:   '10–15 min',
+    difficulty: 3,
+    tags:       ['Leadership', 'Team dynamics'],
+    glowColor:  'rgba(139,92,246,0.2)',
+    borderHover:'rgba(139,92,246,0.4)',
+    tier:       'pro',
+  },
+  {
+    id:         'sensitive_conversation',
+    icon:       '💬',
+    title:      'Sensitive Conversation',
+    desc:       'Raise a difficult topic — feedback, a personal issue, or an uncomfortable truth — with empathy.',
+    duration:   '5–10 min',
+    difficulty: 2,
+    tags:       ['EQ', 'Relationships', 'Workplace'],
+    glowColor:  'rgba(236,72,153,0.2)',
+    borderHover:'rgba(236,72,153,0.4)',
+    tier:       'pro',
+  },
 ]
 
 // ── UI helpers ────────────────────────────────────────────────────────────────
@@ -352,29 +426,63 @@ export default function Practice() {
           </div>
         )}
 
-        {/* ── Teleprompter Mode entry ── */}
-        <Link
-          to="/script-reading"
-          className="flex items-center gap-4 rounded-3xl p-5 mb-5 transition-all hover:brightness-110"
-          style={{
-            background: 'linear-gradient(135deg, rgba(139,92,246,0.1), rgba(139,92,246,0.05))',
-            border: '1px solid rgba(139,92,246,0.25)',
-          }}
-        >
-          <div
-            className="shrink-0 w-12 h-12 flex items-center justify-center rounded-2xl text-2xl"
-            style={{ background: 'rgba(139,92,246,0.15)' }}
+        {/* ── Quick Drills section ─────────────────────────────────────────── */}
+        <div className="mb-3 flex items-center gap-3">
+          <div className="text-xs font-bold uppercase tracking-widest" style={{ color: '#6B8CAE' }}>
+            ⚡ Quick Drills
+          </div>
+          <div className="flex-1 h-px" style={{ background: 'rgba(255,255,255,0.07)' }} />
+        </div>
+
+        <div className="grid md:grid-cols-2 gap-4 mb-8">
+          {/* Teleprompter Mode */}
+          <Link
+            to="/script-reading"
+            className="flex items-center gap-4 rounded-3xl p-5 transition-all hover:brightness-110"
+            style={{
+              background: 'linear-gradient(135deg, rgba(139,92,246,0.1), rgba(139,92,246,0.05))',
+              border: '1px solid rgba(139,92,246,0.25)',
+            }}
           >
-            📜
-          </div>
-          <div className="flex-1 min-w-0">
-            <div className="text-white font-black text-sm mb-0.5">Teleprompter Mode</div>
-            <div className="text-xs" style={{ color: '#6B8CAE' }}>
-              Read real scripts aloud — Vak catches every filler, pause, and pace issue live
+            <div
+              className="shrink-0 w-12 h-12 flex items-center justify-center rounded-2xl text-2xl"
+              style={{ background: 'rgba(139,92,246,0.15)' }}
+            >
+              📜
             </div>
-          </div>
-          <span style={{ color: '#A78BFA', fontSize: '1.1rem' }}>→</span>
-        </Link>
+            <div className="flex-1 min-w-0">
+              <div className="text-white font-black text-sm mb-0.5">Teleprompter Mode</div>
+              <div className="text-xs" style={{ color: '#6B8CAE' }}>
+                Read real scripts aloud — Vak catches fillers, pauses, and pace live
+              </div>
+            </div>
+            <span style={{ color: '#A78BFA', fontSize: '1.1rem' }}>→</span>
+          </Link>
+
+          {/* Micro-Drills */}
+          <Link
+            to="/micro-drill"
+            className="flex items-center gap-4 rounded-3xl p-5 transition-all hover:brightness-110"
+            style={{
+              background: 'linear-gradient(135deg, rgba(245,158,11,0.1), rgba(245,158,11,0.05))',
+              border: '1px solid rgba(245,158,11,0.25)',
+            }}
+          >
+            <div
+              className="shrink-0 w-12 h-12 flex items-center justify-center rounded-2xl text-2xl"
+              style={{ background: 'rgba(245,158,11,0.15)' }}
+            >
+              ⚡
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="text-white font-black text-sm mb-0.5">Micro-Drills</div>
+              <div className="text-xs" style={{ color: '#6B8CAE' }}>
+                60–90 sec drills — BLUF briefings &amp; unexpected questions, instant AI feedback
+              </div>
+            </div>
+            <span style={{ color: '#F59E0B', fontSize: '1.1rem' }}>→</span>
+          </Link>
+        </div>
 
         {/* Bottom tip */}
         <div
