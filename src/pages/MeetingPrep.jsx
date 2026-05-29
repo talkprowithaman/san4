@@ -146,7 +146,7 @@ export default function MeetingPrep() {
               style={{ background: 'rgba(255,107,53,0.07)', border: '1px solid rgba(255,107,53,0.2)' }}
             >
               <p className="text-xs font-bold uppercase tracking-widest mb-3" style={{ color: '#FF6B35' }}>
-                Vak Pro — ₹399/month
+                Vak Pro — ₹299/month
               </p>
               {['Unlimited meeting prep', 'Deep coaching reports', 'Unlimited sessions', '8 scenarios'].map(f => (
                 <div key={f} className="flex items-center gap-2 mb-1.5">
