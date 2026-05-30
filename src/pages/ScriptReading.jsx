@@ -15,14 +15,37 @@ const SR_Class = window.SpeechRecognition || window.webkitSpeechRecognition
 const VOICE_OK = !!SR_Class
 
 // ── Filler detection (for live counter in reading phase) ──────────────────────
-const FILLER_WORDS   = new Set(['um', 'uh', 'ah', 'aa', 'hmm', 'eh', 'er', 'erm'])
-const FILLER_PHRASES = ['you know', 'i mean', 'kind of', 'sort of', 'basically', 'like basically']
+const BASE_FILLER_WORDS   = ['um', 'uh', 'ah', 'aa', 'hmm', 'eh', 'er', 'erm']
+const BASE_FILLER_PHRASES = ['you know', 'i mean', 'kind of', 'sort of', 'basically', 'like basically', 'actually', 'you see']
 
-function detectFillers(text) {
-  const lower = text.toLowerCase()
+// Regional filler words by language
+const REGIONAL_FILLER_WORDS = {
+  'hi-IN': ['matlab', 'woh', 'jaise', 'toh', 'bas', 'arre', 'haan'],
+  'mr-IN': ['mhanje', 'asa', 'toch', 'mhanaje'],
+  'te-IN': ['ante', 'adi', 'emo'],
+  'bn-IN': ['mane', 'tokhon', 'aar'],
+  'ta-IN': ['enna', 'apparam', 'illa'],
+  'kn-IN': ['andre', 'avaga', 'nodu'],
+}
+const REGIONAL_FILLER_PHRASES = {
+  'hi-IN': ['matlab kya', 'woh kya hai', 'matlab yeh'],
+  'mr-IN': ['mhanje kay', 'asa aahe'],
+}
+
+function detectFillers(text, langCode = 'en-US') {
+  const lower   = text.toLowerCase()
+  const words   = new Set(BASE_FILLER_WORDS)
+  const phrases = [...BASE_FILLER_PHRASES]
+
+  // Add regional fillers for non-English languages
+  if (langCode && langCode !== 'en-US') {
+    ;(REGIONAL_FILLER_WORDS[langCode] || []).forEach(w => words.add(w))
+    ;(REGIONAL_FILLER_PHRASES[langCode] || []).forEach(p => phrases.push(p))
+  }
+
   let count = 0
-  lower.split(/\s+/).forEach(w => { if (FILLER_WORDS.has(w.replace(/[^a-z]/g, ''))) count++ })
-  FILLER_PHRASES.forEach(p => { count += (lower.match(new RegExp(p, 'g')) || []).length })
+  lower.split(/\s+/).forEach(w => { if (words.has(w.replace(/[^a-z]/g, ''))) count++ })
+  phrases.forEach(p => { count += (lower.match(new RegExp(`\\b${p}\\b`, 'g')) || []).length })
   return count
 }
 
@@ -94,6 +117,10 @@ export default function ScriptReading() {
   useEffect(() => {
     langRef.current = lang
     try { localStorage.setItem('san4_lang', lang) } catch {}
+    // Persist ESL pref alongside lang so PracticeSession picks it up too
+    if (lang !== 'en-US') {
+      try { localStorage.setItem('san4_esl_mode', 'true') } catch {}
+    }
   }, [lang])
 
   // ── Report state ──────────────────────────────────────────────────────────
@@ -245,8 +272,8 @@ export default function ScriptReading() {
           if (cur > 0 && cur < 500) setWpm(cur)
         }
 
-        // Fillers
-        const newF = detectFillers(finalChunk)
+        // Fillers — use langRef.current so regional words are counted
+        const newF = detectFillers(finalChunk, langRef.current)
         if (newF > 0) {
           fillerRef.current += newF
           setFillerCount(fillerRef.current)

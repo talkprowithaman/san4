@@ -69,6 +69,7 @@ export default function PracticeSession() {
   const [reward,     setReward]     = useState(null)
   const [seconds,    setSeconds]    = useState(0)
   const [started,    setStarted]    = useState(false)
+  const [setupDone,  setSetupDone]  = useState(false)  // gates beginSession()
 
   // ── Voice state ───────────────────────────────────────────────────────────
   const [voiceMode,   setVoiceMode]   = useState(VOICE_SUPPORTED)
@@ -99,6 +100,12 @@ export default function PracticeSession() {
   useEffect(() => {
     langRef.current = lang
     try { localStorage.setItem('san4_lang', lang) } catch {}
+    // Auto-enable ESL for any Indian language — Vak won't penalise
+    // code-switching, Indian English structure, or mixed responses
+    if (lang !== 'en-US') {
+      setEslMode(true)
+      try { localStorage.setItem('san4_esl_mode', 'true') } catch {}
+    }
   }, [lang])
 
   // ── Text mode state ───────────────────────────────────────────────────────
@@ -133,8 +140,8 @@ export default function PracticeSession() {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages, aiThinking, liveText])
 
-  // ── Start session ─────────────────────────────────────────────────────────
-  useEffect(() => { beginSession() }, [])
+  // ── Start session — fires once when user clicks "Start" on the setup screen
+  useEffect(() => { if (setupDone) beginSession() }, [setupDone]) // eslint-disable-line
 
   async function beginSession() {
     setStarted(true)
@@ -477,6 +484,105 @@ export default function PracticeSession() {
   }
 
   // ── Views ─────────────────────────────────────────────────────────────────
+
+  // ── SETUP SCREEN ──────────────────────────────────────────────────────────
+  if (!setupDone) return (
+    <div className="min-h-screen flex flex-col" style={{ background: '#060E1A' }}>
+      <Navbar />
+      <main className="flex-1 flex flex-col items-center justify-center px-4 py-8 max-w-lg mx-auto w-full animate-fade-in">
+
+        {/* Scenario card */}
+        <div
+          className="w-full rounded-3xl p-6 mb-6 text-center"
+          style={{ background: 'linear-gradient(145deg, #0F1E35, #091522)', border: '1px solid rgba(255,255,255,0.08)' }}
+        >
+          <div className="text-5xl mb-3">{scenario.icon || '🎭'}</div>
+          <h1 className="text-xl font-black text-white mb-1">{scenario.title}</h1>
+          <p className="text-sm" style={{ color: '#6B8CAE' }}>
+            Vak plays the other person. Speak naturally — your voice is recorded and analysed.
+          </p>
+        </div>
+
+        {/* Language picker */}
+        <div className="w-full mb-5">
+          <div className="text-xs font-bold mb-2 uppercase tracking-widest" style={{ color: '#6B8CAE' }}>
+            🌐 I'll be speaking in
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {LANGUAGES.map(l => (
+              <button
+                key={l.code}
+                onClick={() => setLang(l.code)}
+                className="text-xs px-3 py-2 rounded-full transition-all font-semibold"
+                style={{
+                  background: lang === l.code ? 'rgba(0,196,154,0.18)'  : 'rgba(255,255,255,0.05)',
+                  color:      lang === l.code ? '#00C49A'                : '#6B8CAE',
+                  border:     `1px solid ${lang === l.code ? 'rgba(0,196,154,0.45)' : 'rgba(255,255,255,0.1)'}`,
+                }}
+              >
+                {l.flag} {l.nativeName}
+              </button>
+            ))}
+          </div>
+          {lang !== 'en-US' && (
+            <p className="text-xs mt-2 px-3 py-2 rounded-xl"
+              style={{ background: 'rgba(245,158,11,0.08)', color: '#F59E0B', border: '1px solid rgba(245,158,11,0.2)' }}>
+              🇮🇳 ESL mode auto-enabled — Vak won't penalise Indian English or code-switching.
+            </p>
+          )}
+        </div>
+
+        {/* ESL toggle */}
+        <div
+          className="w-full mb-5 flex items-center justify-between p-4 rounded-2xl"
+          style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}
+        >
+          <div>
+            <div className="text-white font-semibold text-sm">ESL / Indian English mode</div>
+            <div className="text-xs mt-0.5" style={{ color: '#6B8CAE' }}>
+              Adapts feedback for non-native speakers — no grammar penalties
+            </div>
+          </div>
+          <button
+            onClick={toggleEsl}
+            className="px-3 py-1.5 rounded-full text-xs font-bold transition-all ml-4 shrink-0"
+            style={{
+              background: eslMode ? 'rgba(0,196,154,0.15)' : 'rgba(255,255,255,0.07)',
+              color:      eslMode ? '#00C49A'               : '#6B8CAE',
+              border:     `1px solid ${eslMode ? 'rgba(0,196,154,0.35)' : 'rgba(255,255,255,0.1)'}`,
+            }}
+          >
+            {eslMode ? '✓ On' : 'Off'}
+          </button>
+        </div>
+
+        {/* Quick tips */}
+        <div className="w-full mb-6 space-y-2">
+          {[
+            { icon: '🎤', text: 'Tap the mic to speak — Vak listens and responds' },
+            { icon: '🔴', text: 'Your audio is always recorded — even if text doesn\'t appear' },
+            { icon: '🏁', text: 'Say "end session" or tap End → when you\'re done' },
+          ].map(({ icon, text }) => (
+            <div
+              key={text}
+              className="flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm"
+              style={{ color: '#6B8CAE', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)' }}
+            >
+              <span>{icon}</span>
+              <span>{text}</span>
+            </div>
+          ))}
+        </div>
+
+        <button onClick={() => setSetupDone(true)} className="btn-play w-full">
+          <span className="text-xl">🎮</span>
+          <span>Start Session</span>
+          <span style={{ opacity: 0.7, fontSize: '0.85rem' }}>→</span>
+        </button>
+
+      </main>
+    </div>
+  )
 
   if (analyzing) return (
     <div className="min-h-screen flex items-center justify-center" style={{ background: '#060E1A' }}>
