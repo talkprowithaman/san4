@@ -31,9 +31,9 @@ export default function Auth() {
   // ── Check-email screen ───────────────────────────────────────────────────────
   if (mode === 'check-email') return (
     <div className="min-h-screen flex items-center justify-center px-4"
-      style={{ background: '#060E1A' }}>
+      style={{ background: '#050810' }}>
       <div className="max-w-md w-full text-center rounded-3xl p-10"
-        style={{ background: 'linear-gradient(145deg, #0F1E35, #091522)', border: '1px solid rgba(255,255,255,0.08)' }}>
+        style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
         <div className="text-5xl mb-5">📧</div>
         <h2 className="text-white font-black text-xl mb-3">Check your inbox</h2>
         <p className="text-sm leading-relaxed" style={{ color: '#6B8CAE' }}>
@@ -56,7 +56,7 @@ export default function Auth() {
   return (
     <div
       className="min-h-screen flex items-center justify-center px-4 py-8 relative overflow-hidden"
-      style={{ background: '#060E1A' }}
+      style={{ background: '#050810' }}
     >
       {/* Background glows */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden">
@@ -93,7 +93,7 @@ export default function Auth() {
         <div
           className="rounded-3xl p-6 sm:p-8 animate-slide-up"
           style={{
-            background: 'linear-gradient(145deg, #0F1E35 0%, #091522 100%)',
+            background: 'rgba(255,255,255,0.04)',
             border: '1px solid rgba(255,255,255,0.08)',
           }}
         >

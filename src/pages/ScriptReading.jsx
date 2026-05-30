@@ -407,7 +407,7 @@ export default function ScriptReading() {
         overall_score: 70, accuracy_score: 70, fluency_score: 70, pacing_score: 70,
         filler_word_count: fillerRef.current, top_filler_words: [], missed_phrases: [],
         pause_note:   `${pauseRef.current} long pause(s) detected.`,
-        pacing_note:  avgWpm ? `You spoke at ~${avgWpm} WPM — aim for 120–150 WPM.` : null,
+        pacing_note:  avgWpm ? `You spoke at ~${avgWpm} WPM, aim for 120–150 WPM.` : null,
         strengths:    ['You completed the full script reading'],
         improvements: ['Focus on maintaining a consistent pace throughout'],
         action_item:  'Read the same script again tomorrow and compare your scores.',
@@ -444,7 +444,7 @@ export default function ScriptReading() {
   // ── SELECT ────────────────────────────────────────────────────────────────
   if (phase === 'select') {
     return (
-      <div className="min-h-screen" style={{ background: '#060E1A' }}>
+      <div className="min-h-screen" style={{ background: '#050810' }}>
         <Navbar />
         <main className="max-w-4xl mx-auto px-4 py-8">
 
@@ -455,7 +455,7 @@ export default function ScriptReading() {
             </div>
             <h1 className="text-3xl font-black text-white">Read. Practise. Improve.</h1>
             <p className="mt-1 max-w-xl" style={{ color: '#6B8CAE' }}>
-              Pick a script or paste your own. Read it aloud — Vak records your voice and gives you
+              Pick a script or paste your own. Read it aloud. Vak records your voice and gives you
               detailed coaching on accuracy, fluency, pacing, and filler words.
             </p>
 
@@ -539,7 +539,7 @@ export default function ScriptReading() {
                   onClick={() => { setScript(s); setPhase('countdown') }}
                   className="text-left rounded-3xl p-5 transition-all duration-200 relative overflow-hidden group"
                   style={{
-                    background: 'linear-gradient(145deg, #0F1E35, #091522)',
+                    background: 'rgba(255,255,255,0.04)',
                     border:  locked ? '1px solid rgba(255,255,255,0.06)' : '1px solid rgba(139,92,246,0.2)',
                     opacity: locked ? 0.65 : 1,
                     cursor:  locked ? 'not-allowed' : 'pointer',
@@ -595,7 +595,7 @@ export default function ScriptReading() {
   // ── CUSTOM SCRIPT INPUT ───────────────────────────────────────────────────
   if (phase === 'custom_input') {
     return (
-      <div className="min-h-screen" style={{ background: '#060E1A' }}>
+      <div className="min-h-screen" style={{ background: '#050810' }}>
         <Navbar />
         <main className="max-w-2xl mx-auto px-4 py-8">
 
@@ -636,7 +636,7 @@ export default function ScriptReading() {
               onChange={e => setCustomText(e.target.value)}
               className="input w-full"
               rows={12}
-              placeholder="Paste or type your script here…&#10;&#10;Tip: Use double line breaks between paragraphs — each paragraph becomes one section in the teleprompter."
+              placeholder="Paste or type your script here…&#10;&#10;Tip: Use double line breaks between paragraphs. Each paragraph becomes one section in the teleprompter."
               style={{ resize: 'vertical', minHeight: 240 }}
             />
             <p className="text-xs mt-2" style={{ color: '#6B8CAE' }}>
@@ -673,7 +673,7 @@ export default function ScriptReading() {
   if (phase === 'countdown') {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center gap-6"
-        style={{ background: '#060E1A' }}>
+        style={{ background: '#050810' }}>
         <p className="text-sm font-semibold" style={{ color: '#6B8CAE' }}>
           Get ready to read: <span className="text-white">{script?.title}</span>
         </p>
@@ -692,7 +692,7 @@ export default function ScriptReading() {
   // ── READING (teleprompter) ────────────────────────────────────────────────
   if (phase === 'reading') {
     return (
-      <div className="flex flex-col" style={{ height: '100vh', overflow: 'hidden', background: '#060E1A' }}>
+      <div className="flex flex-col" style={{ height: '100vh', overflow: 'hidden', background: '#050810' }}>
 
         {/* ── Top stats bar ── */}
         <div className="shrink-0 px-4 py-3 flex items-center gap-4 flex-wrap"
@@ -845,7 +845,7 @@ export default function ScriptReading() {
   // ── ANALYZING ─────────────────────────────────────────────────────────────
   if (phase === 'analyzing') {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center gap-6" style={{ background: '#060E1A' }}>
+      <div className="min-h-screen flex flex-col items-center justify-center gap-6" style={{ background: '#050810' }}>
         <div className="animate-float"><VakMascot level={3} size={100} /></div>
         <div className="text-center">
           <div className="text-white font-bold text-xl mb-2">Analysing your delivery…</div>
@@ -869,7 +869,7 @@ export default function ScriptReading() {
     const fc = report.filler_word_count ?? fillerCount
 
     return (
-      <div className="min-h-screen" style={{ background: '#060E1A' }}>
+      <div className="min-h-screen" style={{ background: '#050810' }}>
         <Navbar />
         <main className="max-w-2xl mx-auto px-4 py-8 animate-slide-up">
 
@@ -895,7 +895,7 @@ export default function ScriptReading() {
               { label: 'Pacing',   value: report.pacing_score,   icon: '⚡' },
             ].map(({ label, value, icon }) => (
               <div key={label} className="rounded-2xl p-4 text-center"
-                style={{ background: 'linear-gradient(145deg, #0F1E35, #091522)', border: `1px solid ${scoreColor(value)}30` }}>
+                style={{ background: 'rgba(255,255,255,0.04)', border: `1px solid ${scoreColor(value)}30` }}>
                 <div className="text-lg mb-1">{icon}</div>
                 <div className="text-2xl font-black" style={{ color: scoreColor(value) }}>{value}</div>
                 <div className="text-xs mt-0.5" style={{ color: '#6B8CAE' }}>{label}</div>
@@ -906,9 +906,9 @@ export default function ScriptReading() {
           {/* Score legend */}
           <div className="rounded-2xl px-4 py-3 mb-5 text-xs leading-relaxed space-y-1"
             style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}>
-            <p style={{ color: '#6B8CAE' }}><span className="text-white font-semibold">Accuracy</span> — how closely your words matched the script</p>
-            <p style={{ color: '#6B8CAE' }}><span className="text-white font-semibold">Fluency</span> — smooth delivery without unnatural hesitations</p>
-            <p style={{ color: '#6B8CAE' }}><span className="text-white font-semibold">Pacing</span> — speaking speed (ideal: 120–150 WPM for most scripts)</p>
+            <p style={{ color: '#6B8CAE' }}><span className="text-white font-semibold">Accuracy</span>: how closely your words matched the script</p>
+            <p style={{ color: '#6B8CAE' }}><span className="text-white font-semibold">Fluency</span>: smooth delivery without unnatural hesitations</p>
+            <p style={{ color: '#6B8CAE' }}><span className="text-white font-semibold">Pacing</span>: speaking speed (ideal: 120–150 WPM for most scripts)</p>
           </div>
 
           {/* Vak's coaching summary */}
@@ -930,7 +930,7 @@ export default function ScriptReading() {
                     "{report.transcript}"
                   </p>
                   <p className="text-xs mt-2" style={{ color: '#6B8CAE' }}>
-                    Gemini's transcription of your reading — the basis for accuracy and fluency scores.
+                    Gemini's transcription of your reading, the basis for accuracy and fluency scores.
                   </p>
                 </div>
               </div>
@@ -958,7 +958,7 @@ export default function ScriptReading() {
               </div>
             ) : (
               <p className="text-xs mt-1" style={{ color: '#6B8CAE' }}>
-                {fc === 0 ? '🎉 No filler words detected — great control!' : 'Replace fillers with a deliberate 1-second pause.'}
+                {fc === 0 ? '🎉 No filler words detected. Great control!' : 'Replace fillers with a deliberate 1-second pause.'}
               </p>
             )}
           </div>

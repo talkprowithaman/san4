@@ -4,6 +4,7 @@ import { useAuth }          from '../hooks/useAuth'
 import { useProgress }      from '../hooks/useProgress'
 import { useSubscription }  from '../hooks/useSubscription'
 import { supabase }         from '../lib/supabase'
+import { useScrollReveal }  from '../hooks/useScrollReveal'
 import Navbar               from '../components/Navbar'
 import VakMascot            from '../components/VakMascot'
 import DailyMissions        from '../components/DailyMissions'
@@ -14,6 +15,8 @@ export default function Dashboard() {
   const { progress, levelInfo } = useProgress()
   const [sessions, setSessions] = useState([])
   const [loading, setLoading]   = useState(true)
+
+  useScrollReveal()
 
   useEffect(() => {
     if (user) fetchSessions()
@@ -30,16 +33,7 @@ export default function Dashboard() {
     setLoading(false)
   }
 
-  const {
-    isPro,
-    sessionsRemaining,
-    canStartSession,
-    weeklySessionCount,
-  } = useSubscription()
-
-  const avgScore = sessions.length
-    ? Math.round(sessions.reduce((a, s) => a + (s.overall_score || 0), 0) / sessions.length)
-    : null
+  const { isPro, sessionsRemaining, canStartSession, weeklySessionCount } = useSubscription()
 
   const firstName  = profile?.name?.split(' ')[0] || 'there'
   const level      = levelInfo?.current.level     || 1
@@ -56,81 +50,81 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="min-h-screen" style={{ background: '#060E1A' }}>
+    <div className="min-h-screen" style={{ background: '#050810' }}>
 
-      {/* Background atmosphere */}
-      <div className="fixed inset-0 pointer-events-none overflow-hidden">
+      {/* Ambient background glows */}
+      <div className="fixed inset-0 pointer-events-none overflow-hidden" aria-hidden="true">
         <div style={{
-          position: 'absolute', top: '-120px', right: '-80px',
-          width: '500px', height: '500px', borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(99,102,241,0.1) 0%, transparent 70%)',
+          position: 'absolute', top: '-160px', right: '-80px',
+          width: '560px', height: '560px', borderRadius: '50%',
+          background: 'radial-gradient(circle, rgba(99,102,241,0.07) 0%, transparent 70%)',
         }} />
         <div style={{
-          position: 'absolute', bottom: '-150px', left: '-100px',
-          width: '600px', height: '500px', borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(0,196,154,0.06) 0%, transparent 70%)',
+          position: 'absolute', bottom: '-180px', left: '-120px',
+          width: '640px', height: '540px', borderRadius: '50%',
+          background: 'radial-gradient(circle, rgba(0,196,154,0.05) 0%, transparent 70%)',
         }} />
       </div>
 
       <Navbar />
 
-      <main className="max-w-xl mx-auto px-4 py-6 relative z-10">
+      <main className="max-w-xl mx-auto px-4 py-8 relative z-10">
 
-        {/* ── Greeting ─────────────────────────────────────────────────────── */}
-        <div className="text-center mb-5 animate-fade-in">
-          <h1 className="text-2xl font-black text-white">
-            Hey {firstName}! 👋
+        {/* Greeting */}
+        <div className="text-center mb-6 animate-fade-in">
+          <h1 className="text-2xl font-black text-white tracking-tight">
+            Hey {firstName} 👋
           </h1>
-          <p style={{ color: '#6B8CAE' }} className="text-sm mt-1">
+          <p className="text-sm mt-1.5" style={{ color: 'rgba(255,255,255,0.35)' }}>
             {streak > 0
-              ? `${streak}-day streak 🔥 — keep it going!`
-              : "Start your first session and build a streak!"}
+              ? `${streak}-day streak 🔥 Keep it going`
+              : 'Start your first session and build a streak'}
           </p>
         </div>
 
-        {/* ── Vak Hero Card ────────────────────────────────────────────────── */}
+        {/* Vak Hero Card */}
         <div
-          className="rounded-3xl p-6 text-center mb-5 animate-slide-up relative overflow-hidden"
+          className="rounded-3xl p-6 text-center mb-5 relative overflow-hidden reveal animate-slide-up"
           style={{
-            background: 'linear-gradient(145deg, #0F1E35 0%, #091522 100%)',
-            border: `1px solid ${levelColor}30`,
-            boxShadow: `0 0 40px ${levelColor}14`,
+            background: 'rgba(255,255,255,0.04)',
+            backdropFilter: 'blur(20px)',
+            WebkitBackdropFilter: 'blur(20px)',
+            border: `1px solid ${levelColor}28`,
+            boxShadow: `0 0 60px ${levelColor}10, 0 1px 0 rgba(255,255,255,0.05) inset`,
           }}
         >
-          {/* Decorative corner glow */}
+          {/* Corner glow */}
           <div style={{
-            position: 'absolute', top: '-30px', right: '-30px',
-            width: '120px', height: '120px', borderRadius: '50%',
-            background: `radial-gradient(circle, ${levelColor}20 0%, transparent 70%)`,
+            position: 'absolute', top: '-40px', right: '-40px',
+            width: '160px', height: '160px', borderRadius: '50%',
+            background: `radial-gradient(circle, ${levelColor}18 0%, transparent 70%)`,
+            pointerEvents: 'none',
           }} />
 
-          {/* Vak floating */}
-          <div className="flex justify-center mb-3 animate-float">
+          <div className="flex justify-center mb-4 animate-float">
             <VakMascot level={level} size={148} />
           </div>
 
-          {/* Level badge */}
-          <div className="flex items-center justify-center gap-2 mb-3">
+          <div className="flex items-center justify-center gap-2 mb-4">
             <span
               className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-sm font-bold"
               style={{
-                background: `${levelColor}1A`,
+                background: `${levelColor}14`,
                 color: levelColor,
-                border: `1px solid ${levelColor}40`,
+                border: `1px solid ${levelColor}35`,
               }}
             >
               {levelIcon} {levelName} · Lv.{level}
             </span>
           </div>
 
-          {/* XP Progress bar */}
           {levelInfo && (
             <div className="px-2">
-              <div className="flex justify-between text-xs mb-1.5" style={{ color: '#6B8CAE' }}>
+              <div className="flex justify-between text-xs mb-1.5" style={{ color: 'rgba(255,255,255,0.3)' }}>
                 <span>{levelInfo.xpIntoLevel} XP</span>
                 {levelInfo.next
                   ? <span>{levelInfo.next.icon} {levelInfo.next.name} at {levelInfo.next.minXP}</span>
-                  : <span>🦚 Max level!</span>
+                  : <span>Max level reached</span>
                 }
               </div>
               <div className="xp-bar-track">
@@ -139,108 +133,127 @@ export default function Dashboard() {
                   style={{
                     width: `${levelInfo.progressPercent}%`,
                     background: `linear-gradient(90deg, ${levelColor}88, ${levelColor})`,
-                    boxShadow: `0 0 10px ${levelColor}55`,
+                    boxShadow: `0 0 8px ${levelColor}60`,
                   }}
                 />
               </div>
-              <p className="text-xs mt-1.5" style={{ color: `${levelColor}99` }}>
+              <p className="text-xs mt-1.5" style={{ color: `${levelColor}80` }}>
                 {levelInfo.progressPercent}% to next level
               </p>
             </div>
           )}
         </div>
 
-        {/* ── Stats row ────────────────────────────────────────────────────── */}
-        <div className="grid grid-cols-3 gap-3 mb-5">
+        {/* Stats row */}
+        <div className="grid grid-cols-3 gap-3 mb-5 reveal reveal-d1">
           {[
-            { icon: '🔥', label: 'Streak', value: streak > 0 ? `${streak}d` : '—', color: '#FF6B35' },
-            { icon: '⭐', label: 'Total XP', value: totalXP,        color: '#F59E0B' },
-            { icon: '🎭', label: 'Sessions', value: sessions.length, color: '#00C49A' },
+            { icon: '🔥', label: 'Streak',   value: streak > 0 ? `${streak}d` : '0',  color: '#FF6B35' },
+            { icon: '⭐', label: 'Total XP', value: totalXP,          color: '#F59E0B' },
+            { icon: '🎭', label: 'Sessions', value: sessions.length,  color: '#00C49A' },
           ].map(({ icon, label, value, color }) => (
             <div key={label} className="stat-gem">
               <div className="text-xl mb-1">{icon}</div>
               <div className="text-xl font-black" style={{ color }}>{value}</div>
-              <div className="text-xs mt-0.5" style={{ color: '#6B8CAE' }}>{label}</div>
+              <div className="text-xs mt-0.5" style={{ color: 'rgba(255,255,255,0.3)' }}>{label}</div>
             </div>
           ))}
         </div>
 
-        {/* ── Play button ──────────────────────────────────────────────────── */}
-        <Link to="/practice" className="btn-play mb-5">
+        {/* Play button */}
+        <Link to="/practice" className="btn-play mb-5 reveal reveal-d2">
           <span className="text-xl">🎮</span>
           <span>Start Practice</span>
-          <span style={{ opacity: 0.7, fontSize: '0.85rem' }}>→</span>
+          <span style={{ opacity: 0.6, fontSize: '0.85rem' }}>→</span>
         </Link>
 
-        {/* ── Meeting Prep quick link ───────────────────────────────────────── */}
+        {/* Meeting Prep quick link */}
         <Link
           to="/meeting-prep"
-          className="flex items-center gap-3 px-5 py-4 rounded-2xl mb-6 transition-all hover:brightness-110"
+          className="flex items-center gap-3 px-5 py-4 rounded-2xl mb-6 transition-all reveal reveal-d3"
           style={{
-            background: 'linear-gradient(135deg, #0F1E35, #091522)',
-            border: '1px solid rgba(0,196,154,0.2)',
+            background: 'rgba(255,255,255,0.04)',
+            backdropFilter: 'blur(16px)',
+            WebkitBackdropFilter: 'blur(16px)',
+            border: '1px solid rgba(0,196,154,0.18)',
           }}
+          onMouseEnter={e => e.currentTarget.style.borderColor = 'rgba(0,196,154,0.4)'}
+          onMouseLeave={e => e.currentTarget.style.borderColor = 'rgba(0,196,154,0.18)'}
         >
           <span className="text-2xl">📋</span>
           <div className="flex-1">
-            <div className="text-white font-bold text-sm">Meeting Prep</div>
-            <div className="text-xs" style={{ color: '#6B8CAE' }}>AI talking points in 90 seconds</div>
+            <div className="text-white font-semibold text-sm">Meeting Prep</div>
+            <div className="text-xs mt-0.5" style={{ color: 'rgba(255,255,255,0.35)' }}>AI talking points in 90 seconds</div>
           </div>
-          <span style={{ color: '#00C49A', fontSize: '1.1rem' }}>→</span>
+          <span style={{ color: '#00C49A', fontSize: '1rem' }}>→</span>
         </Link>
 
-        {/* ── Situation of the Day ─────────────────────────────────────────── */}
-        <SituationOfTheDay />
+        {/* Situation of the Day */}
+        <div className="reveal reveal-d4">
+          <SituationOfTheDay />
+        </div>
 
-        {/* ── Daily Missions ────────────────────────────────────────────────── */}
-        <DailyMissions />
+        {/* Daily Missions */}
+        <div className="reveal reveal-d5">
+          <DailyMissions />
+        </div>
 
-        {/* ── Recent Sessions ───────────────────────────────────────────────── */}
-        <div>
-          <h2 className="text-white font-bold text-base mb-3 flex items-center gap-2">
+        {/* Recent Sessions */}
+        <div className="reveal">
+          <h2 className="text-white font-semibold text-sm mb-3 flex items-center gap-2 tracking-wide">
             <span>🏆</span> Recent Sessions
           </h2>
 
           {loading ? (
-            <div className="text-sm text-center py-6" style={{ color: '#6B8CAE' }}>Loading…</div>
+            <div className="text-sm text-center py-8" style={{ color: 'rgba(255,255,255,0.25)' }}>Loading</div>
           ) : sessions.length === 0 ? (
             <div
               className="rounded-2xl p-8 text-center"
-              style={{ background: 'linear-gradient(135deg, #0F1E35, #091522)', border: '1px solid rgba(255,255,255,0.06)' }}
+              style={{
+                background: 'rgba(255,255,255,0.03)',
+                backdropFilter: 'blur(16px)',
+                border: '1px solid rgba(255,255,255,0.06)',
+              }}
             >
               <div className="text-4xl mb-3">🎯</div>
               <p className="text-white font-semibold mb-1">No sessions yet</p>
-              <p className="text-sm mb-4" style={{ color: '#6B8CAE' }}>
+              <p className="text-sm mb-5" style={{ color: 'rgba(255,255,255,0.35)' }}>
                 Your first session unlocks XP, streaks, and reports.
               </p>
-              <Link to="/practice" className="btn-play" style={{ maxWidth: '200px', margin: '0 auto', fontSize: '0.9rem', padding: '0.8rem' }}>
-                🎮 Play Now →
+              <Link
+                to="/practice"
+                className="btn-play"
+                style={{ maxWidth: '200px', margin: '0 auto', fontSize: '0.875rem', padding: '0.75rem' }}
+              >
+                🎮 Start now →
               </Link>
             </div>
           ) : (
-            <div className="space-y-2.5">
+            <div className="space-y-2">
               {sessions.map(s => (
                 <div
                   key={s.id}
                   className="flex items-center gap-3 px-4 py-3.5 rounded-2xl transition-all"
                   style={{
-                    background: 'linear-gradient(135deg, #0F1E35, #091522)',
+                    background: 'rgba(255,255,255,0.04)',
+                    backdropFilter: 'blur(12px)',
                     border: '1px solid rgba(255,255,255,0.06)',
                   }}
+                  onMouseEnter={e => e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'}
+                  onMouseLeave={e => e.currentTarget.style.borderColor = 'rgba(255,255,255,0.06)'}
                 >
                   <span className="text-xl">🎭</span>
                   <div className="flex-1 min-w-0">
-                    <div className="text-white font-semibold text-sm truncate">{s.scenario_title}</div>
-                    <div className="text-xs mt-0.5" style={{ color: '#6B8CAE' }}>
+                    <div className="text-white font-medium text-sm truncate">{s.scenario_title}</div>
+                    <div className="text-xs mt-0.5" style={{ color: 'rgba(255,255,255,0.3)' }}>
                       {new Date(s.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}
                       {s.duration_seconds > 0 && ` · ${Math.round(s.duration_seconds / 60)}m`}
                     </div>
                   </div>
                   <div className="text-right">
-                    <div className="text-lg font-black" style={{ color: scoreColor(s.overall_score) }}>
+                    <div className="text-base font-black" style={{ color: scoreColor(s.overall_score) }}>
                       {s.overall_score || 0}%
                     </div>
-                    <div className="text-xs" style={{ color: '#6B8CAE' }}>
+                    <div className="text-xs" style={{ color: 'rgba(255,255,255,0.25)' }}>
                       {s.filler_word_count} fillers
                     </div>
                   </div>
@@ -250,23 +263,25 @@ export default function Dashboard() {
           )}
         </div>
 
-        {/* ── Weekly sessions pill (free users) ────────────────────────────── */}
+        {/* Weekly sessions pill */}
         {!isPro && (
           <div
-            className="mt-4 rounded-2xl px-4 py-3 flex items-center justify-between gap-3"
+            className="mt-4 rounded-2xl px-4 py-3 flex items-center justify-between gap-3 reveal"
             style={{
-              background: canStartSession ? 'rgba(0,196,154,0.06)' : 'rgba(239,68,68,0.06)',
-              border: `1px solid ${canStartSession ? 'rgba(0,196,154,0.2)' : 'rgba(239,68,68,0.2)'}`,
+              background: canStartSession ? 'rgba(0,196,154,0.05)' : 'rgba(239,68,68,0.05)',
+              border: `1px solid ${canStartSession ? 'rgba(0,196,154,0.18)' : 'rgba(239,68,68,0.18)'}`,
             }}
           >
             <div className="flex items-center gap-2">
-              <span>{canStartSession ? '🟢' : '🔴'}</span>
+              <span className="text-xs" style={{ color: canStartSession ? '#00C49A' : '#F87171' }}>
+                {canStartSession ? '●' : '●'}
+              </span>
               <span className="text-sm font-medium" style={{ color: canStartSession ? '#00C49A' : '#F87171' }}>
                 {canStartSession
                   ? `${sessionsRemaining} free session${sessionsRemaining !== 1 ? 's' : ''} left this week`
-                  : 'Weekly limit reached — resets Sunday'}
+                  : 'Weekly limit reached. Resets Sunday'}
               </span>
-              <span className="text-xs" style={{ color: '#6B8CAE' }}>({weeklySessionCount}/3)</span>
+              <span className="text-xs" style={{ color: 'rgba(255,255,255,0.2)' }}>({weeklySessionCount}/3)</span>
             </div>
             <Link to="/pricing" className="text-xs font-bold" style={{ color: '#FF6B35' }}>
               Upgrade →
@@ -274,36 +289,36 @@ export default function Dashboard() {
           </div>
         )}
 
-        {/* ── Upgrade banner (free plan) ────────────────────────────────────── */}
+        {/* Upgrade banner */}
         {!isPro && (
           <div
-            className="mt-4 rounded-2xl p-5"
+            className="mt-4 rounded-2xl p-5 reveal"
             style={{
-              background: 'linear-gradient(135deg, rgba(255,107,53,0.08), rgba(255,107,53,0.04))',
-              border: '1px solid rgba(255,107,53,0.25)',
+              background: 'rgba(255,107,53,0.06)',
+              border: '1px solid rgba(255,107,53,0.18)',
             }}
           >
             <div className="flex items-center justify-between flex-wrap gap-3">
               <div>
                 <div
                   className="inline-flex items-center gap-1.5 text-xs font-bold px-2.5 py-1 rounded-full mb-2"
-                  style={{ background: 'rgba(245,158,11,0.15)', color: '#F59E0B' }}
+                  style={{ background: 'rgba(245,158,11,0.12)', color: '#F59E0B' }}
                 >
                   🎉 Founding Member Offer
                 </div>
-                <h3 className="text-white font-bold">Upgrade to Vak Pro — ₹299/month</h3>
-                <p className="text-sm mt-0.5" style={{ color: '#6B8CAE' }}>
+                <h3 className="text-white font-bold">Upgrade to Vak Pro · ₹299/month</h3>
+                <p className="text-sm mt-0.5" style={{ color: 'rgba(255,255,255,0.35)' }}>
                   Unlimited sessions · Deep reports · Full scenario library
                 </p>
               </div>
-              <Link to="/pricing" className="btn-primary text-sm py-2.5 px-5">
+              <Link to="/pricing" className="btn-primary text-sm">
                 See plans →
               </Link>
             </div>
           </div>
         )}
 
-        <div className="h-6" />
+        <div className="h-8" />
       </main>
     </div>
   )

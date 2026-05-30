@@ -84,7 +84,7 @@ export default function RewardCard({ reward }) {
           )}
           {reward.brokeStreak && (
             <span className="text-xs font-semibold text-red-400">
-              Streak reset — keep going!
+              Streak reset, keep going!
             </span>
           )}
         </div>

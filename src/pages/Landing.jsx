@@ -13,13 +13,13 @@ import { supabase }  from '../lib/supabase'
 import VakMascot     from '../components/VakMascot'
 
 // ── Palette ───────────────────────────────────────────────────────────────────
-const navy   = '#060E1A'
+const navy   = '#050810'
 const blue   = '#FF6B35'   // "blue" var kept for compat — now brand orange
 const green  = '#00C49A'
 const gold   = '#F59E0B'
 const purple = '#8B5CF6'
-const bg     = '#080F1C'
-const text   = '#E2E8F0'
+const bg     = '#050810'
+const text   = '#F1F5F9'
 
 // ── Easing ────────────────────────────────────────────────────────────────────
 const ease = [0.25, 0.1, 0.25, 1]
@@ -306,7 +306,7 @@ const PROBLEMS = [
     expandTitle: 'Why you freeze up',
     bullets: [
       'Adrenaline shuts down the part of the brain that forms sentences',
-      'You rehearsed answers — not real back-and-forth conversations',
+      'You rehearsed answers, not real back-and-forth conversations',
       'Without pressure reps, confidence cannot be built before the day',
     ],
   },
@@ -446,7 +446,7 @@ export default function Landing() {
       {/* ── Hero ───────────────────────────────────────────────────────────── */}
       <section
         className="relative min-h-screen flex items-center pt-16 px-8 overflow-hidden"
-        style={{ background: 'linear-gradient(135deg, #060E1A 0%, #0D1B33 60%, #111E3A 100%)' }}
+        style={{ background: 'linear-gradient(160deg, #050810 0%, #08101E 50%, #0A1525 100%)' }}
       >
         {/* Subtle grid */}
         <div
@@ -619,7 +619,7 @@ export default function Landing() {
       </section>
 
       {/* ── Meet Vak ──────────────────────────────────────────────────────── */}
-      <section className="py-28 px-8 relative overflow-hidden" style={{ background: '#07111F' }}>
+      <section className="py-28 px-8 relative overflow-hidden" style={{ background: '#060B18' }}>
         {/* Purple glow behind Vak */}
         <div className="absolute top-1/2 left-1/4 -translate-y-1/2 w-[500px] h-[500px] rounded-full pointer-events-none"
           style={{ background: 'radial-gradient(circle, rgba(139,92,246,0.12) 0%, transparent 65%)' }} />
@@ -670,14 +670,14 @@ export default function Landing() {
               </h2>
 
               <p className="text-lg leading-relaxed mb-5" style={{ color: '#6B8CAE' }}>
-                The Hamsa — the sacred swan — is the mount of Saraswati, goddess of speech,
+                The Hamsa, the sacred swan, is the mount of Saraswati, goddess of speech,
                 learning, and expression. In ancient tradition, the swan separates milk from water,
                 truth from noise.
               </p>
 
               <p className="text-lg leading-relaxed mb-8" style={{ color: '#6B8CAE' }}>
-                We named our AI coach <strong className="text-white font-bold">Vak</strong> — the
-                Sanskrit word for speech — because great communication isn't a Western import.
+                We named our AI coach <strong className="text-white font-bold">Vak</strong>, the
+                Sanskrit word for speech, because great communication isn't a Western import.
                 It's ancient, it's Indian, and it starts with your voice.
               </p>
 
@@ -705,7 +705,12 @@ export default function Landing() {
           <FadeUp delay={0.25}>
             <div
               className="rounded-3xl p-8"
-              style={{ background: 'rgba(255,255,255,0.025)', border: '1px solid rgba(255,255,255,0.07)' }}
+              style={{
+                background: 'rgba(255,255,255,0.03)',
+                backdropFilter: 'blur(20px)',
+                WebkitBackdropFilter: 'blur(20px)',
+                border: '1px solid rgba(255,255,255,0.07)',
+              }}
             >
               <p className="text-center text-sm font-semibold mb-2 text-white">
                 Vak grows as you practice
@@ -790,9 +795,11 @@ export default function Landing() {
                 <motion.div
                   className="rounded-2xl overflow-hidden cursor-pointer select-none"
                   style={{
-                    background: 'linear-gradient(135deg, #0F1E35, #0A1628)',
+                    background: 'rgba(255,255,255,0.04)',
+                    backdropFilter: 'blur(20px)',
+                    WebkitBackdropFilter: 'blur(20px)',
                     border: isOpen ? '1px solid rgba(255,107,53,0.3)' : '1px solid rgba(255,255,255,0.07)',
-                    boxShadow: isOpen ? `0 8px 32px rgba(255,107,53,0.12)` : '0 1px 4px rgba(0,0,0,0.3)',
+                    boxShadow: isOpen ? '0 16px 48px rgba(255,107,53,0.1)' : 'none',
                   }}
                   onClick={() => setOpenCard(isOpen ? null : i)}
                   whileHover={{ y: -3 }}

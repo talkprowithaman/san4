@@ -11,7 +11,7 @@ export default function SituationOfTheDay() {
       style={{
         background: done
           ? 'linear-gradient(145deg, rgba(0,196,154,0.08), rgba(0,196,154,0.04))'
-          : 'linear-gradient(145deg, #0F1E35, #091522)',
+          : 'rgba(255,255,255,0.04)',
         border: done
           ? '1px solid rgba(0,196,154,0.25)'
           : '1px solid rgba(255,107,53,0.25)',

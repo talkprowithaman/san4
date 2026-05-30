@@ -173,7 +173,7 @@ export default function DailyChallenge() {
   // ── Already done today ────────────────────────────────────────────────────
   if (alreadyDone && phase === 'prompt') {
     return (
-      <div className="min-h-screen" style={{ background: '#060E1A' }}>
+      <div className="min-h-screen" style={{ background: '#050810' }}>
         <Navbar />
         <main className="max-w-lg mx-auto px-4 py-16 text-center">
           <div className="flex justify-center mb-4 animate-float"><VakMascot level={4} size={90} /></div>
@@ -193,7 +193,7 @@ export default function DailyChallenge() {
   // ── Phase: prompt ─────────────────────────────────────────────────────────
   if (phase === 'prompt') {
     return (
-      <div className="min-h-screen" style={{ background: '#060E1A' }}>
+      <div className="min-h-screen" style={{ background: '#050810' }}>
         <Navbar />
         <main className="max-w-lg mx-auto px-4 py-8 animate-fade-in">
 
@@ -203,7 +203,7 @@ export default function DailyChallenge() {
               className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full mb-3 text-sm font-semibold"
               style={{ background: 'rgba(255,107,53,0.12)', color: '#FF6B35', border: '1px solid rgba(255,107,53,0.25)' }}
             >
-              🔥 Daily Challenge — {situation.category}
+              🔥 Daily Challenge: {situation.category}
             </div>
             <p className="text-sm" style={{ color: '#6B8CAE' }}>
               One real situation. 90 seconds. Respond like you mean it.
@@ -214,7 +214,7 @@ export default function DailyChallenge() {
           <div
             className="rounded-3xl p-7 mb-6"
             style={{
-              background: 'linear-gradient(145deg, #0F1E35, #091522)',
+              background: 'rgba(255,255,255,0.04)',
               border: '1px solid rgba(255,107,53,0.25)',
               boxShadow: '0 0 40px rgba(255,107,53,0.08)',
             }}
@@ -267,7 +267,7 @@ export default function DailyChallenge() {
   if (phase === 'recording') {
     const pct = Math.min(100, (seconds / MAX_SEC) * 100)
     return (
-      <div className="min-h-screen flex flex-col" style={{ background: '#060E1A' }}>
+      <div className="min-h-screen flex flex-col" style={{ background: '#050810' }}>
         <Navbar />
         <main className="max-w-lg mx-auto px-4 py-8 flex-1 flex flex-col">
 
@@ -327,7 +327,7 @@ export default function DailyChallenge() {
             className="w-full py-3.5 rounded-2xl font-bold text-sm text-white transition-all hover:opacity-90 disabled:opacity-40"
             style={{ background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.15)' }}
           >
-            Done — Submit Response →
+            Submit Response →
           </button>
         </main>
       </div>
@@ -337,7 +337,7 @@ export default function DailyChallenge() {
   // ── Phase: analyzing ──────────────────────────────────────────────────────
   if (phase === 'analyzing') {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center gap-6" style={{ background: '#060E1A' }}>
+      <div className="min-h-screen flex flex-col items-center justify-center gap-6" style={{ background: '#050810' }}>
         <div className="animate-float"><VakMascot level={3} size={90} /></div>
         <div className="text-center">
           <div className="text-white font-bold text-xl mb-2">Reviewing your response…</div>
@@ -356,7 +356,7 @@ export default function DailyChallenge() {
   // ── Phase: report ─────────────────────────────────────────────────────────
   if (phase === 'report' && report) {
     return (
-      <div className="min-h-screen" style={{ background: '#060E1A' }}>
+      <div className="min-h-screen" style={{ background: '#050810' }}>
         <Navbar />
         <main className="max-w-lg mx-auto px-4 py-8 animate-slide-up">
 
@@ -377,7 +377,7 @@ export default function DailyChallenge() {
               { label: 'Confidence', value: report.confidence, icon: '💪' },
             ].map(({ label, value, icon }) => (
               <div key={label} className="rounded-2xl p-4 text-center"
-                style={{ background: 'linear-gradient(145deg, #0F1E35, #091522)', border: `1px solid ${scoreColor(value)}30` }}>
+                style={{ background: 'rgba(255,255,255,0.04)', border: `1px solid ${scoreColor(value)}30` }}>
                 <div className="text-lg mb-1">{icon}</div>
                 <div className="text-2xl font-black" style={{ color: scoreColor(value) }}>{value}</div>
                 <div className="text-xs mt-0.5" style={{ color: '#6B8CAE' }}>{label}</div>

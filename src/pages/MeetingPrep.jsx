@@ -85,7 +85,7 @@ export default function MeetingPrep() {
   }
 
   return (
-    <div className="min-h-screen" style={{ background: '#060E1A' }}>
+    <div className="min-h-screen" style={{ background: '#050810' }}>
       <Navbar />
 
       <main className="max-w-3xl mx-auto px-4 py-8">
@@ -111,7 +111,7 @@ export default function MeetingPrep() {
                 {canStartPrep ? '🟢' : '🔴'}
                 {canStartPrep
                   ? `${prepsRemaining} meeting prep left this week`
-                  : 'Weekly prep limit reached — resets Sunday'}
+                  : 'Weekly prep limit reached. Resets Sunday'}
                 <span style={{ opacity: 0.6 }}>({weeklyPrepCount}/1)</span>
               </div>
               {!canStartPrep && (
@@ -132,7 +132,7 @@ export default function MeetingPrep() {
           <div
             className="rounded-3xl p-8 text-center animate-fade-in"
             style={{
-              background: 'linear-gradient(145deg, #0F1E35, #091522)',
+              background: 'rgba(255,255,255,0.04)',
               border: '1px solid rgba(255,107,53,0.25)',
             }}
           >
@@ -146,7 +146,7 @@ export default function MeetingPrep() {
               style={{ background: 'rgba(255,107,53,0.07)', border: '1px solid rgba(255,107,53,0.2)' }}
             >
               <p className="text-xs font-bold uppercase tracking-widest mb-3" style={{ color: '#FF6B35' }}>
-                Vak Pro — ₹299/month
+                Vak Pro · ₹299/month
               </p>
               {['Unlimited meeting prep', 'Deep coaching reports', 'Unlimited sessions', '8 scenarios'].map(f => (
                 <div key={f} className="flex items-center gap-2 mb-1.5">

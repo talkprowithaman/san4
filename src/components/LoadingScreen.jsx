@@ -4,7 +4,7 @@ export default function LoadingScreen() {
   return (
     <div
       className="min-h-screen flex items-center justify-center"
-      style={{ background: '#060E1A' }}
+      style={{ background: '#050810' }}
     >
       <div className="text-center animate-fade-in">
         {/* Vak floating */}

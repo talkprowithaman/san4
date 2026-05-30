@@ -30,7 +30,7 @@ const DRILL_META = {
     color:       '#6366F1',
     colorAlpha:  'rgba(99,102,241,0.12)',
     colorBorder: 'rgba(99,102,241,0.3)',
-    description: 'Bottom Line Up Front. You\'re given a complex situation — explain it starting with your conclusion. No preamble.',
+    description: 'Bottom Line Up Front. You\'re given a complex situation: explain it starting with your conclusion. No preamble.',
     instruction: 'Lead with the key takeaway. Then give context. Never bury the point.',
     timeLabel:   '60 seconds',
   },
@@ -40,7 +40,7 @@ const DRILL_META = {
     color:       '#F59E0B',
     colorAlpha:  'rgba(245,158,11,0.12)',
     colorBorder: 'rgba(245,158,11,0.3)',
-    description: 'A hard question — no warning. Answer on your feet. Trains your brain to think fast without freezing.',
+    description: 'A hard question with no warning. Answer on your feet. Trains your brain to think fast without freezing.',
     instruction: 'You have 5 seconds to start. Structure as you go. Don\'t panic — think out loud.',
     timeLabel:   '90 seconds',
   },
@@ -206,7 +206,7 @@ export default function MicroDrill() {
         score: 70, clarity: 70, confidence: 70, led_with_point: null,
         best_moment: null,
         one_fix: 'Be more specific in your examples.',
-        encouragement: 'Good effort — completing the drill is what matters. Keep going.',
+        encouragement: 'Good effort. Completing the drill is what matters. Keep going.',
       }
       const r = await awardXP(fallback.score)
       setReward(r)
@@ -223,7 +223,7 @@ export default function MicroDrill() {
   // ── PHASE: select ─────────────────────────────────────────────────────────
   if (phase === 'select') {
     return (
-      <div className="min-h-screen" style={{ background: '#060E1A' }}>
+      <div className="min-h-screen" style={{ background: '#050810' }}>
         <Navbar />
         <main className="max-w-2xl mx-auto px-4 py-8 animate-fade-in">
 
@@ -236,7 +236,7 @@ export default function MicroDrill() {
             </div>
             <h1 className="text-3xl font-black text-white">60-second skill sharpeners</h1>
             <p className="mt-1" style={{ color: '#6B8CAE' }}>
-              No scenario setup. No warmup. Just a real challenge — respond on the spot.
+              No scenario setup. No warmup. Respond on the spot.
             </p>
           </div>
 
@@ -255,7 +255,7 @@ export default function MicroDrill() {
                 onClick={() => pickDrill(type)}
                 className="text-left rounded-3xl p-6 transition-all hover:brightness-110 disabled:opacity-50"
                 style={{
-                  background: 'linear-gradient(145deg, #0F1E35, #091522)',
+                  background: 'rgba(255,255,255,0.04)',
                   border: `1px solid ${m.colorBorder}`,
                   boxShadow: `0 0 30px ${m.colorAlpha}`,
                 }}
@@ -291,7 +291,7 @@ export default function MicroDrill() {
   if (phase === 'ready') {
     const promptText = drillType === 'bluf' ? prompt.situation : prompt.question
     return (
-      <div className="min-h-screen flex flex-col" style={{ background: '#060E1A' }}>
+      <div className="min-h-screen flex flex-col" style={{ background: '#050810' }}>
         <Navbar />
         <main className="max-w-lg mx-auto px-4 py-8 flex-1 flex flex-col justify-center">
 
@@ -309,7 +309,7 @@ export default function MicroDrill() {
           <div
             className="rounded-3xl p-6 mb-6"
             style={{
-              background: 'linear-gradient(145deg, #0F1E35, #091522)',
+              background: 'rgba(255,255,255,0.04)',
               border: `1px solid ${meta.colorBorder}`,
             }}
           >
@@ -321,7 +321,7 @@ export default function MicroDrill() {
             {drillType === 'bluf' && (
               <div className="mt-4 pt-4 border-t" style={{ borderColor: 'rgba(255,255,255,0.08)' }}>
                 <p className="text-xs font-semibold" style={{ color: meta.color }}>
-                  Your task: Explain this situation to your leadership — lead with the bottom line.
+                  Your task: Explain this situation to your leadership. Lead with the bottom line.
                 </p>
               </div>
             )}
@@ -353,7 +353,7 @@ export default function MicroDrill() {
     const pct = Math.min(100, (seconds / maxSec) * 100)
     const promptText = drillType === 'bluf' ? prompt.situation : prompt.question
     return (
-      <div className="min-h-screen flex flex-col" style={{ background: '#060E1A' }}>
+      <div className="min-h-screen flex flex-col" style={{ background: '#050810' }}>
         <Navbar />
         <main className="max-w-lg mx-auto px-4 py-6 flex-1 flex flex-col">
 
@@ -408,7 +408,7 @@ export default function MicroDrill() {
             className="w-full py-3 rounded-2xl font-bold text-sm transition-all hover:opacity-90 disabled:opacity-40"
             style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.12)', color: 'white' }}
           >
-            Done — Submit →
+            Submit →
           </button>
         </main>
       </div>
@@ -418,7 +418,7 @@ export default function MicroDrill() {
   // ── PHASE: analyzing ──────────────────────────────────────────────────────
   if (phase === 'analyzing') {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center gap-6" style={{ background: '#060E1A' }}>
+      <div className="min-h-screen flex flex-col items-center justify-center gap-6" style={{ background: '#050810' }}>
         <div className="animate-float"><VakMascot level={3} size={90} /></div>
         <div className="text-center">
           <div className="text-white font-bold text-xl mb-2">Analysing your response…</div>
@@ -438,7 +438,7 @@ export default function MicroDrill() {
   if (phase === 'report' && report) {
     const promptText = drillType === 'bluf' ? prompt.situation : prompt.question
     return (
-      <div className="min-h-screen" style={{ background: '#060E1A' }}>
+      <div className="min-h-screen" style={{ background: '#050810' }}>
         <Navbar />
         <main className="max-w-lg mx-auto px-4 py-8 animate-slide-up">
 
@@ -462,7 +462,7 @@ export default function MicroDrill() {
               { label: 'Confidence', value: report.confidence, icon: '💪' },
             ].map(({ label, value, icon }) => (
               <div key={label} className="rounded-2xl p-4 text-center"
-                style={{ background: 'linear-gradient(145deg, #0F1E35, #091522)', border: `1px solid ${scoreColor(value)}30` }}>
+                style={{ background: 'rgba(255,255,255,0.04)', border: `1px solid ${scoreColor(value)}30` }}>
                 <div className="text-lg mb-1">{icon}</div>
                 <div className="text-2xl font-black" style={{ color: scoreColor(value) }}>{value}</div>
                 <div className="text-xs mt-0.5" style={{ color: '#6B8CAE' }}>{label}</div>

@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import Navbar from '../components/Navbar'
 import { useSubscription, FREE_SCENARIO_IDS } from '../hooks/useSubscription'
+import { useScrollReveal } from '../hooks/useScrollReveal'
 
 // ── Scenarios ─────────────────────────────────────────────────────────────────
 const SCENARIOS = [
@@ -10,8 +11,8 @@ const SCENARIOS = [
     id:         'hr_interview',
     icon:       '💼',
     title:      'HR Interview',
-    desc:       'Practise your HR round — strengths, weaknesses, situational questions.',
-    duration:   '10–15 min',
+    desc:       'Practise your HR round: strengths, weaknesses, situational questions.',
+    duration:   '10-15 min',
     difficulty: 1,
     tags:       ['Job seekers', 'Freshers'],
     glowColor:  'rgba(59,130,246,0.2)',
@@ -22,8 +23,8 @@ const SCENARIOS = [
     id:         'social_conversation',
     icon:       '💬',
     title:      'Intro Pitch',
-    desc:       'Practise introducing yourself confidently — networking events, new colleagues, first impressions.',
-    duration:   '5–10 min',
+    desc:       'Practise introducing yourself confidently. Networking events, new colleagues, first impressions.',
+    duration:   '5-10 min',
     difficulty: 1,
     tags:       ['Social confidence', 'Networking'],
     glowColor:  'rgba(16,185,129,0.2)',
@@ -35,7 +36,7 @@ const SCENARIOS = [
     icon:       '👥',
     title:      'Daily Standup',
     desc:       'Communicate your updates clearly, handle questions, and sound confident in team standups.',
-    duration:   '5–10 min',
+    duration:   '5-10 min',
     difficulty: 1,
     tags:       ['Team leads', 'Anyone'],
     glowColor:  'rgba(139,92,246,0.2)',
@@ -49,7 +50,7 @@ const SCENARIOS = [
     icon:       '💰',
     title:      'Salary Negotiation',
     desc:       'Negotiate your package confidently against an HR with budget constraints.',
-    duration:   '5–10 min',
+    duration:   '5-10 min',
     difficulty: 3,
     tags:       ['High stakes', 'All levels'],
     glowColor:  'rgba(245,158,11,0.2)',
@@ -61,7 +62,7 @@ const SCENARIOS = [
     icon:       '📊',
     title:      'Client Objections',
     desc:       'Present your proposal to a skeptical client and handle tough objections in real time.',
-    duration:   '10–20 min',
+    duration:   '10-20 min',
     difficulty: 2,
     tags:       ['Consultants', 'Sales'],
     glowColor:  'rgba(255,107,53,0.2)',
@@ -73,7 +74,7 @@ const SCENARIOS = [
     icon:       '⭐',
     title:      'Performance Review',
     desc:       'Talk about achievements and goals with your manager. Own your wins confidently.',
-    duration:   '10–15 min',
+    duration:   '10-15 min',
     difficulty: 2,
     tags:       ['Working professionals'],
     glowColor:  'rgba(0,196,154,0.2)',
@@ -85,7 +86,7 @@ const SCENARIOS = [
     icon:       '🗣️',
     title:      'Group Discussion',
     desc:       'Practise GD rounds for MBA admissions, consulting, and campus placements.',
-    duration:   '5–10 min',
+    duration:   '5-10 min',
     difficulty: 2,
     tags:       ['MBA aspirants', 'Placements'],
     glowColor:  'rgba(236,72,153,0.2)',
@@ -96,8 +97,8 @@ const SCENARIOS = [
     id:         'first_date',
     icon:       '❤️',
     title:      'First Date',
-    desc:       'Practise genuine, engaging conversation on a first date. No scripts — just you.',
-    duration:   '5–10 min',
+    desc:       'Practise genuine, engaging conversation on a first date. No scripts, just you.',
+    duration:   '5-10 min',
     difficulty: 2,
     tags:       ['Social confidence', 'Relationships'],
     glowColor:  'rgba(239,68,68,0.2)',
@@ -110,8 +111,8 @@ const SCENARIOS = [
     id:         'say_no_professionally',
     icon:       '🚫',
     title:      'Say No Professionally',
-    desc:       'Decline unreasonable requests from your boss or client — firm, polite, and without burning bridges.',
-    duration:   '5–10 min',
+    desc:       'Decline unreasonable requests from your boss or client, firmly, polite, no bridges burned.',
+    duration:   '5-10 min',
     difficulty: 2,
     tags:       ['Assertiveness', 'Workplace'],
     glowColor:  'rgba(239,68,68,0.18)',
@@ -123,7 +124,7 @@ const SCENARIOS = [
     icon:       '📈',
     title:      '2-Minute Leadership Update',
     desc:       'Give a sharp, no-fluff update to a senior VP or CXO. No rambling. Bottom line first.',
-    duration:   '5–8 min',
+    duration:   '5-8 min',
     difficulty: 2,
     tags:       ['Executive presence', 'Corporate'],
     glowColor:  'rgba(99,102,241,0.2)',
@@ -135,7 +136,7 @@ const SCENARIOS = [
     icon:       '🎯',
     title:      'Pitch to a Skeptic',
     desc:       'Convince a defensive, budget-conscious stakeholder. Handle objections with data and composure.',
-    duration:   '10–15 min',
+    duration:   '10-15 min',
     difficulty: 3,
     tags:       ['Influence', 'Sales', 'Strategy'],
     glowColor:  'rgba(245,158,11,0.2)',
@@ -147,7 +148,7 @@ const SCENARIOS = [
     icon:       '🤝',
     title:      'Cold Networking',
     desc:       'Walk up to a VIP at a professional event and make yourself genuinely memorable.',
-    duration:   '5–10 min',
+    duration:   '5-10 min',
     difficulty: 3,
     tags:       ['Networking', 'Career growth'],
     glowColor:  'rgba(0,196,154,0.2)',
@@ -158,8 +159,8 @@ const SCENARIOS = [
     id:         'conflict_mediation',
     icon:       '⚖️',
     title:      'Conflict Mediation',
-    desc:       'Two colleagues are fighting. You\'re the team lead — de-escalate without taking sides.',
-    duration:   '10–15 min',
+    desc:       'Two colleagues are fighting. You\'re the team lead, de-escalate without taking sides.',
+    duration:   '10-15 min',
     difficulty: 3,
     tags:       ['Leadership', 'Team dynamics'],
     glowColor:  'rgba(139,92,246,0.2)',
@@ -170,8 +171,8 @@ const SCENARIOS = [
     id:         'sensitive_conversation',
     icon:       '💬',
     title:      'Sensitive Conversation',
-    desc:       'Raise a difficult topic — feedback, a personal issue, or an uncomfortable truth — with empathy.',
-    duration:   '5–10 min',
+    desc:       'Raise a difficult topic: feedback, a personal issue, or an uncomfortable truth, with empathy.',
+    duration:   '5-10 min',
     difficulty: 2,
     tags:       ['EQ', 'Relationships', 'Workplace'],
     glowColor:  'rgba(236,72,153,0.2)',
@@ -202,7 +203,7 @@ function UpgradeModal({ reason, onClose }) {
       <div
         className="relative max-w-sm w-full rounded-3xl p-7 animate-slide-up"
         style={{
-          background: 'linear-gradient(145deg, #0F1E35, #091522)',
+          background: 'rgba(255,255,255,0.04)',
           border: '1px solid rgba(255,107,53,0.35)',
           boxShadow: '0 0 60px rgba(255,107,53,0.15)',
         }}
@@ -222,7 +223,7 @@ function UpgradeModal({ reason, onClose }) {
           style={{ background: 'rgba(255,107,53,0.07)', border: '1px solid rgba(255,107,53,0.2)' }}
         >
           <p className="text-xs font-bold uppercase tracking-widest mb-3" style={{ color: '#FF6B35' }}>
-            Vak Pro — ₹299/month
+            Vak Pro · ₹299/month
           </p>
           {[
             'Unlimited sessions',
@@ -268,6 +269,7 @@ export default function Practice() {
     weeklySessionCount,
   } = useSubscription()
 
+  useScrollReveal()
   const [upgradeModal, setUpgradeModal] = useState(null) // null | string (reason)
 
   function startSession(scenario) {
@@ -284,7 +286,7 @@ export default function Practice() {
     // Gate: weekly session limit (free users only)
     if (!isPro && !canStartSession) {
       setUpgradeModal(
-        `You've used all 3 free sessions this week. Upgrade to Vak Pro for unlimited practice — every day, any scenario.`
+        `You've used all 3 free sessions this week. Upgrade to Vak Pro for unlimited practice every day, any scenario.`
       )
       return
     }
@@ -296,7 +298,7 @@ export default function Practice() {
   const proSessions   = SCENARIOS.filter(s => s.tier === 'pro')
 
   return (
-    <div className="min-h-screen" style={{ background: '#060E1A' }}>
+    <div className="min-h-screen" style={{ background: '#050810' }}>
 
       {/* Background */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden">
@@ -338,7 +340,7 @@ export default function Practice() {
               <span style={{ color: canStartSession ? '#00C49A' : '#F87171' }}>
                 {canStartSession
                   ? `${sessionsRemaining} free session${sessionsRemaining !== 1 ? 's' : ''} left this week`
-                  : 'Weekly limit reached — resets Sunday'}
+                  : 'Weekly limit reached. Resets Sunday'}
               </span>
               <span className="text-xs" style={{ color: '#6B8CAE' }}>
                 ({weeklySessionCount}/3 used)
@@ -354,15 +356,15 @@ export default function Practice() {
           </div>
         )}
 
-        {/* ── Free tier scenarios ──────────────────────────────────────────── */}
-        <div className="mb-3 flex items-center gap-3">
-          <div className="text-xs font-bold uppercase tracking-widest" style={{ color: '#6B8CAE' }}>
-            🆓 Vak's Nest — Free
+        {/* Free tier scenarios */}
+        <div className="mb-3 flex items-center gap-3 reveal">
+          <div className="text-xs font-bold uppercase tracking-widest" style={{ color: 'rgba(255,255,255,0.3)' }}>
+            Free
           </div>
-          <div className="flex-1 h-px" style={{ background: 'rgba(255,255,255,0.07)' }} />
+          <div className="flex-1 h-px" style={{ background: 'rgba(255,255,255,0.06)' }} />
         </div>
 
-        <div className="grid md:grid-cols-3 gap-4 mb-8">
+        <div className="grid md:grid-cols-3 gap-4 mb-8 reveal reveal-d1">
           {freeSessions.map(s => (
             <ScenarioCard
               key={s.id}
@@ -377,7 +379,7 @@ export default function Practice() {
         {/* ── Pro tier scenarios ───────────────────────────────────────────── */}
         <div className="mb-3 flex items-center gap-3">
           <div className="text-xs font-bold uppercase tracking-widest" style={{ color: '#FF6B35' }}>
-            ⚡ Vak Pro — ₹299/month
+            ⚡ Vak Pro · ₹299/month
           </div>
           <div className="flex-1 h-px" style={{ background: 'rgba(255,255,255,0.07)' }} />
           {!isPro && (
@@ -417,7 +419,7 @@ export default function Practice() {
               <h3 className="text-white font-black text-lg mb-1">Unlock all 8 scenarios with Vak Pro</h3>
               <p className="text-sm" style={{ color: '#6B8CAE' }}>
                 Salary negotiation, client objections, performance reviews, GD rounds + deep coaching reports.
-                ₹299/month — cancel anytime.
+                ₹299/month, cancel anytime.
               </p>
             </div>
             <Link to="/pricing" className="btn-primary text-sm py-3 px-6 shrink-0">
@@ -453,7 +455,7 @@ export default function Practice() {
             <div className="flex-1 min-w-0">
               <div className="text-white font-black text-sm mb-0.5">Teleprompter Mode</div>
               <div className="text-xs" style={{ color: '#6B8CAE' }}>
-                Read real scripts aloud — Vak catches fillers, pauses, and pace live
+                Read real scripts aloud. Vak catches fillers, pauses, and pace live
               </div>
             </div>
             <span style={{ color: '#A78BFA', fontSize: '1.1rem' }}>→</span>
@@ -477,7 +479,7 @@ export default function Practice() {
             <div className="flex-1 min-w-0">
               <div className="text-white font-black text-sm mb-0.5">Micro-Drills</div>
               <div className="text-xs" style={{ color: '#6B8CAE' }}>
-                60–90 sec drills — BLUF briefings &amp; unexpected questions, instant AI feedback
+                60-90 sec drills: BLUF briefings &amp; unexpected questions, instant AI feedback
               </div>
             </div>
             <span style={{ color: '#F59E0B', fontSize: '1.1rem' }}>→</span>
@@ -487,7 +489,7 @@ export default function Practice() {
         {/* Bottom tip */}
         <div
           className="rounded-2xl px-5 py-4 flex items-start gap-3"
-          style={{ background: 'linear-gradient(135deg, #0F1E35, #091522)', border: '1px solid rgba(255,255,255,0.06)' }}
+          style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)' }}
         >
           <span className="text-xl">💡</span>
           <div>

@@ -46,9 +46,9 @@ function scoreColor(s) {
 }
 function wpmLabel(wpm) {
   if (!wpm) return null
-  if (wpm < 100) return { text: `${wpm} WPM — too slow`, color: '#F87171' }
-  if (wpm > 180) return { text: `${wpm} WPM — too fast`, color: '#F59E0B' }
-  return { text: `${wpm} WPM — good pace`, color: '#00C49A' }
+  if (wpm < 100) return { text: `${wpm} WPM · too slow`, color: '#F87171' }
+  if (wpm > 180) return { text: `${wpm} WPM · too fast`, color: '#F59E0B' }
+  return { text: `${wpm} WPM · good pace`, color: '#00C49A' }
 }
 
 // ── Main component ────────────────────────────────────────────────────────────
@@ -487,19 +487,19 @@ export default function PracticeSession() {
 
   // ── SETUP SCREEN ──────────────────────────────────────────────────────────
   if (!setupDone) return (
-    <div className="min-h-screen flex flex-col" style={{ background: '#060E1A' }}>
+    <div className="min-h-screen flex flex-col" style={{ background: '#050810' }}>
       <Navbar />
       <main className="flex-1 flex flex-col items-center justify-center px-4 py-8 max-w-lg mx-auto w-full animate-fade-in">
 
         {/* Scenario card */}
         <div
           className="w-full rounded-3xl p-6 mb-6 text-center"
-          style={{ background: 'linear-gradient(145deg, #0F1E35, #091522)', border: '1px solid rgba(255,255,255,0.08)' }}
+          style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}
         >
           <div className="text-5xl mb-3">{scenario.icon || '🎭'}</div>
           <h1 className="text-xl font-black text-white mb-1">{scenario.title}</h1>
           <p className="text-sm" style={{ color: '#6B8CAE' }}>
-            Vak plays the other person. Speak naturally — your voice is recorded and analysed.
+            Vak plays the other person. Speak naturally. Your voice is recorded and analysed.
           </p>
         </div>
 
@@ -527,7 +527,7 @@ export default function PracticeSession() {
           {lang !== 'en-US' && (
             <p className="text-xs mt-2 px-3 py-2 rounded-xl"
               style={{ background: 'rgba(245,158,11,0.08)', color: '#F59E0B', border: '1px solid rgba(245,158,11,0.2)' }}>
-              🇮🇳 ESL mode auto-enabled — Vak won't penalise Indian English or code-switching.
+              🇮🇳 ESL mode on. Vak won't penalise Indian English or code-switching.
             </p>
           )}
         </div>
@@ -540,7 +540,7 @@ export default function PracticeSession() {
           <div>
             <div className="text-white font-semibold text-sm">ESL / Indian English mode</div>
             <div className="text-xs mt-0.5" style={{ color: '#6B8CAE' }}>
-              Adapts feedback for non-native speakers — no grammar penalties
+              Adapts feedback for non-native speakers, no grammar penalties
             </div>
           </div>
           <button
@@ -559,8 +559,8 @@ export default function PracticeSession() {
         {/* Quick tips */}
         <div className="w-full mb-6 space-y-2">
           {[
-            { icon: '🎤', text: 'Tap the mic to speak — Vak listens and responds' },
-            { icon: '🔴', text: 'Your audio is always recorded — even if text doesn\'t appear' },
+            { icon: '🎤', text: 'Tap the mic to speak. Vak listens and responds' },
+            { icon: '🔴', text: 'Your audio is always recorded, even if text doesn\'t appear' },
             { icon: '🏁', text: 'Say "end session" or tap End → when you\'re done' },
           ].map(({ icon, text }) => (
             <div
@@ -585,13 +585,13 @@ export default function PracticeSession() {
   )
 
   if (analyzing) return (
-    <div className="min-h-screen flex items-center justify-center" style={{ background: '#060E1A' }}>
+    <div className="min-h-screen flex items-center justify-center" style={{ background: '#050810' }}>
       <div className="text-center animate-fade-in">
         <div className="flex justify-center mb-4 animate-float">
           <VakMascot level={3} size={100} />
         </div>
         <h2 className="text-white font-bold text-xl mb-2">Vak is reviewing your session…</h2>
-        <p className="text-sm" style={{ color: '#6B8CAE' }}>Checking filler words, pacing, confidence — building your report.</p>
+        <p className="text-sm" style={{ color: '#6B8CAE' }}>Checking filler words, pacing, confidence. Building your report.</p>
         <div className="flex gap-2 justify-center mt-5">
           {[0,1,2].map(i => (
             <div key={i} className="w-2 h-2 rounded-full animate-bounce"
@@ -603,7 +603,7 @@ export default function PracticeSession() {
   )
 
   if (report) return (
-    <div className="min-h-screen" style={{ background: '#060E1A' }}>
+    <div className="min-h-screen" style={{ background: '#050810' }}>
       <Navbar />
       <main className="max-w-2xl mx-auto px-4 py-8 animate-slide-up">
 
@@ -673,7 +673,7 @@ export default function PracticeSession() {
           )}
           <p className="text-xs mt-2" style={{ color: '#6B8CAE' }}>
             {report.filler_word_count === 0
-              ? '🎉 No filler words detected — excellent!'
+              ? '🎉 No filler words detected. Excellent!'
               : report.filler_word_count <= 5
               ? 'Good control. Keep it up.'
               : 'Filler words reduce perceived confidence. Pause instead of filling silence.'}
@@ -697,7 +697,7 @@ export default function PracticeSession() {
                   "{report.transcript}"
                 </p>
                 <p className="text-xs mt-2" style={{ color: '#6B8CAE' }}>
-                  This is Gemini's transcription of your audio — used to generate the feedback above.
+                  This is Gemini's transcription of your audio, used to generate the feedback above.
                 </p>
               </div>
             </div>
@@ -753,7 +753,7 @@ export default function PracticeSession() {
   const lastAiMsg = [...messages].reverse().find(m => m.role === 'ai')
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ background: '#060E1A' }}>
+    <div className="min-h-screen flex flex-col" style={{ background: '#050810' }}>
       <Navbar />
 
       {/* Session header */}
@@ -939,7 +939,7 @@ export default function PracticeSession() {
               ) : (
                 <p className="text-sm italic" style={{ color: 'rgba(107,140,174,0.6)' }}>
                   {listening
-                    ? 'Speak now — your words will appear here…'
+                    ? 'Speak now — your words will appear here'
                     : 'Tap the mic below and start speaking'}
                 </p>
               )}
@@ -968,7 +968,7 @@ export default function PracticeSession() {
             </button>
             <p className="text-xs text-center" style={{ color: '#6B8CAE' }}>
               {listening
-                ? 'Tap to stop & send — or pause for 2 seconds to auto-send'
+                ? 'Tap to stop & send, or pause for 2 seconds to auto-send'
                 : 'Tap to speak · your voice is always recorded for analysis'}
             </p>
 

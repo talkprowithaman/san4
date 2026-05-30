@@ -22,7 +22,7 @@ const PLANS = [
     features: [
       { text: '3 practice sessions per week',              included: true  },
       { text: '3 scenarios (HR, Intro Pitch, Standup)',    included: true  },
-      { text: 'Basic feedback — filler words & pacing',    included: true  },
+      { text: 'Basic feedback: filler words & pacing',    included: true  },
       { text: 'Streaks, XP & levels',                     included: true  },
       { text: "Vak's daily check-ins",                    included: true  },
       { text: 'Leaderboard',                               included: true  },
@@ -79,7 +79,7 @@ const PLANS = [
     features: [
       { text: 'Everything in Vak Pro',                     included: true  },
       { text: 'Monthly 1:1 with a human coach',            included: true  },
-      { text: 'Industry packs — BFSI, Consulting, Sales',  included: true  },
+      { text: 'Industry packs: BFSI, Consulting, Sales',  included: true  },
       { text: 'MBA GD + personal interview prep',          included: true  },
       { text: 'Priority support',                          included: true  },
     ],
@@ -114,7 +114,7 @@ export default function Pricing() {
   const isLoggedIn = !!user
 
   return (
-    <div className="min-h-screen" style={{ background: '#060E1A' }}>
+    <div className="min-h-screen" style={{ background: '#050810' }}>
 
       {/* Fixed background glows */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden">
@@ -165,7 +165,7 @@ export default function Pricing() {
             Choose your path with Vak
           </h1>
           <p className="text-lg max-w-xl mx-auto" style={{ color: '#6B8CAE' }}>
-            Start free — no card needed. Upgrade when you're ready to go deeper.
+            Start free, no card needed. Upgrade when you're ready to go deeper.
           </p>
 
           {/* Founding offer banner */}
@@ -173,7 +173,7 @@ export default function Pricing() {
             className="inline-flex items-center gap-2 mt-5 px-5 py-2.5 rounded-2xl text-sm font-semibold"
             style={{ background: 'rgba(245,158,11,0.1)', border: '1px solid rgba(245,158,11,0.25)', color: '#F59E0B' }}
           >
-            🎉 Early Bird Offer — Pro at ₹299 instead of ₹399. Lock it in before we scale.
+            🎉 Early Bird: Pro at ₹299 instead of ₹399. Lock it in before we scale.
           </div>
         </div>
 
@@ -267,7 +267,7 @@ function PlanCard({ plan, isCurrent, onCta }) {
     <div
       className="rounded-3xl p-6 relative flex flex-col"
       style={{
-        background: `linear-gradient(145deg, #0F1E35 0%, #091522 100%)`,
+        background: `rgba(255,255,255,0.04)`,
         border: `1px solid ${plan.border}`,
         boxShadow: plan.popular ? `0 0 60px ${plan.glow}, 0 0 0 1px ${plan.border}` : `0 0 30px ${plan.glow}`,
         opacity: plan.comingSoon ? 0.8 : 1,
