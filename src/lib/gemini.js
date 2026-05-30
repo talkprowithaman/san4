@@ -296,52 +296,75 @@ Return JSON only (no markdown, no code fences):
   }
 }
 
+// ── Audio model — gemini-1.5-flash is the stable model with confirmed audio support ──
+// gemini-flash-latest is a text alias and may not handle inline audio blobs.
+const AUDIO_MODEL = 'gemini-1.5-flash'
+
+// ── Regional language map ────────────────────────────────────────────────────
+export const LANGUAGES = [
+  { code: 'en-US', label: 'English',  nativeName: 'English',  flag: '🌐' },
+  { code: 'hi-IN', label: 'Hindi',    nativeName: 'हिंदी',    flag: '🇮🇳' },
+  { code: 'mr-IN', label: 'Marathi',  nativeName: 'मराठी',    flag: '🇮🇳' },
+  { code: 'te-IN', label: 'Telugu',   nativeName: 'తెలుగు',   flag: '🇮🇳' },
+  { code: 'bn-IN', label: 'Bengali',  nativeName: 'বাংলা',    flag: '🇮🇳' },
+  { code: 'ta-IN', label: 'Tamil',    nativeName: 'தமிழ்',    flag: '🇮🇳' },
+  { code: 'kn-IN', label: 'Kannada',  nativeName: 'ಕನ್ನಡ',   flag: '🇮🇳' },
+]
+
+function langNote(langCode) {
+  if (!langCode || langCode === 'en-US') return ''
+  const lang = LANGUAGES.find(l => l.code === langCode)
+  const name = lang?.label || 'an Indian language'
+  return `\n\nIMPORTANT: The user is speaking in ${name}. Transcribe their speech as-is. Evaluate their spoken communication in ${name} — fluency, confidence, filler words, and pacing all apply equally. Your JSON values (scores, strengths, improvements, summary, action_item) should be written in English so they're readable in the app UI.`
+}
+
 // ── Audio-based session analysis ─────────────────────────────────────────────
-// Used when Web Speech API fails or as the primary analysis path.
-// Gemini receives the raw audio, transcribes it, and coaches in one call.
-export async function analyzeSessionFromAudio(scenarioTitle, audioBase64, mimeType = 'audio/webm') {
-  const model  = genAI.getGenerativeModel({ model: MODEL })
+// Gemini receives raw audio, transcribes + coaches in one call.
+// Uses gemini-1.5-flash (NOT the gemini-flash-latest alias) — confirmed audio support.
+export async function analyzeSessionFromAudio(scenarioTitle, audioBase64, mimeType = 'audio/webm', lang = 'en-US') {
+  const model  = genAI.getGenerativeModel({ model: AUDIO_MODEL })
   const prompt = `You are a professional communication coach.
 Listen to this audio recording from a "${scenarioTitle}" practice session.
-The user was practising spoken communication. Ignore any AI/automated voice you hear — focus only on the human speaker.
+Focus only on the human speaker. Ignore any AI/TTS voice you may hear.${langNote(lang)}
 
-Transcribe what the human said, then analyse their spoken communication.
+First, transcribe exactly what the human speaker said.
+Then analyse their spoken communication quality.
 
 Return JSON only (no markdown, no code fences):
 {
+  "transcript": "exact transcription of what the human speaker said",
   "overall_score": <integer 0-100>,
-  "confidence_score": <integer 0-100, based on pace, clarity, hedging>,
-  "pacing_score": <integer 0-100, based on WPM and flow>,
+  "confidence_score": <integer 0-100>,
+  "pacing_score": <integer 0-100>,
   "filler_word_count": <integer count of um/uh/ah/like/basically/you know>,
-  "top_filler_words": ["list", "of", "fillers"],
-  "strengths": ["specific observation from what they said"],
-  "improvements": ["specific improvement with example from what they said"],
-  "action_item": "One precise, actionable drill for next session",
-  "summary": "2-sentence honest assessment — cite something specific they said",
+  "top_filler_words": ["list", "of", "actual", "fillers", "used"],
+  "strengths": ["specific observation citing something they actually said"],
+  "improvements": ["specific improvement with an example from what they said"],
+  "action_item": "One precise, actionable drill for their next session",
+  "summary": "2-sentence honest coaching assessment — cite something specific they said",
   "pacing_note": "One sentence on their speaking pace and what to adjust"
 }`
 
-  const result = await model.generateContent([
-    { inlineData: { mimeType, data: audioBase64 } },
-    { text: prompt },
-  ])
-  const text = result.response.text().trim()
   try {
+    const result = await model.generateContent([
+      { inlineData: { mimeType, data: audioBase64 } },
+      { text: prompt },
+    ])
+    const text = result.response.text().trim()
     return JSON.parse(text.replace(/^```json\s*/i, '').replace(/\s*```$/i, ''))
-  } catch {
-    return null
+  } catch (err) {
+    console.warn('analyzeSessionFromAudio failed:', err.message)
+    return null   // caller falls back to text-based analysis
   }
 }
 
 // ── Audio-based script-reading analysis ───────────────────────────────────────
-// Primary analysis for ScriptReading — Gemini hears the audio directly,
-// compares it to the original script, and coaches the user.
 export async function analyzeScriptReadingFromAudio(
-  scriptTitle, scriptText, audioBase64, mimeType = 'audio/webm'
+  scriptTitle, scriptText, audioBase64, mimeType = 'audio/webm', lang = 'en-US'
 ) {
-  const model  = genAI.getGenerativeModel({ model: MODEL })
+  const model  = genAI.getGenerativeModel({ model: AUDIO_MODEL })
   const prompt = `You are a professional voice and speech coach.
-Listen to this audio of someone reading a script aloud.
+Listen to this audio of someone reading a script aloud.${langNote(lang)}
 
 SCRIPT TITLE: "${scriptTitle}"
 ORIGINAL SCRIPT:
@@ -349,38 +372,40 @@ ORIGINAL SCRIPT:
 ${scriptText}
 ---
 
-Compare what they actually said against the script above. Evaluate:
+Compare what they actually said against the script. Evaluate:
 1. ACCURACY — did they follow the script or skip/change key phrases?
-2. FLUENCY — smooth, natural delivery without unnatural hesitations or false starts?
-3. PACING — ideal is 120–150 WPM for most scripts; IPL/sports commentary can be faster
+2. FLUENCY — smooth delivery without hesitations or false starts?
+3. PACING — ideal is 120–150 WPM for most scripts; IPL/sports commentary faster
 4. FILLER WORDS — um, uh, ah, hmm, "you know", "basically", "I mean", "sort of"
-5. LONG PAUSES — gaps of 2+ seconds mid-sentence (nervous) vs deliberate dramatic pauses (good)
+5. LONG PAUSES — nervous gaps (>2s) vs deliberate dramatic pauses
 
 Return JSON only (no markdown, no code fences):
 {
+  "transcript": "exact transcription of what they said",
   "overall_score": <integer 0-100>,
   "accuracy_score": <integer 0-100>,
   "fluency_score": <integer 0-100>,
   "pacing_score": <integer 0-100>,
   "filler_word_count": <integer>,
   "top_filler_words": ["um", "uh", ...],
-  "missed_phrases": ["key phrases from script they skipped or significantly changed"],
-  "pause_note": "One sentence on their pausing pattern — deliberate or nervous?",
+  "missed_phrases": ["key phrases from script they skipped or changed"],
+  "pause_note": "One sentence on their pausing — nervous or deliberate?",
   "pacing_note": "One sentence on speaking speed with WPM estimate",
   "strengths": ["specific observed strength from their reading"],
   "improvements": ["specific improvement with example from their reading"],
-  "action_item": "One precise drill to do before the next reading session",
-  "summary": "2-sentence honest coaching assessment — cite specifics from their reading"
+  "action_item": "One precise drill before the next reading session",
+  "summary": "2-sentence honest assessment — cite specifics from their reading"
 }`
 
-  const result = await model.generateContent([
-    { inlineData: { mimeType, data: audioBase64 } },
-    { text: prompt },
-  ])
-  const text = result.response.text().trim()
   try {
+    const result = await model.generateContent([
+      { inlineData: { mimeType, data: audioBase64 } },
+      { text: prompt },
+    ])
+    const text = result.response.text().trim()
     return JSON.parse(text.replace(/^```json\s*/i, '').replace(/\s*```$/i, ''))
-  } catch {
+  } catch (err) {
+    console.warn('analyzeScriptReadingFromAudio failed:', err.message)
     return null
   }
 }

@@ -3,7 +3,7 @@ import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import { useAuth }     from '../hooks/useAuth'
 import { useProgress } from '../hooks/useProgress'
 import { supabase }    from '../lib/supabase'
-import { sendPracticeMessage, analyzeSession, analyzeSessionFromAudio } from '../lib/gemini'
+import { sendPracticeMessage, analyzeSession, analyzeSessionFromAudio, LANGUAGES } from '../lib/gemini'
 import Navbar      from '../components/Navbar'
 import RewardCard  from '../components/RewardCard'
 import VakMascot   from '../components/VakMascot'
@@ -89,6 +89,17 @@ export default function PracticeSession() {
       return next
     })
   }
+
+  // ── Language state ─────────────────────────────────────────────────────────
+  const [lang, setLang] = useState(() => {
+    try { return localStorage.getItem('san4_lang') || 'en-US' } catch { return 'en-US' }
+  })
+  const langRef = useRef(lang)
+
+  useEffect(() => {
+    langRef.current = lang
+    try { localStorage.setItem('san4_lang', lang) } catch {}
+  }, [lang])
 
   // ── Text mode state ───────────────────────────────────────────────────────
   const [textInput, setTextInput] = useState('')
@@ -258,6 +269,9 @@ export default function PracticeSession() {
   function startListening() {
     if (!recRef.current || listening) return
 
+    // Apply the currently selected language before (re-)starting
+    recRef.current.lang = langRef.current
+
     // Stop Vak's TTS immediately — user wants to speak
     window.speechSynthesis?.cancel()
     setVakSpeaking(false)
@@ -416,7 +430,7 @@ export default function PracticeSession() {
       if (!hasUserMessages && audioPayload) {
         // Primary path: audio-first analysis — STT didn't work but we have the recording
         analysis = await analyzeSessionFromAudio(
-          scenario.title, audioPayload.base64, audioPayload.mimeType
+          scenario.title, audioPayload.base64, audioPayload.mimeType, lang
         )
       }
 
@@ -566,6 +580,24 @@ export default function PracticeSession() {
           <p className="text-sm leading-relaxed" style={{ color: '#94A3B8' }}>{report.summary}</p>
         </div>
 
+        {/* What Vak heard — transcript from audio analysis */}
+        {report.transcript && (
+          <div className="card mb-4" style={{ background: 'rgba(0,196,154,0.05)', border: '1px solid rgba(0,196,154,0.2)' }}>
+            <div className="flex gap-3 items-start">
+              <span className="text-xl shrink-0">📝</span>
+              <div className="flex-1">
+                <h3 className="text-white font-semibold text-sm mb-2">What Vak heard</h3>
+                <p className="text-sm leading-relaxed italic" style={{ color: '#94A3B8' }}>
+                  "{report.transcript}"
+                </p>
+                <p className="text-xs mt-2" style={{ color: '#6B8CAE' }}>
+                  This is Gemini's transcription of your audio — used to generate the feedback above.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Strengths + improvements */}
         <div className="grid md:grid-cols-2 gap-3 mb-4">
           <div className="card">
@@ -633,6 +665,27 @@ export default function PracticeSession() {
           </div>
         </div>
         <div className="flex items-center gap-2">
+          {/* Language selector */}
+          <select
+            value={lang}
+            onChange={e => setLang(e.target.value)}
+            title="Choose your speaking language"
+            className="text-xs px-2 py-1.5 rounded-full transition-all cursor-pointer"
+            style={{
+              background: lang !== 'en-US' ? 'rgba(245,158,11,0.12)' : 'rgba(255,255,255,0.07)',
+              color:      lang !== 'en-US' ? '#F59E0B' : '#6B8CAE',
+              border:     `1px solid ${lang !== 'en-US' ? 'rgba(245,158,11,0.3)' : 'rgba(255,255,255,0.1)'}`,
+              WebkitAppearance: 'none',
+              appearance: 'none',
+            }}
+          >
+            {LANGUAGES.map(l => (
+              <option key={l.code} value={l.code} style={{ background: '#0F1E35', color: '#E2E8F0' }}>
+                {l.flag} {l.nativeName}
+              </option>
+            ))}
+          </select>
+
           {/* ESL mode toggle */}
           <button
             onClick={toggleEsl}

@@ -4,7 +4,7 @@ import { useAuth }         from '../hooks/useAuth'
 import { useProgress }     from '../hooks/useProgress'
 import { useSubscription } from '../hooks/useSubscription'
 import { supabase }        from '../lib/supabase'
-import { analyzeScriptReading, analyzeScriptReadingFromAudio } from '../lib/gemini'
+import { analyzeScriptReading, analyzeScriptReadingFromAudio, LANGUAGES } from '../lib/gemini'
 import { SCRIPTS }         from '../lib/scripts'
 import Navbar              from '../components/Navbar'
 import VakMascot           from '../components/VakMascot'
@@ -84,6 +84,17 @@ export default function ScriptReading() {
   const [pauseCount,  setPauseCount]  = useState(0)
   const [wpm,         setWpm]         = useState(0)
   const [seconds,     setSeconds]     = useState(0)
+
+  // ── Language state ────────────────────────────────────────────────────────
+  const [lang, setLang] = useState(() => {
+    try { return localStorage.getItem('san4_lang') || 'en-US' } catch { return 'en-US' }
+  })
+  const langRef = useRef(lang)
+
+  useEffect(() => {
+    langRef.current = lang
+    try { localStorage.setItem('san4_lang', lang) } catch {}
+  }, [lang])
 
   // ── Report state ──────────────────────────────────────────────────────────
   const [report, setReport] = useState(null)
@@ -279,6 +290,7 @@ export default function ScriptReading() {
 
   function startListening() {
     if (!recRef.current) return
+    recRef.current.lang = langRef.current  // apply selected language
     try { recRef.current.start(); isListeningRef.current = true } catch (_) {}
   }
 
@@ -327,6 +339,7 @@ export default function ScriptReading() {
           script.text,
           audioPayload.base64,
           audioPayload.mimeType,
+          lang,
         )
       }
 
@@ -418,6 +431,26 @@ export default function ScriptReading() {
               Pick a script or paste your own. Read it aloud — Vak records your voice and gives you
               detailed coaching on accuracy, fluency, pacing, and filler words.
             </p>
+
+            {/* ── Language picker ── */}
+            <div className="flex flex-wrap items-center gap-2 mt-4">
+              <span className="text-xs font-semibold" style={{ color: '#6B8CAE' }}>🌐 Reading in:</span>
+              {LANGUAGES.map(l => (
+                <button
+                  key={l.code}
+                  onClick={() => setLang(l.code)}
+                  className="text-xs px-3 py-1.5 rounded-full transition-all font-semibold"
+                  style={{
+                    background: lang === l.code ? 'rgba(139,92,246,0.2)'   : 'rgba(255,255,255,0.05)',
+                    color:      lang === l.code ? '#A78BFA'                 : '#6B8CAE',
+                    border:     `1px solid ${lang === l.code ? 'rgba(139,92,246,0.5)' : 'rgba(255,255,255,0.1)'}`,
+                  }}
+                >
+                  {l.flag} {l.nativeName}
+                </button>
+              ))}
+            </div>
+
             {!VOICE_OK && (
               <div className="mt-4 px-4 py-3 rounded-2xl text-sm"
                 style={{ background: 'rgba(239,68,68,0.1)', color: '#F87171', border: '1px solid rgba(239,68,68,0.2)' }}>
@@ -858,6 +891,24 @@ export default function ScriptReading() {
               <p className="text-sm leading-relaxed" style={{ color: '#E2E8F0' }}>{report.summary}</p>
             </div>
           </div>
+
+          {/* What Vak heard — transcript from Gemini audio analysis */}
+          {report.transcript && (
+            <div className="card mb-4" style={{ background: 'rgba(0,196,154,0.05)', border: '1px solid rgba(0,196,154,0.2)' }}>
+              <div className="flex gap-3 items-start">
+                <span className="text-xl shrink-0">📝</span>
+                <div className="flex-1">
+                  <h3 className="text-white font-semibold text-sm mb-2">What Vak heard</h3>
+                  <p className="text-sm leading-relaxed italic" style={{ color: '#94A3B8' }}>
+                    "{report.transcript}"
+                  </p>
+                  <p className="text-xs mt-2" style={{ color: '#6B8CAE' }}>
+                    Gemini's transcription of your reading — the basis for accuracy and fluency scores.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Filler words */}
           <div className="card mb-4">
