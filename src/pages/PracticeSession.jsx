@@ -494,7 +494,7 @@ export default function PracticeSession() {
         {/* Scenario card */}
         <div
           className="w-full rounded-3xl p-6 mb-6 text-center"
-          style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}
+          style={{ background: 'linear-gradient(160deg, #10192E 0%, #0B1220 100%)', border: '1px solid rgba(255,255,255,0.08)' }}
         >
           <div className="text-5xl mb-3">{scenario.icon || '🎭'}</div>
           <h1 className="text-xl font-black text-white mb-1">{scenario.title}</h1>
@@ -535,7 +535,7 @@ export default function PracticeSession() {
         {/* ESL toggle */}
         <div
           className="w-full mb-5 flex items-center justify-between p-4 rounded-2xl"
-          style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}
+          style={{ background: 'linear-gradient(160deg, #10192E 0%, #0B1220 100%)', border: '1px solid rgba(255,255,255,0.07)' }}
         >
           <div>
             <div className="text-white font-semibold text-sm">ESL / Indian English mode</div>
@@ -898,7 +898,7 @@ export default function PracticeSession() {
             {lastAiMsg && (
               <div
                 className="w-full rounded-2xl px-5 py-4 mb-4"
-                style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}
+                style={{ background: 'linear-gradient(160deg, #10192E 0%, #0B1220 100%)', border: '1px solid rgba(255,255,255,0.08)' }}
               >
                 <div className="text-xs mb-2 font-semibold" style={{ color: '#6B8CAE' }}>🦢 Vak says</div>
                 <p className="text-white text-sm leading-relaxed">{lastAiMsg.content}</p>

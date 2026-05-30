@@ -40,7 +40,7 @@ export default function AuthCallback() {
     >
       <div
         className="max-w-sm w-full text-center rounded-2xl p-10"
-        style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.10)' }}
+        style={{ background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.10)' }}
       >
         {status === 'verifying' && (
           <>

@@ -33,7 +33,7 @@ export default function Auth() {
     <div className="min-h-screen flex items-center justify-center px-4"
       style={{ background: '#050810' }}>
       <div className="max-w-md w-full text-center rounded-3xl p-10"
-        style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
+        style={{ background: 'linear-gradient(160deg, #10192E 0%, #0B1220 100%)', border: '1px solid rgba(255,255,255,0.08)' }}>
         <div className="text-5xl mb-5">📧</div>
         <h2 className="text-white font-black text-xl mb-3">Check your inbox</h2>
         <p className="text-sm leading-relaxed" style={{ color: '#6B8CAE' }}>
@@ -93,14 +93,14 @@ export default function Auth() {
         <div
           className="rounded-3xl p-6 sm:p-8 animate-slide-up"
           style={{
-            background: 'rgba(255,255,255,0.04)',
+            background: 'linear-gradient(160deg, #10192E 0%, #0B1220 100%)',
             border: '1px solid rgba(255,255,255,0.08)',
           }}
         >
           {/* Tab toggle */}
           <div
             className="flex rounded-2xl p-1 mb-7"
-            style={{ background: 'rgba(255,255,255,0.04)' }}
+            style={{ background: 'linear-gradient(160deg, #10192E 0%, #0B1220 100%)' }}
           >
             {['signin', 'signup'].map(m => (
               <button

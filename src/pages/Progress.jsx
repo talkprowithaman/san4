@@ -202,7 +202,7 @@ export default function Progress() {
               { label: 'Best Score', value: bestScore ? `${bestScore}%` : 'n/a', icon: '🏆' },
             ].map(({ label, value, icon }) => (
               <div key={label} className="rounded-2xl p-4 text-center"
-                style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)' }}>
+                style={{ background: 'linear-gradient(160deg, #10192E 0%, #0B1220 100%)', border: '1px solid rgba(255,255,255,0.06)' }}>
                 <div className="text-2xl mb-1">{icon}</div>
                 <div className="text-2xl font-black text-white">{value}</div>
                 <div className="text-xs mt-0.5" style={{ color: '#6B8CAE' }}>{label}</div>
@@ -252,7 +252,7 @@ export default function Progress() {
                 { label: 'Avg Fillers',  value: avgFillers,            icon: '💬', color: avgFillers > 5 ? '#F87171' : '#00C49A' },
               ].map(({ label, value, icon, color }) => (
                 <div key={label} className="rounded-2xl p-4 text-center"
-                  style={{ background: 'rgba(255,255,255,0.04)', border: `1px solid ${color}25` }}>
+                  style={{ background: 'linear-gradient(160deg, #10192E 0%, #0B1220 100%)', border: `1px solid ${color}25` }}>
                   <div className="text-lg mb-1">{icon}</div>
                   <div className="text-2xl font-black" style={{ color }}>{value}</div>
                   <div className="text-xs mt-0.5" style={{ color: '#6B8CAE' }}>{label}</div>
@@ -286,7 +286,7 @@ export default function Progress() {
 
               {/* Score trend */}
               <div className="rounded-2xl p-4"
-                style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(0,196,154,0.2)' }}>
+                style={{ background: 'linear-gradient(160deg, #10192E 0%, #0B1220 100%)', border: '1px solid rgba(0,196,154,0.2)' }}>
                 <div className="text-xs font-bold mb-1" style={{ color: '#00C49A' }}>SCORE TREND</div>
                 <div className="text-xs mb-3" style={{ color: '#6B8CAE' }}>Last {recentScores.length} sessions</div>
                 <Sparkline data={recentScores} color="#00C49A" />
@@ -299,7 +299,7 @@ export default function Progress() {
 
               {/* Filler trend */}
               <div className="rounded-2xl p-4"
-                style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(239,68,68,0.2)' }}>
+                style={{ background: 'linear-gradient(160deg, #10192E 0%, #0B1220 100%)', border: '1px solid rgba(239,68,68,0.2)' }}>
                 <div className="text-xs font-bold mb-1" style={{ color: '#F87171' }}>FILLER WORDS</div>
                 <div className="text-xs mb-3" style={{ color: '#6B8CAE' }}>Going down = improving</div>
                 <Sparkline data={recentFillers} color="#F87171" invert />
@@ -312,7 +312,7 @@ export default function Progress() {
 
               {/* Weekly sessions */}
               <div className="rounded-2xl p-4"
-                style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(99,102,241,0.2)' }}>
+                style={{ background: 'linear-gradient(160deg, #10192E 0%, #0B1220 100%)', border: '1px solid rgba(99,102,241,0.2)' }}>
                 <div className="text-xs font-bold mb-1" style={{ color: '#818CF8' }}>SESSIONS / WEEK</div>
                 <div className="text-xs mb-3" style={{ color: '#6B8CAE' }}>Last 8 weeks</div>
                 {weeklyCounts.length > 0 ? (
@@ -338,7 +338,7 @@ export default function Progress() {
             {progress && (
               <div className="grid grid-cols-2 gap-4 mb-6">
                 <div className="rounded-2xl p-4"
-                  style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,107,53,0.2)' }}>
+                  style={{ background: 'linear-gradient(160deg, #10192E 0%, #0B1220 100%)', border: '1px solid rgba(255,107,53,0.2)' }}>
                   <div className="flex items-center gap-2 mb-2">
                     <span className="text-xl">🔥</span>
                     <span className="text-xs font-bold uppercase tracking-widest" style={{ color: '#FF6B35' }}>Streak</span>
@@ -349,7 +349,7 @@ export default function Progress() {
                   </div>
                 </div>
                 <div className="rounded-2xl p-4"
-                  style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(245,158,11,0.2)' }}>
+                  style={{ background: 'linear-gradient(160deg, #10192E 0%, #0B1220 100%)', border: '1px solid rgba(245,158,11,0.2)' }}>
                   <div className="flex items-center gap-2 mb-2">
                     <span className="text-xl">⭐</span>
                     <span className="text-xs font-bold uppercase tracking-widest" style={{ color: '#F59E0B' }}>Total XP</span>
@@ -367,7 +367,7 @@ export default function Progress() {
             {/* ── Scenario breakdown ── */}
             {topScenarios.length > 0 && (
               <div className="rounded-2xl p-5 mb-6"
-                style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)' }}>
+                style={{ background: 'linear-gradient(160deg, #10192E 0%, #0B1220 100%)', border: '1px solid rgba(255,255,255,0.07)' }}>
                 <div className="text-sm font-bold text-white mb-4">🎭 Most Practised Scenarios</div>
                 <div className="space-y-3">
                   {topScenarios.map(([title, count]) => (
@@ -397,7 +397,7 @@ export default function Progress() {
               <div className="space-y-2">
                 {[...sessions].reverse().slice(0, 10).map(s => (
                   <div key={s.id} className="flex items-center gap-3 px-4 py-3 rounded-2xl"
-                    style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)' }}>
+                    style={{ background: 'linear-gradient(160deg, #10192E 0%, #0B1220 100%)', border: '1px solid rgba(255,255,255,0.05)' }}>
                     <span className="text-lg">🎭</span>
                     <div className="flex-1 min-w-0">
                       <div className="text-white text-sm font-medium truncate">{s.scenario_title}</div>

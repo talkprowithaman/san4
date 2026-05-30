@@ -132,7 +132,7 @@ export default function MeetingPrep() {
           <div
             className="rounded-3xl p-8 text-center animate-fade-in"
             style={{
-              background: 'rgba(255,255,255,0.04)',
+              background: 'linear-gradient(160deg, #10192E 0%, #0B1220 100%)',
               border: '1px solid rgba(255,107,53,0.25)',
             }}
           >

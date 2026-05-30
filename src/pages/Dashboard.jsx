@@ -55,14 +55,19 @@ export default function Dashboard() {
       {/* Ambient background glows */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden" aria-hidden="true">
         <div style={{
-          position: 'absolute', top: '-160px', right: '-80px',
-          width: '560px', height: '560px', borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(99,102,241,0.07) 0%, transparent 70%)',
+          position: 'absolute', top: '-220px', right: '-160px',
+          width: '800px', height: '800px', borderRadius: '50%',
+          background: 'radial-gradient(circle, rgba(255,107,53,0.22) 0%, rgba(255,107,53,0.06) 45%, transparent 70%)',
         }} />
         <div style={{
-          position: 'absolute', bottom: '-180px', left: '-120px',
-          width: '640px', height: '540px', borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(0,196,154,0.05) 0%, transparent 70%)',
+          position: 'absolute', bottom: '-220px', left: '-180px',
+          width: '800px', height: '700px', borderRadius: '50%',
+          background: 'radial-gradient(circle, rgba(0,196,154,0.16) 0%, rgba(0,196,154,0.04) 45%, transparent 70%)',
+        }} />
+        <div style={{
+          position: 'absolute', top: '45%', left: '50%', transform: 'translateX(-50%)',
+          width: '600px', height: '600px', borderRadius: '50%',
+          background: 'radial-gradient(circle, rgba(139,92,246,0.1) 0%, transparent 65%)',
         }} />
       </div>
 
@@ -86,11 +91,9 @@ export default function Dashboard() {
         <div
           className="rounded-3xl p-6 text-center mb-5 relative overflow-hidden reveal animate-slide-up"
           style={{
-            background: 'rgba(255,255,255,0.04)',
-            backdropFilter: 'blur(20px)',
-            WebkitBackdropFilter: 'blur(20px)',
-            border: `1px solid ${levelColor}28`,
-            boxShadow: `0 0 60px ${levelColor}10, 0 1px 0 rgba(255,255,255,0.05) inset`,
+            background: 'linear-gradient(160deg, #10192E 0%, #0B1220 100%)',
+            border: `1px solid ${levelColor}40`,
+            boxShadow: `0 0 80px ${levelColor}18, inset 0 1px 0 rgba(255,255,255,0.07)`,
           }}
         >
           {/* Corner glow */}
@@ -171,10 +174,9 @@ export default function Dashboard() {
           to="/meeting-prep"
           className="flex items-center gap-3 px-5 py-4 rounded-2xl mb-6 transition-all reveal reveal-d3"
           style={{
-            background: 'rgba(255,255,255,0.04)',
-            backdropFilter: 'blur(16px)',
-            WebkitBackdropFilter: 'blur(16px)',
-            border: '1px solid rgba(0,196,154,0.18)',
+            background: 'linear-gradient(160deg, #0E1A2C 0%, #091322 100%)',
+            border: '1px solid rgba(0,196,154,0.22)',
+            boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.05), 0 4px 20px rgba(0,0,0,0.4)',
           }}
           onMouseEnter={e => e.currentTarget.style.borderColor = 'rgba(0,196,154,0.4)'}
           onMouseLeave={e => e.currentTarget.style.borderColor = 'rgba(0,196,154,0.18)'}
@@ -209,9 +211,9 @@ export default function Dashboard() {
             <div
               className="rounded-2xl p-8 text-center"
               style={{
-                background: 'rgba(255,255,255,0.03)',
-                backdropFilter: 'blur(16px)',
-                border: '1px solid rgba(255,255,255,0.06)',
+                background: 'linear-gradient(160deg, #10192E 0%, #0B1220 100%)',
+                border: '1px solid rgba(255,255,255,0.09)',
+                boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.05)',
               }}
             >
               <div className="text-4xl mb-3">🎯</div>
@@ -234,12 +236,12 @@ export default function Dashboard() {
                   key={s.id}
                   className="flex items-center gap-3 px-4 py-3.5 rounded-2xl transition-all"
                   style={{
-                    background: 'rgba(255,255,255,0.04)',
-                    backdropFilter: 'blur(12px)',
-                    border: '1px solid rgba(255,255,255,0.06)',
+                    background: 'linear-gradient(160deg, #10192E 0%, #0B1220 100%)',
+                    border: '1px solid rgba(255,255,255,0.09)',
+                    boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.05)',
                   }}
-                  onMouseEnter={e => e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'}
-                  onMouseLeave={e => e.currentTarget.style.borderColor = 'rgba(255,255,255,0.06)'}
+                  onMouseEnter={e => e.currentTarget.style.borderColor = 'rgba(255,255,255,0.18)'}
+                  onMouseLeave={e => e.currentTarget.style.borderColor = 'rgba(255,255,255,0.09)'}
                 >
                   <span className="text-xl">🎭</span>
                   <div className="flex-1 min-w-0">
@@ -294,8 +296,9 @@ export default function Dashboard() {
           <div
             className="mt-4 rounded-2xl p-5 reveal"
             style={{
-              background: 'rgba(255,107,53,0.06)',
-              border: '1px solid rgba(255,107,53,0.18)',
+              background: 'linear-gradient(160deg, rgba(255,107,53,0.1), rgba(255,107,53,0.05))',
+              border: '1px solid rgba(255,107,53,0.25)',
+              boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.04)',
             }}
           >
             <div className="flex items-center justify-between flex-wrap gap-3">

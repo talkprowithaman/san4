@@ -203,7 +203,7 @@ function UpgradeModal({ reason, onClose }) {
       <div
         className="relative max-w-sm w-full rounded-3xl p-7 animate-slide-up"
         style={{
-          background: 'rgba(255,255,255,0.04)',
+          background: 'linear-gradient(160deg, #10192E 0%, #0B1220 100%)',
           border: '1px solid rgba(255,107,53,0.35)',
           boxShadow: '0 0 60px rgba(255,107,53,0.15)',
         }}
@@ -489,7 +489,7 @@ export default function Practice() {
         {/* Bottom tip */}
         <div
           className="rounded-2xl px-5 py-4 flex items-start gap-3"
-          style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)' }}
+          style={{ background: 'linear-gradient(160deg, #10192E 0%, #0B1220 100%)', border: '1px solid rgba(255,255,255,0.06)' }}
         >
           <span className="text-xl">💡</span>
           <div>
@@ -581,7 +581,7 @@ function ScenarioCard({ scenario: s, locked, dimmed, onClick }) {
       <div className="flex flex-wrap gap-1.5 mt-3">
         {s.tags.map(t => (
           <span key={t} className="text-xs px-2 py-0.5 rounded-full"
-            style={{ background: 'rgba(255,255,255,0.05)', color: '#6B8CAE' }}>
+            style={{ background: 'rgba(255,255,255,0.07)', color: '#6B8CAE' }}>
             {t}
           </span>
         ))}

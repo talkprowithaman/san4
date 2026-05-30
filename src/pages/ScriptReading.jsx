@@ -539,7 +539,7 @@ export default function ScriptReading() {
                   onClick={() => { setScript(s); setPhase('countdown') }}
                   className="text-left rounded-3xl p-5 transition-all duration-200 relative overflow-hidden group"
                   style={{
-                    background: 'rgba(255,255,255,0.04)',
+                    background: 'linear-gradient(160deg, #10192E 0%, #0B1220 100%)',
                     border:  locked ? '1px solid rgba(255,255,255,0.06)' : '1px solid rgba(139,92,246,0.2)',
                     opacity: locked ? 0.65 : 1,
                     cursor:  locked ? 'not-allowed' : 'pointer',
@@ -895,7 +895,7 @@ export default function ScriptReading() {
               { label: 'Pacing',   value: report.pacing_score,   icon: '⚡' },
             ].map(({ label, value, icon }) => (
               <div key={label} className="rounded-2xl p-4 text-center"
-                style={{ background: 'rgba(255,255,255,0.04)', border: `1px solid ${scoreColor(value)}30` }}>
+                style={{ background: 'linear-gradient(160deg, #10192E 0%, #0B1220 100%)', border: `1px solid ${scoreColor(value)}30` }}>
                 <div className="text-lg mb-1">{icon}</div>
                 <div className="text-2xl font-black" style={{ color: scoreColor(value) }}>{value}</div>
                 <div className="text-xs mt-0.5" style={{ color: '#6B8CAE' }}>{label}</div>
@@ -905,7 +905,7 @@ export default function ScriptReading() {
 
           {/* Score legend */}
           <div className="rounded-2xl px-4 py-3 mb-5 text-xs leading-relaxed space-y-1"
-            style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}>
+            style={{ background: 'linear-gradient(160deg, #10192E 0%, #0B1220 100%)', border: '1px solid rgba(255,255,255,0.07)' }}>
             <p style={{ color: '#6B8CAE' }}><span className="text-white font-semibold">Accuracy</span>: how closely your words matched the script</p>
             <p style={{ color: '#6B8CAE' }}><span className="text-white font-semibold">Fluency</span>: smooth delivery without unnatural hesitations</p>
             <p style={{ color: '#6B8CAE' }}><span className="text-white font-semibold">Pacing</span>: speaking speed (ideal: 120–150 WPM for most scripts)</p>

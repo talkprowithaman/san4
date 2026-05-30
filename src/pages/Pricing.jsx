@@ -213,7 +213,7 @@ export default function Pricing() {
           >
             {/* Header */}
             <div className="grid grid-cols-4 text-xs font-bold uppercase tracking-widest"
-              style={{ background: 'rgba(255,255,255,0.04)', borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
+              style={{ background: 'linear-gradient(160deg, #10192E 0%, #0B1220 100%)', borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
               <div className="px-5 py-4" style={{ color: '#6B8CAE' }}>Feature</div>
               {PLANS.map(p => (
                 <div key={p.id} className="px-3 py-4 text-center" style={{ color: p.badgeColor }}>

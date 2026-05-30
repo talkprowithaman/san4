@@ -255,7 +255,7 @@ export default function MicroDrill() {
                 onClick={() => pickDrill(type)}
                 className="text-left rounded-3xl p-6 transition-all hover:brightness-110 disabled:opacity-50"
                 style={{
-                  background: 'rgba(255,255,255,0.04)',
+                  background: 'linear-gradient(160deg, #10192E 0%, #0B1220 100%)',
                   border: `1px solid ${m.colorBorder}`,
                   boxShadow: `0 0 30px ${m.colorAlpha}`,
                 }}
@@ -275,7 +275,7 @@ export default function MicroDrill() {
           </div>
 
           <div className="mt-6 rounded-2xl p-4"
-            style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
+            style={{ background: 'linear-gradient(160deg, #10192E 0%, #0B1220 100%)', border: '1px solid rgba(255,255,255,0.06)' }}>
             <p className="text-sm" style={{ color: '#6B8CAE' }}>
               💡 <span className="text-white font-semibold">How drills work:</span> A random prompt appears.
               You have 5 seconds to read it, then recording starts automatically. Speak until time runs out
@@ -309,7 +309,7 @@ export default function MicroDrill() {
           <div
             className="rounded-3xl p-6 mb-6"
             style={{
-              background: 'rgba(255,255,255,0.04)',
+              background: 'linear-gradient(160deg, #10192E 0%, #0B1220 100%)',
               border: `1px solid ${meta.colorBorder}`,
             }}
           >
@@ -359,7 +359,7 @@ export default function MicroDrill() {
 
           {/* Prompt reminder */}
           <div className="rounded-2xl p-4 mb-4"
-            style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
+            style={{ background: 'linear-gradient(160deg, #10192E 0%, #0B1220 100%)', border: '1px solid rgba(255,255,255,0.06)' }}>
             <p className="text-sm" style={{ color: '#6B8CAE' }}>{promptText}</p>
           </div>
 
@@ -379,7 +379,7 @@ export default function MicroDrill() {
           {/* Live transcript */}
           {(transcript || liveText) && (
             <div className="rounded-2xl p-4 mb-4 max-h-32 overflow-y-auto"
-              style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
+              style={{ background: 'linear-gradient(160deg, #10192E 0%, #0B1220 100%)', border: '1px solid rgba(255,255,255,0.06)' }}>
               <p className="text-sm" style={{ color: '#E2E8F0' }}>
                 {transcript}
                 {liveText && <span style={{ color: '#6B8CAE' }}> {liveText}</span>}
@@ -462,7 +462,7 @@ export default function MicroDrill() {
               { label: 'Confidence', value: report.confidence, icon: '💪' },
             ].map(({ label, value, icon }) => (
               <div key={label} className="rounded-2xl p-4 text-center"
-                style={{ background: 'rgba(255,255,255,0.04)', border: `1px solid ${scoreColor(value)}30` }}>
+                style={{ background: 'linear-gradient(160deg, #10192E 0%, #0B1220 100%)', border: `1px solid ${scoreColor(value)}30` }}>
                 <div className="text-lg mb-1">{icon}</div>
                 <div className="text-2xl font-black" style={{ color: scoreColor(value) }}>{value}</div>
                 <div className="text-xs mt-0.5" style={{ color: '#6B8CAE' }}>{label}</div>

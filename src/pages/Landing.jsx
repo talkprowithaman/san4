@@ -115,7 +115,7 @@ const PHONE_SCREENS = [
         {/* Stats */}
         <div className="grid grid-cols-3 gap-1.5">
           {[['🔥','3d','Streak'],['⭐','450','XP'],['🎭','6','Done']].map(([ic,v,l])=>(
-            <div key={l} className="rounded-xl p-2 text-center" style={{ background: 'rgba(255,255,255,0.05)' }}>
+            <div key={l} className="rounded-xl p-2 text-center" style={{ background: 'rgba(255,255,255,0.07)' }}>
               <div className="text-sm">{ic}</div>
               <div className="text-white font-black text-sm">{v}</div>
               <div className="text-xs" style={{ color: '#6B8CAE' }}>{l}</div>
@@ -128,7 +128,7 @@ const PHONE_SCREENS = [
           🎮 Start Practice
         </div>
         {/* Missions */}
-        <div className="rounded-xl p-2.5" style={{ background: 'rgba(255,255,255,0.05)' }}>
+        <div className="rounded-xl p-2.5" style={{ background: 'rgba(255,255,255,0.07)' }}>
           <div className="text-xs font-bold text-white mb-1.5">📋 Daily Missions</div>
           {[['Complete a session','#00C49A',true],[' Score 75%+','#F59E0B',false]].map(([m,c,done])=>(
             <div key={m} className="flex items-center gap-1.5 mb-1">
@@ -161,14 +161,14 @@ const PHONE_SCREENS = [
         {/* Scores */}
         <div className="grid grid-cols-3 gap-1.5">
           {[['84%','#00C49A','Overall'],['78%','#FF6B35','Confidence'],['91%','#00C49A','Pacing']].map(([v,c,l])=>(
-            <div key={l} className="rounded-xl p-2 text-center" style={{ background: 'rgba(255,255,255,0.05)' }}>
+            <div key={l} className="rounded-xl p-2 text-center" style={{ background: 'rgba(255,255,255,0.07)' }}>
               <div className="font-black text-sm" style={{ color: c }}>{v}</div>
               <div className="text-slate-500 text-xs">{l}</div>
             </div>
           ))}
         </div>
         {/* Filler words */}
-        <div className="rounded-xl p-2.5" style={{ background: 'rgba(255,255,255,0.05)' }}>
+        <div className="rounded-xl p-2.5" style={{ background: 'rgba(255,255,255,0.07)' }}>
           <div className="text-slate-400 text-xs mb-0.5">Filler words</div>
           <div className="flex items-baseline gap-1.5">
             <span className="text-xl font-black" style={{ color: '#00C49A' }}>3</span>
@@ -418,27 +418,32 @@ export default function Landing() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6, ease }}
         className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-8 h-16 border-b"
-        style={{ background: 'rgba(6,14,26,0.88)', backdropFilter: 'blur(20px)', borderColor: 'rgba(255,255,255,0.07)' }}
+        style={{
+          background: 'rgba(4,8,16,0.85)',
+          backdropFilter: 'blur(24px)',
+          WebkitBackdropFilter: 'blur(24px)',
+          borderColor: 'rgba(255,255,255,0.07)',
+        }}
       >
         <span className="text-xl font-black tracking-tight text-white">
           San<span style={{ color: blue }}>4</span>
         </span>
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3">
           <Link
             to="/auth"
-            className="text-sm font-medium transition-colors"
-            style={{ color: '#6B8CAE' }}
+            className="text-sm font-medium transition-colors px-4 py-2"
+            style={{ color: 'rgba(255,255,255,0.5)' }}
             onMouseEnter={e => e.currentTarget.style.color = 'white'}
-            onMouseLeave={e => e.currentTarget.style.color = '#6B8CAE'}
+            onMouseLeave={e => e.currentTarget.style.color = 'rgba(255,255,255,0.5)'}
           >
             Sign in
           </Link>
           <Link
             to="/auth?mode=signup"
-            className="text-sm font-semibold text-white px-5 py-2 rounded-full transition-all active:scale-95 hover:opacity-90"
-            style={{ background: blue }}
+            className="text-sm font-bold text-white px-5 py-2 rounded-full transition-all active:scale-95 hover:opacity-90"
+            style={{ background: blue, boxShadow: '0 4px 18px rgba(255,107,53,0.4)' }}
           >
-            Try free
+            Try free →
           </Link>
         </div>
       </motion.nav>
@@ -446,26 +451,43 @@ export default function Landing() {
       {/* ── Hero ───────────────────────────────────────────────────────────── */}
       <section
         className="relative min-h-screen flex items-center pt-16 px-8 overflow-hidden"
-        style={{ background: 'linear-gradient(160deg, #050810 0%, #08101E 50%, #0A1525 100%)' }}
+        style={{ background: '#040810' }}
       >
-        {/* Subtle grid */}
+        {/* Grid overlay */}
         <div
           className="absolute inset-0 pointer-events-none"
           style={{
             backgroundImage:
-              'linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px)',
-            backgroundSize: '64px 64px',
+              'linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px)',
+            backgroundSize: '72px 72px',
           }}
         />
-        {/* Radial bloom top-right — orange */}
+        {/* Large vivid orange bloom — top right */}
         <div
-          className="absolute -top-40 -right-40 w-[700px] h-[700px] rounded-full pointer-events-none"
-          style={{ background: 'radial-gradient(circle, rgba(255,107,53,0.18) 0%, transparent 65%)' }}
+          className="absolute pointer-events-none"
+          style={{
+            top: '-250px', right: '-200px',
+            width: '900px', height: '900px', borderRadius: '50%',
+            background: 'radial-gradient(circle, rgba(255,107,53,0.28) 0%, rgba(255,107,53,0.08) 40%, transparent 70%)',
+          }}
         />
-        {/* Radial bloom bottom-left — purple */}
+        {/* Large vivid purple bloom — bottom left */}
         <div
-          className="absolute -bottom-60 -left-40 w-[600px] h-[600px] rounded-full pointer-events-none"
-          style={{ background: 'radial-gradient(circle, rgba(139,92,246,0.12) 0%, transparent 65%)' }}
+          className="absolute pointer-events-none"
+          style={{
+            bottom: '-300px', left: '-200px',
+            width: '900px', height: '800px', borderRadius: '50%',
+            background: 'radial-gradient(circle, rgba(139,92,246,0.2) 0%, rgba(139,92,246,0.06) 45%, transparent 70%)',
+          }}
+        />
+        {/* Teal bloom — center bottom */}
+        <div
+          className="absolute pointer-events-none"
+          style={{
+            bottom: '-100px', left: '50%', transform: 'translateX(-50%)',
+            width: '600px', height: '400px', borderRadius: '50%',
+            background: 'radial-gradient(circle, rgba(0,196,154,0.08) 0%, transparent 70%)',
+          }}
         />
 
         <div className="max-w-7xl mx-auto w-full grid lg:grid-cols-2 gap-16 items-center relative z-10">
@@ -619,12 +641,11 @@ export default function Landing() {
       </section>
 
       {/* ── Meet Vak ──────────────────────────────────────────────────────── */}
-      <section className="py-28 px-8 relative overflow-hidden" style={{ background: '#060B18' }}>
-        {/* Purple glow behind Vak */}
-        <div className="absolute top-1/2 left-1/4 -translate-y-1/2 w-[500px] h-[500px] rounded-full pointer-events-none"
-          style={{ background: 'radial-gradient(circle, rgba(139,92,246,0.12) 0%, transparent 65%)' }} />
-        <div className="absolute top-1/2 right-0 -translate-y-1/2 w-[400px] h-[400px] rounded-full pointer-events-none"
-          style={{ background: 'radial-gradient(circle, rgba(255,107,53,0.07) 0%, transparent 65%)' }} />
+      <section className="py-28 px-8 relative overflow-hidden" style={{ background: 'linear-gradient(180deg, #060C1C 0%, #040810 100%)' }}>
+        <div className="absolute top-1/2 left-1/4 -translate-y-1/2 w-[700px] h-[700px] rounded-full pointer-events-none"
+          style={{ background: 'radial-gradient(circle, rgba(139,92,246,0.18) 0%, transparent 60%)' }} />
+        <div className="absolute top-1/2 right-0 -translate-y-1/2 w-[500px] h-[500px] rounded-full pointer-events-none"
+          style={{ background: 'radial-gradient(circle, rgba(255,107,53,0.12) 0%, transparent 60%)' }} />
 
         <div className="max-w-6xl mx-auto">
 
@@ -690,7 +711,7 @@ export default function Landing() {
                   <div key={item.text}
                     className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium"
                     style={{
-                      background: 'rgba(255,255,255,0.04)',
+                      background: 'linear-gradient(160deg, #10192E 0%, #0B1220 100%)',
                       border: '1px solid rgba(255,255,255,0.08)',
                       color: '#CBD5E1',
                     }}>
@@ -706,7 +727,7 @@ export default function Landing() {
             <div
               className="rounded-3xl p-8"
               style={{
-                background: 'rgba(255,255,255,0.03)',
+                background: 'linear-gradient(160deg, #10192E 0%, #0B1220 100%)',
                 backdropFilter: 'blur(20px)',
                 WebkitBackdropFilter: 'blur(20px)',
                 border: '1px solid rgba(255,255,255,0.07)',
@@ -763,7 +784,7 @@ export default function Landing() {
       </section>
 
       {/* ── Problem ────────────────────────────────────────────────────────── */}
-      <section className="py-20 lg:py-40 px-8" style={{ background: bg }}>
+      <section className="py-20 lg:py-40 px-8" style={{ background: '#040810' }}>
         <div className="max-w-4xl mx-auto text-center">
           <FadeUp>
             <p className="text-xs font-semibold uppercase tracking-widest mb-10" style={{ color: '#6B8CAE' }}>
@@ -786,7 +807,7 @@ export default function Landing() {
       </section>
 
       {/* ── Pain points — expandable accordion cards ───────────────────────── */}
-      <section className="pb-16 lg:pb-40 px-8" style={{ background: bg }}>
+      <section className="pb-16 lg:pb-40 px-8" style={{ background: '#040810' }}>
         <div className="max-w-5xl mx-auto grid md:grid-cols-3 gap-6 items-start">
           {PROBLEMS.map((card, i) => {
             const isOpen = openCard === i
@@ -795,7 +816,7 @@ export default function Landing() {
                 <motion.div
                   className="rounded-2xl overflow-hidden cursor-pointer select-none"
                   style={{
-                    background: 'rgba(255,255,255,0.04)',
+                    background: 'linear-gradient(160deg, #10192E 0%, #0B1220 100%)',
                     backdropFilter: 'blur(20px)',
                     WebkitBackdropFilter: 'blur(20px)',
                     border: isOpen ? '1px solid rgba(255,107,53,0.3)' : '1px solid rgba(255,255,255,0.07)',
@@ -883,7 +904,7 @@ export default function Landing() {
           it enters the centre of the viewport — no scroll events, no rAF,
           no 400vh height hacks. Works regardless of any parent overflow.
       */}
-      <section style={{ background: bg }}>
+      <section style={{ background: '#040810' }}>
         <div className="max-w-7xl mx-auto px-8">
 
           {/* Section label */}
@@ -922,7 +943,7 @@ export default function Landing() {
       </section>
 
       {/* ── Numbers ────────────────────────────────────────────────────────── */}
-      <section className="py-40 px-8" style={{ background: bg }}>
+      <section className="py-40 px-8" style={{ background: '#040810' }}>
         <div className="max-w-5xl mx-auto">
           <FadeUp className="text-center mb-20">
             <p className="text-xs font-semibold uppercase tracking-widest" style={{ color: '#6B8CAE' }}>
@@ -949,7 +970,7 @@ export default function Landing() {
       </section>
 
       {/* ── Scenarios strip ────────────────────────────────────────────────── */}
-      <section className="py-20 overflow-hidden" style={{ background: bg }}>
+      <section className="py-20 overflow-hidden" style={{ background: '#040810' }}>
         <FadeUp className="text-center mb-12 px-8">
           <p className="text-xs font-semibold uppercase tracking-widest" style={{ color: '#6B8CAE' }}>
             What you can practice
@@ -986,7 +1007,7 @@ export default function Landing() {
       </section>
 
       {/* ── Founder ────────────────────────────────────────────────────────── */}
-      <section className="py-40 px-8" style={{ background: bg }}>
+      <section className="py-40 px-8" style={{ background: '#040810' }}>
         <div className="max-w-3xl mx-auto text-center">
           <FadeUp>
             <div className="relative inline-block mb-10">
@@ -1023,7 +1044,7 @@ export default function Landing() {
       </section>
 
       {/* ── CTA ────────────────────────────────────────────────────────────── */}
-      <section className="py-40 px-8" style={{ background: navy }}>
+      <section className="py-40 px-8" style={{ background: '#040810' }}>
         <div className="max-w-2xl mx-auto text-center">
           <FadeUp>
             <h2 className="text-6xl lg:text-7xl font-black mb-4 text-white">
