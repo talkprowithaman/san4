@@ -44,7 +44,7 @@ export default function RewardCard({ reward }) {
       {/* Main reward row */}
       <div
         className="rounded-2xl p-5 border"
-        style={{ background: 'rgba(255,107,53,0.06)', borderColor: 'rgba(255,107,53,0.3)' }}
+        style={{ background: 'rgba(123,94,167,0.06)', borderColor: 'rgba(123,94,167,0.3)' }}
       >
         <div className="flex items-center justify-between mb-4">
           <div>
@@ -52,10 +52,10 @@ export default function RewardCard({ reward }) {
               XP Earned
             </p>
             <div className="flex items-baseline gap-2">
-              <span className="text-5xl font-black" style={{ color: '#FF6B35' }}>
+              <span className="text-5xl font-black" style={{ color: '#7B5EA7' }}>
                 +{displayXP}
               </span>
-              <span className="text-lg font-bold" style={{ color: '#FF6B35' }}>XP</span>
+              <span className="text-lg font-bold" style={{ color: '#7B5EA7' }}>XP</span>
             </div>
           </div>
 
@@ -68,7 +68,7 @@ export default function RewardCard({ reward }) {
         <div className="flex items-center gap-3 flex-wrap">
           <div
             className="flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-semibold"
-            style={{ background: 'rgba(255,107,53,0.15)' }}
+            style={{ background: 'rgba(123,94,167,0.15)' }}
           >
             <span>🔥</span>
             <span className="text-white">{reward.streakCount}</span>

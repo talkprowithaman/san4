@@ -39,7 +39,7 @@ export default function Navbar() {
         {/* Logo */}
         <Link to="/dashboard" className="flex items-center gap-2 shrink-0">
           <span className="text-xl font-black text-white tracking-tight">
-            San<span style={{ color: '#FF6B35' }}>4</span>
+            San<span style={{ color: '#7B5EA7' }}>4</span>
           </span>
         </Link>
 
@@ -69,7 +69,7 @@ export default function Navbar() {
           {streak > 0 && (
             <div
               className="hidden sm:flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-bold"
-              style={{ background: 'rgba(255,107,53,0.1)', color: '#FF6B35', border: '1px solid rgba(255,107,53,0.2)' }}
+              style={{ background: 'rgba(123,94,167,0.1)', color: '#7B5EA7', border: '1px solid rgba(123,94,167,0.2)' }}
             >
               🔥 {streak}
             </div>
@@ -109,9 +109,9 @@ export default function Navbar() {
               to="/pricing"
               className="hidden sm:flex items-center gap-1 text-xs font-bold px-3 py-1.5 rounded-full transition-all"
               style={{
-                background: 'linear-gradient(135deg, #FF6B35, #FF8C55)',
+                background: 'linear-gradient(135deg, #7B5EA7, #9B7EC8)',
                 color: 'white',
-                boxShadow: '0 2px 12px rgba(255,107,53,0.3)',
+                boxShadow: '0 2px 12px rgba(123,94,167,0.3)',
               }}
             >
               ⚡ Pro
@@ -151,7 +151,7 @@ export default function Navbar() {
               key={to}
               to={to}
               className="flex-1 flex flex-col items-center gap-0.5 py-2.5 text-xs font-semibold transition-all"
-              style={{ color: active ? '#FF6B35' : 'rgba(255,255,255,0.35)' }}
+              style={{ color: active ? '#7B5EA7' : 'rgba(255,255,255,0.35)' }}
             >
               <span className="text-base">{icon}</span>
               {label}

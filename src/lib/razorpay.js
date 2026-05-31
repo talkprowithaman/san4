@@ -6,7 +6,7 @@ export function openRazorpay({ amount, userEmail, userName, onSuccess, onError }
     name:        'San4 (Sanchaar)',
     description: 'Monthly Communication Coach Subscription',
     prefill:     { email: userEmail, name: userName },
-    theme:       { color: '#FF6B35' },
+    theme:       { color: '#7B5EA7' },
     handler: function (response) {
       onSuccess(response)
     },

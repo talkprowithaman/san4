@@ -14,7 +14,7 @@ import VakMascot     from '../components/VakMascot'
 
 // ── Palette ───────────────────────────────────────────────────────────────────
 const navy   = '#050810'
-const blue   = '#FF6B35'   // "blue" var kept for compat — now brand orange
+const blue   = '#7B5EA7'
 const green  = '#00C49A'
 const gold   = '#F59E0B'
 const purple = '#8B5CF6'
@@ -50,7 +50,7 @@ const PHONE_SCREENS = [
         <div className="flex items-center justify-between pb-2 border-b border-white/5">
           <span className="text-xs text-slate-400">HR Interview · 3:42</span>
           <div className="flex items-center gap-2">
-            <span className="text-xs font-bold" style={{ color: '#FF6B35' }}>🔥 3</span>
+            <span className="text-xs font-bold" style={{ color: '#7B5EA7' }}>🔥 3</span>
             <span className="text-xs font-bold" style={{ color: '#F59E0B' }}>⭐ 450</span>
           </div>
         </div>
@@ -68,7 +68,7 @@ const PHONE_SCREENS = [
         </div>
         {/* User reply */}
         <div className="rounded-2xl rounded-tr-sm p-2.5 max-w-[75%] self-end"
-          style={{ background: '#FF6B35' }}>
+          style={{ background: '#7B5EA7' }}>
           <p className="text-white text-xs leading-relaxed">
             In my last role, I had a client who kept changing scope…
           </p>
@@ -87,7 +87,7 @@ const PHONE_SCREENS = [
         <div className="mt-auto border border-white/10 rounded-xl px-3 py-2 flex items-center gap-2">
           <span className="text-slate-500 text-xs flex-1">Your response…</span>
           <div className="w-6 h-6 rounded-full flex items-center justify-center"
-            style={{ background: '#FF6B35' }}>
+            style={{ background: '#7B5EA7' }}>
             <span className="text-white text-xs">↑</span>
           </div>
         </div>
@@ -124,7 +124,7 @@ const PHONE_SCREENS = [
         </div>
         {/* Play */}
         <div className="rounded-2xl py-2.5 text-center text-white font-bold text-sm"
-          style={{ background: 'linear-gradient(135deg, #FF6B35, #FF8F4F)' }}>
+          style={{ background: 'linear-gradient(135deg, #7B5EA7, #9B7EC8)' }}>
           🎮 Start Practice
         </div>
         {/* Missions */}
@@ -154,13 +154,13 @@ const PHONE_SCREENS = [
         </div>
         {/* XP earned */}
         <div className="rounded-xl p-3 text-center"
-          style={{ background: 'rgba(255,107,53,0.1)', border: '1px solid rgba(255,107,53,0.25)' }}>
-          <div className="text-2xl font-black" style={{ color: '#FF6B35' }}>+176 XP</div>
-          <div className="text-xs font-semibold mt-0.5" style={{ color: '#FF6B35' }}>🔥 4-day streak!</div>
+          style={{ background: 'rgba(123,94,167,0.1)', border: '1px solid rgba(123,94,167,0.25)' }}>
+          <div className="text-2xl font-black" style={{ color: '#7B5EA7' }}>+176 XP</div>
+          <div className="text-xs font-semibold mt-0.5" style={{ color: '#7B5EA7' }}>🔥 4-day streak!</div>
         </div>
         {/* Scores */}
         <div className="grid grid-cols-3 gap-1.5">
-          {[['84%','#00C49A','Overall'],['78%','#FF6B35','Confidence'],['91%','#00C49A','Pacing']].map(([v,c,l])=>(
+          {[['84%','#00C49A','Overall'],['78%','#7B5EA7','Confidence'],['91%','#00C49A','Pacing']].map(([v,c,l])=>(
             <div key={l} className="rounded-xl p-2 text-center" style={{ background: 'rgba(255,255,255,0.07)' }}>
               <div className="font-black text-sm" style={{ color: c }}>{v}</div>
               <div className="text-slate-500 text-xs">{l}</div>
@@ -177,8 +177,8 @@ const PHONE_SCREENS = [
         </div>
         {/* Action item */}
         <div className="rounded-xl p-2.5"
-          style={{ background: 'rgba(255,107,53,0.08)', border: '1px solid rgba(255,107,53,0.2)' }}>
-          <div className="text-xs font-semibold mb-0.5" style={{ color: '#FF6B35' }}>🎯 Action item</div>
+          style={{ background: 'rgba(123,94,167,0.08)', border: '1px solid rgba(123,94,167,0.2)' }}>
+          <div className="text-xs font-semibold mb-0.5" style={{ color: '#7B5EA7' }}>🎯 Action item</div>
           <p className="text-white text-xs leading-relaxed">
             Pause 2 seconds before answering. Your best answers came after a pause.
           </p>
@@ -362,8 +362,8 @@ function FeatureBlock({ feat, index, isActive, setActive }) {
       <div>
         <motion.div
           animate={{
-            background: isActive ? blue : 'rgba(255,107,53,0.08)',
-            color:      isActive ? 'white' : 'rgba(255,107,53,0.4)',
+            background: isActive ? blue : 'rgba(123,94,167,0.08)',
+            color:      isActive ? 'white' : 'rgba(123,94,167,0.4)',
           }}
           transition={{ duration: 0.4 }}
           className="w-11 h-11 rounded-2xl flex items-center justify-center text-sm font-black mb-8"
@@ -441,7 +441,7 @@ export default function Landing() {
           <Link
             to="/auth?mode=signup"
             className="text-sm font-bold text-white px-5 py-2 rounded-full transition-all active:scale-95 hover:opacity-90"
-            style={{ background: blue, boxShadow: '0 4px 18px rgba(255,107,53,0.4)' }}
+            style={{ background: blue, boxShadow: '0 4px 18px rgba(123,94,167,0.4)' }}
           >
             Try free →
           </Link>
@@ -468,7 +468,7 @@ export default function Landing() {
           style={{
             top: '-250px', right: '-200px',
             width: '900px', height: '900px', borderRadius: '50%',
-            background: 'radial-gradient(circle, rgba(255,107,53,0.28) 0%, rgba(255,107,53,0.08) 40%, transparent 70%)',
+            background: 'radial-gradient(circle, rgba(123,94,167,0.28) 0%, rgba(123,94,167,0.08) 40%, transparent 70%)',
           }}
         />
         {/* Large vivid purple bloom — bottom left */}
@@ -516,7 +516,7 @@ export default function Landing() {
                 </div>
                 <div
                   className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full mb-1.5"
-                  style={{ background: 'rgba(255,107,53,0.15)', border: '1px solid rgba(255,107,53,0.3)', color: '#FF8F4F' }}
+                  style={{ background: 'rgba(123,94,167,0.15)', border: '1px solid rgba(123,94,167,0.3)', color: '#9B7EC8' }}
                 >
                   🦢 Your AI communication coach
                 </div>
@@ -645,7 +645,7 @@ export default function Landing() {
         <div className="absolute top-1/2 left-1/4 -translate-y-1/2 w-[700px] h-[700px] rounded-full pointer-events-none"
           style={{ background: 'radial-gradient(circle, rgba(139,92,246,0.18) 0%, transparent 60%)' }} />
         <div className="absolute top-1/2 right-0 -translate-y-1/2 w-[500px] h-[500px] rounded-full pointer-events-none"
-          style={{ background: 'radial-gradient(circle, rgba(255,107,53,0.12) 0%, transparent 60%)' }} />
+          style={{ background: 'radial-gradient(circle, rgba(123,94,167,0.12) 0%, transparent 60%)' }} />
 
         <div className="max-w-6xl mx-auto">
 
@@ -743,7 +743,7 @@ export default function Landing() {
                 {[
                   { level: 1, name: 'Hesitant',   xp: '0 XP',    color: '#6B8CAE' },
                   { level: 2, name: 'Aware',       xp: '300 XP',  color: '#00C49A' },
-                  { level: 3, name: 'Expressive',  xp: '800 XP',  color: '#FF6B35' },
+                  { level: 3, name: 'Expressive',  xp: '800 XP',  color: '#7B5EA7' },
                   { level: 4, name: 'Influential', xp: '1,800 XP', color: '#8B5CF6' },
                   { level: 5, name: 'Vaksiddha',  xp: '4,000 XP', color: '#F59E0B' },
                 ].map(({ level, name, xp, color }, i) => (
@@ -819,8 +819,8 @@ export default function Landing() {
                     background: 'linear-gradient(160deg, #10192E 0%, #0B1220 100%)',
                     backdropFilter: 'blur(20px)',
                     WebkitBackdropFilter: 'blur(20px)',
-                    border: isOpen ? '1px solid rgba(255,107,53,0.3)' : '1px solid rgba(255,255,255,0.07)',
-                    boxShadow: isOpen ? '0 16px 48px rgba(255,107,53,0.1)' : 'none',
+                    border: isOpen ? '1px solid rgba(123,94,167,0.3)' : '1px solid rgba(255,255,255,0.07)',
+                    boxShadow: isOpen ? '0 16px 48px rgba(123,94,167,0.1)' : 'none',
                   }}
                   onClick={() => setOpenCard(isOpen ? null : i)}
                   whileHover={{ y: -3 }}
@@ -901,7 +901,7 @@ export default function Landing() {
       {/*
           Architecture: the phone column uses position:sticky inside a normal
           flex row. Each feature block uses IntersectionObserver to fire when
-          it enters the centre of the viewport — no scroll events, no rAF,
+          it enters the centre of the viewport, no scroll events, no rAF,
           no 400vh height hacks. Works regardless of any parent overflow.
       */}
       <section style={{ background: '#040810' }}>

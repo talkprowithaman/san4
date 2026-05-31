@@ -14,7 +14,7 @@ export default function SituationOfTheDay() {
           : 'rgba(255,255,255,0.04)',
         border: done
           ? '1px solid rgba(0,196,154,0.25)'
-          : '1px solid rgba(255,107,53,0.25)',
+          : '1px solid rgba(123,94,167,0.25)',
       }}
     >
       {/* Header */}
@@ -24,7 +24,7 @@ export default function SituationOfTheDay() {
           <div className="flex items-center gap-2">
             <span
               className="text-xs font-black uppercase tracking-widest"
-              style={{ color: done ? '#00C49A' : '#FF6B35' }}
+              style={{ color: done ? '#00C49A' : '#7B5EA7' }}
             >
               {done ? '✓ Done today' : '🔥 Daily Challenge'}
             </span>
@@ -34,7 +34,7 @@ export default function SituationOfTheDay() {
         {!done && (
           <div
             className="ml-auto text-xs font-bold px-2 py-0.5 rounded-full"
-            style={{ background: 'rgba(255,107,53,0.12)', color: '#FF6B35' }}
+            style={{ background: 'rgba(123,94,167,0.12)', color: '#7B5EA7' }}
           >
             +XP
           </div>
@@ -60,9 +60,9 @@ export default function SituationOfTheDay() {
           to="/daily-challenge"
           className="inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl text-sm font-bold transition-all hover:opacity-90"
           style={{
-            background: 'linear-gradient(135deg, #FF6B35, #FF8F4F)',
+            background: 'linear-gradient(135deg, #7B5EA7, #9B7EC8)',
             color: 'white',
-            boxShadow: '0 4px 14px rgba(255,107,53,0.3)',
+            boxShadow: '0 4px 14px rgba(123,94,167,0.3)',
           }}
         >
           🎤 Respond Now →

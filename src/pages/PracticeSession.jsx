@@ -159,7 +159,7 @@ export default function PracticeSession() {
       rec.start(1000)  // collect in 1-second chunks
       mediaRecRef.current = rec
     } catch (err) {
-      console.warn('MediaRecorder unavailable — will rely on STT only:', err.message)
+      console.warn('MediaRecorder unavailable, will rely on STT only:', err.message)
     }
 
     setAiThinking(true)
@@ -595,7 +595,7 @@ export default function PracticeSession() {
         <div className="flex gap-2 justify-center mt-5">
           {[0,1,2].map(i => (
             <div key={i} className="w-2 h-2 rounded-full animate-bounce"
-              style={{ background: '#FF6B35', animationDelay: `${i * 0.18}s` }} />
+              style={{ background: '#7B5EA7', animationDelay: `${i * 0.18}s` }} />
           ))}
         </div>
       </div>
@@ -717,11 +717,11 @@ export default function PracticeSession() {
             </ul>
           </div>
           <div className="card">
-            <h3 className="font-semibold text-sm mb-3" style={{ color: '#FF6B35' }}>↑ Work on this</h3>
+            <h3 className="font-semibold text-sm mb-3" style={{ color: '#7B5EA7' }}>↑ Work on this</h3>
             <ul className="space-y-2">
               {report.improvements?.map((s, i) => (
                 <li key={i} className="text-sm flex gap-2" style={{ color: '#94A3B8' }}>
-                  <span style={{ color: '#FF6B35' }}>•</span> {s}
+                  <span style={{ color: '#7B5EA7' }}>•</span> {s}
                 </li>
               ))}
             </ul>
@@ -730,11 +730,11 @@ export default function PracticeSession() {
 
         {/* Action item */}
         <div className="card mb-8"
-          style={{ background: 'rgba(255,107,53,0.07)', border: '1px solid rgba(255,107,53,0.25)' }}>
+          style={{ background: 'rgba(123,94,167,0.07)', border: '1px solid rgba(123,94,167,0.25)' }}>
           <div className="flex gap-3 items-start">
             <span className="text-2xl">🎯</span>
             <div>
-              <h3 className="font-semibold text-sm mb-1" style={{ color: '#FF6B35' }}>Your action item</h3>
+              <h3 className="font-semibold text-sm mb-1" style={{ color: '#7B5EA7' }}>Your action item</h3>
               <p className="text-white text-sm">{report.action_item}</p>
             </div>
           </div>
@@ -801,7 +801,7 @@ export default function PracticeSession() {
               color: eslMode ? '#F59E0B' : '#6B8CAE',
               border: `1px solid ${eslMode ? 'rgba(245,158,11,0.3)' : 'rgba(255,255,255,0.1)'}`,
             }}
-            title="ESL / Indian English mode — Vak adapts feedback for non-native speakers"
+            title="ESL / Indian English mode, Vak adapts feedback for non-native speakers"
           >
             {eslMode ? '🇮🇳 ESL on' : '🌐 ESL'}
           </button>
@@ -847,8 +847,8 @@ export default function PracticeSession() {
                     width: 160, height: 160,
                     background: vakSpeaking
                       ? 'rgba(139,92,246,0.15)'
-                      : 'rgba(255,107,53,0.15)',
-                    border: `2px solid ${vakSpeaking ? 'rgba(139,92,246,0.3)' : 'rgba(255,107,53,0.3)'}`,
+                      : 'rgba(123,94,167,0.15)',
+                    border: `2px solid ${vakSpeaking ? 'rgba(139,92,246,0.3)' : 'rgba(123,94,167,0.3)'}`,
                     animationDuration: '1.5s',
                   }}
                 />
@@ -861,7 +861,7 @@ export default function PracticeSession() {
                   background: vakSpeaking
                     ? 'radial-gradient(circle, rgba(139,92,246,0.15) 0%, transparent 70%)'
                     : listening
-                    ? 'radial-gradient(circle, rgba(255,107,53,0.15) 0%, transparent 70%)'
+                    ? 'radial-gradient(circle, rgba(123,94,167,0.15) 0%, transparent 70%)'
                     : 'transparent',
                 }}
               />
@@ -877,12 +877,12 @@ export default function PracticeSession() {
                 background: vakSpeaking
                   ? 'rgba(139,92,246,0.15)'
                   : listening
-                  ? 'rgba(255,107,53,0.15)'
+                  ? 'rgba(123,94,167,0.15)'
                   : aiThinking
                   ? 'rgba(245,158,11,0.15)'
                   : 'rgba(255,255,255,0.07)',
-                color: vakSpeaking ? '#A78BFA' : listening ? '#FF6B35' : aiThinking ? '#F59E0B' : '#6B8CAE',
-                border: `1px solid ${vakSpeaking ? 'rgba(139,92,246,0.3)' : listening ? 'rgba(255,107,53,0.3)' : aiThinking ? 'rgba(245,158,11,0.3)' : 'rgba(255,255,255,0.1)'}`,
+                color: vakSpeaking ? '#A78BFA' : listening ? '#7B5EA7' : aiThinking ? '#F59E0B' : '#6B8CAE',
+                border: `1px solid ${vakSpeaking ? 'rgba(139,92,246,0.3)' : listening ? 'rgba(123,94,167,0.3)' : aiThinking ? 'rgba(245,158,11,0.3)' : 'rgba(255,255,255,0.1)'}`,
               }}
             >
               {vakSpeaking
@@ -919,12 +919,12 @@ export default function PracticeSession() {
             <div
               className="w-full rounded-2xl px-4 py-3 mb-2 min-h-[60px] transition-all"
               style={{
-                background: liveText ? 'rgba(255,107,53,0.08)' : 'rgba(255,255,255,0.03)',
-                border: `1px solid ${liveText ? 'rgba(255,107,53,0.3)' : 'rgba(255,255,255,0.06)'}`,
+                background: liveText ? 'rgba(123,94,167,0.08)' : 'rgba(255,255,255,0.03)',
+                border: `1px solid ${liveText ? 'rgba(123,94,167,0.3)' : 'rgba(255,255,255,0.06)'}`,
               }}
             >
               <div className="flex items-center gap-2 mb-1">
-                <span className="text-xs font-semibold" style={{ color: '#FF6B35' }}>
+                <span className="text-xs font-semibold" style={{ color: '#7B5EA7' }}>
                   🎤 What Vak hears
                 </span>
                 {mediaRecRef.current && (
@@ -939,7 +939,7 @@ export default function PracticeSession() {
               ) : (
                 <p className="text-sm italic" style={{ color: 'rgba(107,140,174,0.6)' }}>
                   {listening
-                    ? 'Speak now — your words will appear here'
+                    ? 'Speak now, your words will appear here'
                     : 'Tap the mic below and start speaking'}
                 </p>
               )}
@@ -955,12 +955,12 @@ export default function PracticeSession() {
               style={{
                 width: 80, height: 80,
                 background: listening
-                  ? 'linear-gradient(135deg, #FF6B35, #FF4500)'
+                  ? 'linear-gradient(135deg, #7B5EA7, #FF4500)'
                   : 'linear-gradient(135deg, #0F1E35, #1A2F4A)',
                 border: listening
-                  ? '3px solid rgba(255,107,53,0.6)'
+                  ? '3px solid rgba(123,94,167,0.6)'
                   : '2px solid rgba(255,255,255,0.15)',
-                boxShadow: listening ? '0 0 30px rgba(255,107,53,0.5)' : 'none',
+                boxShadow: listening ? '0 0 30px rgba(123,94,167,0.5)' : 'none',
                 opacity: (aiThinking || vakSpeaking) ? 0.4 : 1,
               }}
             >
@@ -1031,7 +1031,7 @@ export default function PracticeSession() {
                   className="max-w-[80%] px-4 py-3 rounded-2xl text-sm leading-relaxed"
                   style={msg.role === 'ai'
                     ? { background: 'rgba(255,255,255,0.06)', color: '#E2E8F0', borderRadius: '4px 18px 18px 18px' }
-                    : { background: '#FF6B35', color: 'white', borderRadius: '18px 4px 18px 18px' }
+                    : { background: '#7B5EA7', color: 'white', borderRadius: '18px 4px 18px 18px' }
                   }
                 >
                   {msg.content}

@@ -551,7 +551,7 @@ export default function ScriptReading() {
                     <div className="absolute inset-0 flex flex-col items-center justify-center rounded-3xl gap-1"
                       style={{ background: 'rgba(6,14,26,0.55)', backdropFilter: 'blur(2px)' }}>
                       <div className="text-2xl">🔒</div>
-                      <div className="text-xs font-bold" style={{ color: '#FF6B35' }}>Pro only</div>
+                      <div className="text-xs font-bold" style={{ color: '#7B5EA7' }}>Pro only</div>
                     </div>
                   )}
                   <div className="text-3xl mb-3">{s.icon}</div>
@@ -574,7 +574,7 @@ export default function ScriptReading() {
 
           {!isPro && (
             <div className="rounded-2xl p-5 flex items-center justify-between gap-4 flex-wrap"
-              style={{ background: 'rgba(255,107,53,0.06)', border: '1px solid rgba(255,107,53,0.2)' }}>
+              style={{ background: 'rgba(123,94,167,0.06)', border: '1px solid rgba(123,94,167,0.2)' }}>
               <div>
                 <p className="text-white font-semibold mb-0.5">🔒 4 scripts unlocked with Vak Pro</p>
                 <p className="text-sm" style={{ color: '#6B8CAE' }}>
@@ -582,7 +582,7 @@ export default function ScriptReading() {
                 </p>
               </div>
               <Link to="/pricing" className="text-sm font-bold px-4 py-2 rounded-full whitespace-nowrap"
-                style={{ background: '#FF6B35', color: 'white' }}>
+                style={{ background: '#7B5EA7', color: 'white' }}>
                 Upgrade →
               </Link>
             </div>
@@ -629,7 +629,7 @@ export default function ScriptReading() {
 
           <div className="mb-6">
             <label className="block text-sm font-semibold text-white mb-2">
-              Your script <span style={{ color: '#FF6B35' }}>*</span>
+              Your script <span style={{ color: '#7B5EA7' }}>*</span>
             </label>
             <textarea
               value={customText}
@@ -707,7 +707,7 @@ export default function ScriptReading() {
             <span className="text-xs" style={{ color: '#6B8CAE' }}>WPM</span>
             <span className="font-mono font-bold text-sm"
               style={{ color: wpm > 0 && (wpm < 100 || wpm > 180) ? '#F59E0B' : wpm > 0 ? '#00C49A' : '#6B8CAE' }}>
-              {wpm || '—'}
+              {wpm || ','}
             </span>
           </div>
 
@@ -791,8 +791,8 @@ export default function ScriptReading() {
           {/* Live transcript — confirms voice is being captured */}
           <div className="mb-2 min-h-[28px] px-3 py-1 rounded-xl text-sm transition-all"
             style={{
-              background: liveText ? 'rgba(255,107,53,0.08)' : 'rgba(255,255,255,0.03)',
-              border: `1px solid ${liveText ? 'rgba(255,107,53,0.25)' : 'rgba(255,255,255,0.06)'}`,
+              background: liveText ? 'rgba(123,94,167,0.08)' : 'rgba(255,255,255,0.03)',
+              border: `1px solid ${liveText ? 'rgba(123,94,167,0.25)' : 'rgba(255,255,255,0.06)'}`,
             }}>
             {liveText ? (
               <span className="italic" style={{ color: '#FF9D6F' }}>🎤 {liveText}</span>
@@ -808,10 +808,10 @@ export default function ScriptReading() {
               {/* Listening pulse */}
               <div className="relative flex items-center justify-center w-6 h-6">
                 <div className="absolute w-6 h-6 rounded-full animate-ping"
-                  style={{ background: 'rgba(255,107,53,0.2)', animationDuration: '1.2s' }} />
-                <div className="w-2.5 h-2.5 rounded-full" style={{ background: '#FF6B35' }} />
+                  style={{ background: 'rgba(123,94,167,0.2)', animationDuration: '1.2s' }} />
+                <div className="w-2.5 h-2.5 rounded-full" style={{ background: '#7B5EA7' }} />
               </div>
-              <span className="text-sm font-semibold" style={{ color: '#FF6B35' }}>Listening</span>
+              <span className="text-sm font-semibold" style={{ color: '#7B5EA7' }}>Listening</span>
             </div>
 
             {/* Manual advance button — works even when STT isn't tracking */}
@@ -832,7 +832,7 @@ export default function ScriptReading() {
             <button
               onClick={handleDone}
               className="px-5 py-2 rounded-2xl text-sm font-bold text-white transition-all hover:opacity-90 active:scale-95"
-              style={{ background: 'linear-gradient(135deg, #FF6B35, #FF8F4F)', boxShadow: '0 4px 16px rgba(255,107,53,0.35)' }}
+              style={{ background: 'linear-gradient(135deg, #7B5EA7, #9B7EC8)', boxShadow: '0 4px 16px rgba(123,94,167,0.35)' }}
             >
               Done →
             </button>
@@ -1023,11 +1023,11 @@ export default function ScriptReading() {
               </ul>
             </div>
             <div className="card">
-              <div className="text-sm font-semibold mb-3" style={{ color: '#FF6B35' }}>🔧 Work on this</div>
+              <div className="text-sm font-semibold mb-3" style={{ color: '#7B5EA7' }}>🔧 Work on this</div>
               <ul className="space-y-2">
                 {report.improvements?.map((s, i) => (
                   <li key={i} className="text-sm flex gap-2" style={{ color: '#E2E8F0' }}>
-                    <span style={{ color: '#FF6B35' }}>•</span>{s}
+                    <span style={{ color: '#7B5EA7' }}>•</span>{s}
                   </li>
                 ))}
               </ul>
@@ -1036,11 +1036,11 @@ export default function ScriptReading() {
 
           {/* Action item */}
           {report.action_item && (
-            <div className="card mb-6" style={{ background: 'rgba(255,107,53,0.06)', borderColor: 'rgba(255,107,53,0.2)' }}>
+            <div className="card mb-6" style={{ background: 'rgba(123,94,167,0.06)', borderColor: 'rgba(123,94,167,0.2)' }}>
               <div className="flex gap-3">
                 <span className="text-xl shrink-0">🎯</span>
                 <div>
-                  <div className="text-sm font-semibold mb-1" style={{ color: '#FF6B35' }}>Your action item</div>
+                  <div className="text-sm font-semibold mb-1" style={{ color: '#7B5EA7' }}>Your action item</div>
                   <p className="text-sm" style={{ color: '#E2E8F0' }}>{report.action_item}</p>
                 </div>
               </div>
@@ -1055,7 +1055,7 @@ export default function ScriptReading() {
             </button>
             <button onClick={fullReset}
               className="flex-1 py-3 rounded-2xl font-bold text-sm text-white transition-all hover:opacity-90"
-              style={{ background: 'linear-gradient(135deg, #FF6B35, #FF8F4F)' }}>
+              style={{ background: 'linear-gradient(135deg, #7B5EA7, #9B7EC8)' }}>
               📜 New script →
             </button>
           </div>

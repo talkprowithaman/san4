@@ -118,7 +118,7 @@ export default function MeetingPrep() {
                 <Link
                   to="/pricing"
                   className="text-xs font-bold px-3 py-1.5 rounded-full hover:opacity-90 transition-all"
-                  style={{ background: '#FF6B35', color: 'white' }}
+                  style={{ background: '#7B5EA7', color: 'white' }}
                 >
                   Upgrade for unlimited →
                 </Link>
@@ -133,7 +133,7 @@ export default function MeetingPrep() {
             className="rounded-3xl p-8 text-center animate-fade-in"
             style={{
               background: 'linear-gradient(160deg, #10192E 0%, #0B1220 100%)',
-              border: '1px solid rgba(255,107,53,0.25)',
+              border: '1px solid rgba(123,94,167,0.25)',
             }}
           >
             <div className="text-4xl mb-4">🔒</div>
@@ -143,9 +143,9 @@ export default function MeetingPrep() {
             </p>
             <div
               className="rounded-2xl p-4 mb-6 text-left max-w-xs mx-auto"
-              style={{ background: 'rgba(255,107,53,0.07)', border: '1px solid rgba(255,107,53,0.2)' }}
+              style={{ background: 'rgba(123,94,167,0.07)', border: '1px solid rgba(123,94,167,0.2)' }}
             >
-              <p className="text-xs font-bold uppercase tracking-widest mb-3" style={{ color: '#FF6B35' }}>
+              <p className="text-xs font-bold uppercase tracking-widest mb-3" style={{ color: '#7B5EA7' }}>
                 Vak Pro · ₹299/month
               </p>
               {['Unlimited meeting prep', 'Deep coaching reports', 'Unlimited sessions', '8 scenarios'].map(f => (

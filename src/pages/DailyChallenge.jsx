@@ -156,7 +156,7 @@ export default function DailyChallenge() {
       const fallback = {
         score: 70, clarity: 70, confidence: 70,
         best_moment: null,
-        one_fix: 'Be more specific — use one concrete example to support your point.',
+        one_fix: 'Be more specific, use one concrete example to support your point.',
         encouragement: 'Great effort! Showing up daily is how you build the skill.',
       }
       markDailyChallengeDone()
@@ -201,7 +201,7 @@ export default function DailyChallenge() {
           <div className="mb-6 text-center">
             <div
               className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full mb-3 text-sm font-semibold"
-              style={{ background: 'rgba(255,107,53,0.12)', color: '#FF6B35', border: '1px solid rgba(255,107,53,0.25)' }}
+              style={{ background: 'rgba(123,94,167,0.12)', color: '#7B5EA7', border: '1px solid rgba(123,94,167,0.25)' }}
             >
               🔥 Daily Challenge: {situation.category}
             </div>
@@ -215,8 +215,8 @@ export default function DailyChallenge() {
             className="rounded-3xl p-7 mb-6"
             style={{
               background: 'linear-gradient(160deg, #10192E 0%, #0B1220 100%)',
-              border: '1px solid rgba(255,107,53,0.25)',
-              boxShadow: '0 0 40px rgba(255,107,53,0.08)',
+              border: '1px solid rgba(123,94,167,0.25)',
+              boxShadow: '0 0 40px rgba(123,94,167,0.08)',
             }}
           >
             <div className="text-3xl mb-4 text-center">{situation.icon}</div>
@@ -243,8 +243,8 @@ export default function DailyChallenge() {
               onClick={startRecording}
               className="w-full py-4 rounded-2xl font-black text-white text-base transition-all hover:opacity-90 active:scale-95"
               style={{
-                background: 'linear-gradient(135deg, #FF6B35, #FF8F4F)',
-                boxShadow: '0 6px 24px rgba(255,107,53,0.4)',
+                background: 'linear-gradient(135deg, #7B5EA7, #9B7EC8)',
+                boxShadow: '0 6px 24px rgba(123,94,167,0.4)',
               }}
             >
               🎤 Start Responding
@@ -281,11 +281,11 @@ export default function DailyChallenge() {
             <div className="relative">
               <div
                 className="absolute inset-0 rounded-full animate-ping"
-                style={{ background: 'rgba(255,107,53,0.2)', animationDuration: '1.2s' }}
+                style={{ background: 'rgba(123,94,167,0.2)', animationDuration: '1.2s' }}
               />
               <div
                 className="relative w-24 h-24 rounded-full flex items-center justify-center text-4xl"
-                style={{ background: 'linear-gradient(135deg, #FF6B35, #FF8F4F)', boxShadow: '0 0 40px rgba(255,107,53,0.4)' }}
+                style={{ background: 'linear-gradient(135deg, #7B5EA7, #9B7EC8)', boxShadow: '0 0 40px rgba(123,94,167,0.4)' }}
               >
                 🎤
               </div>
@@ -346,7 +346,7 @@ export default function DailyChallenge() {
         <div className="flex gap-2">
           {[0, 1, 2].map(i => (
             <div key={i} className="w-2 h-2 rounded-full animate-bounce"
-              style={{ background: '#FF6B35', animationDelay: `${i * 0.15}s` }} />
+              style={{ background: '#7B5EA7', animationDelay: `${i * 0.15}s` }} />
           ))}
         </div>
       </div>
@@ -399,11 +399,11 @@ export default function DailyChallenge() {
           )}
 
           {/* One fix */}
-          <div className="card mb-4" style={{ background: 'rgba(255,107,53,0.06)', borderColor: 'rgba(255,107,53,0.2)' }}>
+          <div className="card mb-4" style={{ background: 'rgba(123,94,167,0.06)', borderColor: 'rgba(123,94,167,0.2)' }}>
             <div className="flex gap-3">
               <span className="text-xl">🔧</span>
               <div>
-                <div className="text-sm font-semibold mb-1" style={{ color: '#FF6B35' }}>One thing to fix</div>
+                <div className="text-sm font-semibold mb-1" style={{ color: '#7B5EA7' }}>One thing to fix</div>
                 <p className="text-sm" style={{ color: '#E2E8F0' }}>{report.one_fix}</p>
               </div>
             </div>

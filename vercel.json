@@ -3,6 +3,7 @@
   "outputDirectory": "dist",
   "framework": "vite",
   "rewrites": [
-    { "source": "/((?!san4-landing|assets|aman).*)", "destination": "/index.html" }
+    { "source": "/", "destination": "/san4-landing.html" },
+    { "source": "/((?!san4-landing|assets|aman\\.jpg|favicon).*)", "destination": "/index.html" }
   ]
 }

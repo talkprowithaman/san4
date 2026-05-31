@@ -57,7 +57,7 @@ export default function Dashboard() {
         <div style={{
           position: 'absolute', top: '-220px', right: '-160px',
           width: '800px', height: '800px', borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(255,107,53,0.22) 0%, rgba(255,107,53,0.06) 45%, transparent 70%)',
+          background: 'radial-gradient(circle, rgba(123,94,167,0.22) 0%, rgba(123,94,167,0.06) 45%, transparent 70%)',
         }} />
         <div style={{
           position: 'absolute', bottom: '-220px', left: '-180px',
@@ -150,7 +150,7 @@ export default function Dashboard() {
         {/* Stats row */}
         <div className="grid grid-cols-3 gap-3 mb-5 reveal reveal-d1">
           {[
-            { icon: '🔥', label: 'Streak',   value: streak > 0 ? `${streak}d` : '0',  color: '#FF6B35' },
+            { icon: '🔥', label: 'Streak',   value: streak > 0 ? `${streak}d` : '0',  color: '#7B5EA7' },
             { icon: '⭐', label: 'Total XP', value: totalXP,          color: '#F59E0B' },
             { icon: '🎭', label: 'Sessions', value: sessions.length,  color: '#00C49A' },
           ].map(({ icon, label, value, color }) => (
@@ -285,7 +285,7 @@ export default function Dashboard() {
               </span>
               <span className="text-xs" style={{ color: 'rgba(255,255,255,0.2)' }}>({weeklySessionCount}/3)</span>
             </div>
-            <Link to="/pricing" className="text-xs font-bold" style={{ color: '#FF6B35' }}>
+            <Link to="/pricing" className="text-xs font-bold" style={{ color: '#7B5EA7' }}>
               Upgrade →
             </Link>
           </div>
@@ -296,8 +296,8 @@ export default function Dashboard() {
           <div
             className="mt-4 rounded-2xl p-5 reveal"
             style={{
-              background: 'linear-gradient(160deg, rgba(255,107,53,0.1), rgba(255,107,53,0.05))',
-              border: '1px solid rgba(255,107,53,0.25)',
+              background: 'linear-gradient(160deg, rgba(123,94,167,0.1), rgba(123,94,167,0.05))',
+              border: '1px solid rgba(123,94,167,0.25)',
               boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.04)',
             }}
           >

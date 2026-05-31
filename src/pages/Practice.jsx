@@ -65,8 +65,8 @@ const SCENARIOS = [
     duration:   '10-20 min',
     difficulty: 2,
     tags:       ['Consultants', 'Sales'],
-    glowColor:  'rgba(255,107,53,0.2)',
-    borderHover:'rgba(255,107,53,0.4)',
+    glowColor:  'rgba(123,94,167,0.2)',
+    borderHover:'rgba(123,94,167,0.4)',
     tier:       'pro',
   },
   {
@@ -204,8 +204,8 @@ function UpgradeModal({ reason, onClose }) {
         className="relative max-w-sm w-full rounded-3xl p-7 animate-slide-up"
         style={{
           background: 'linear-gradient(160deg, #10192E 0%, #0B1220 100%)',
-          border: '1px solid rgba(255,107,53,0.35)',
-          boxShadow: '0 0 60px rgba(255,107,53,0.15)',
+          border: '1px solid rgba(123,94,167,0.35)',
+          boxShadow: '0 0 60px rgba(123,94,167,0.15)',
         }}
         onClick={e => e.stopPropagation()}
       >
@@ -220,9 +220,9 @@ function UpgradeModal({ reason, onClose }) {
         {/* What you get */}
         <div
           className="rounded-2xl p-4 mb-5"
-          style={{ background: 'rgba(255,107,53,0.07)', border: '1px solid rgba(255,107,53,0.2)' }}
+          style={{ background: 'rgba(123,94,167,0.07)', border: '1px solid rgba(123,94,167,0.2)' }}
         >
-          <p className="text-xs font-bold uppercase tracking-widest mb-3" style={{ color: '#FF6B35' }}>
+          <p className="text-xs font-bold uppercase tracking-widest mb-3" style={{ color: '#7B5EA7' }}>
             Vak Pro · ₹299/month
           </p>
           {[
@@ -305,7 +305,7 @@ export default function Practice() {
         <div style={{
           position: 'absolute', top: '-80px', left: '50%', transform: 'translateX(-50%)',
           width: '600px', height: '300px', borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(255,107,53,0.07) 0%, transparent 70%)',
+          background: 'radial-gradient(circle, rgba(123,94,167,0.07) 0%, transparent 70%)',
         }} />
       </div>
 
@@ -316,7 +316,7 @@ export default function Practice() {
         {/* Header */}
         <div className="text-center mb-8 animate-fade-in">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full mb-3 text-sm font-semibold"
-            style={{ background: 'rgba(255,107,53,0.12)', color: '#FF6B35', border: '1px solid rgba(255,107,53,0.2)' }}>
+            style={{ background: 'rgba(123,94,167,0.12)', color: '#7B5EA7', border: '1px solid rgba(123,94,167,0.2)' }}>
             ⚔️ Choose Your Quest
           </div>
           <h1 className="text-3xl font-black text-white">What do you want to conquer?</h1>
@@ -348,7 +348,7 @@ export default function Practice() {
               <Link
                 to="/pricing"
                 className="text-xs font-bold px-3 py-1 rounded-full transition-all hover:opacity-90"
-                style={{ background: '#FF6B35', color: 'white' }}
+                style={{ background: '#7B5EA7', color: 'white' }}
               >
                 Upgrade →
               </Link>
@@ -378,7 +378,7 @@ export default function Practice() {
 
         {/* ── Pro tier scenarios ───────────────────────────────────────────── */}
         <div className="mb-3 flex items-center gap-3">
-          <div className="text-xs font-bold uppercase tracking-widest" style={{ color: '#FF6B35' }}>
+          <div className="text-xs font-bold uppercase tracking-widest" style={{ color: '#7B5EA7' }}>
             ⚡ Vak Pro · ₹299/month
           </div>
           <div className="flex-1 h-px" style={{ background: 'rgba(255,255,255,0.07)' }} />
@@ -386,7 +386,7 @@ export default function Practice() {
             <Link
               to="/pricing"
               className="text-xs font-bold px-3 py-1.5 rounded-full transition-all hover:opacity-90"
-              style={{ background: 'rgba(255,107,53,0.15)', color: '#FF6B35', border: '1px solid rgba(255,107,53,0.25)' }}
+              style={{ background: 'rgba(123,94,167,0.15)', color: '#7B5EA7', border: '1px solid rgba(123,94,167,0.25)' }}
             >
               Unlock all →
             </Link>
@@ -410,8 +410,8 @@ export default function Practice() {
           <div
             className="rounded-3xl p-6 mb-6 flex flex-col sm:flex-row items-center gap-5"
             style={{
-              background: 'linear-gradient(135deg, rgba(255,107,53,0.08) 0%, rgba(99,102,241,0.06) 100%)',
-              border: '1px solid rgba(255,107,53,0.25)',
+              background: 'linear-gradient(135deg, rgba(123,94,167,0.08) 0%, rgba(99,102,241,0.06) 100%)',
+              border: '1px solid rgba(123,94,167,0.25)',
             }}
           >
             <div className="text-4xl">🦢</div>
@@ -519,7 +519,7 @@ function ScenarioCard({ scenario: s, locked, dimmed, onClick }) {
       onClick={onClick}
       className="quest-card group relative text-left"
       style={{
-        '--hover-border': locked ? 'rgba(255,107,53,0.4)' : s.borderHover,
+        '--hover-border': locked ? 'rgba(123,94,167,0.4)' : s.borderHover,
         opacity: dimmed ? 0.6 : 1,
       }}
     >
@@ -532,7 +532,7 @@ function ScenarioCard({ scenario: s, locked, dimmed, onClick }) {
           <span className="text-2xl">🔒</span>
           <span
             className="text-xs font-bold px-2.5 py-1 rounded-full"
-            style={{ background: 'rgba(255,107,53,0.2)', color: '#FF6B35', border: '1px solid rgba(255,107,53,0.35)' }}
+            style={{ background: 'rgba(123,94,167,0.2)', color: '#7B5EA7', border: '1px solid rgba(123,94,167,0.35)' }}
           >
             Vak Pro
           </span>
@@ -571,7 +571,7 @@ function ScenarioCard({ scenario: s, locked, dimmed, onClick }) {
         <span className="text-xs" style={{ color: '#6B8CAE' }}>⏱ {s.duration}</span>
         <div className="flex items-center gap-2">
           <span className="text-xs font-bold" style={{ color: '#F59E0B' }}>⭐ +100–225 XP</span>
-          <span className="text-sm font-bold opacity-0 group-hover:opacity-100 transition-all" style={{ color: '#FF6B35' }}>
+          <span className="text-sm font-bold opacity-0 group-hover:opacity-100 transition-all" style={{ color: '#7B5EA7' }}>
             {locked ? 'Unlock →' : 'Play →'}
           </span>
         </div>

@@ -43,9 +43,9 @@ const PLANS = [
     original:  '₹399',
     period:    '/ month',
     badge:     '⚡ MOST POPULAR',
-    badgeColor:'#FF6B35',
-    border:    'rgba(255,107,53,0.45)',
-    glow:      'rgba(255,107,53,0.08)',
+    badgeColor:'#7B5EA7',
+    border:    'rgba(123,94,167,0.45)',
+    glow:      'rgba(123,94,167,0.08)',
     level:     4,
     popular:   true,
     cta:       'Upgrade to Pro',
@@ -121,7 +121,7 @@ export default function Pricing() {
         <div style={{
           position: 'absolute', top: '-100px', right: '-100px',
           width: '600px', height: '600px', borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(255,107,53,0.08) 0%, transparent 65%)',
+          background: 'radial-gradient(circle, rgba(123,94,167,0.08) 0%, transparent 65%)',
         }} />
         <div style={{
           position: 'absolute', bottom: '-100px', left: '-100px',
@@ -139,12 +139,12 @@ export default function Pricing() {
           style={{ background: 'rgba(6,14,26,0.88)', backdropFilter: 'blur(20px)', borderBottom: '1px solid rgba(255,255,255,0.07)' }}
         >
           <Link to="/" className="text-xl font-black text-white tracking-tight">
-            San<span style={{ color: '#FF6B35' }}>4</span>
+            San<span style={{ color: '#7B5EA7' }}>4</span>
           </Link>
           <div className="flex items-center gap-3">
             <Link to="/auth" className="text-sm font-medium transition-colors" style={{ color: '#6B8CAE' }}>Sign in</Link>
             <Link to="/auth?mode=signup" className="text-sm font-bold text-white px-4 py-2 rounded-full transition-all hover:opacity-90"
-              style={{ background: '#FF6B35' }}>
+              style={{ background: '#7B5EA7' }}>
               Join free
             </Link>
           </div>
@@ -229,11 +229,11 @@ export default function Pricing() {
               { label: 'Feedback depth',           free: 'Basic',    pro: 'Deep',      plus: 'Deep' },
               { label: 'Meeting prep',             free: '1/week',   pro: 'Unlimited', plus: 'Unlimited' },
               { label: 'Streaks & XP',             free: '✓',        pro: '✓',         plus: '✓' },
-              { label: 'Progress dashboard',       free: '—',        pro: '✓',         plus: '✓' },
-              { label: 'Live meeting overlay',     free: '—',        pro: 'Beta',      plus: '✓' },
-              { label: 'Indian English mode',      free: '—',        pro: 'Soon',      plus: 'Soon' },
-              { label: '1:1 human coaching',       free: '—',        pro: '—',         plus: '1×/month' },
-              { label: 'Industry packs',           free: '—',        pro: '—',         plus: '✓' },
+              { label: 'Progress dashboard',       free: ',',        pro: '✓',         plus: '✓' },
+              { label: 'Live meeting overlay',     free: ',',        pro: 'Beta',      plus: '✓' },
+              { label: 'Indian English mode',      free: ',',        pro: 'Soon',      plus: 'Soon' },
+              { label: '1:1 human coaching',       free: ',',        pro: ',',         plus: '1×/month' },
+              { label: 'Industry packs',           free: ',',        pro: ',',         plus: '✓' },
             ].map((row, i) => (
               <div
                 key={row.label}
@@ -246,7 +246,7 @@ export default function Pricing() {
                 <div className="px-5 py-3.5" style={{ color: '#94A3B8' }}>{row.label}</div>
                 {[row.free, row.pro, row.plus].map((val, j) => (
                   <div key={j} className="px-3 py-3.5 text-center font-semibold"
-                    style={{ color: val === '—' ? 'rgba(255,255,255,0.15)' : val === '✓' ? '#00C49A' : '#E2E8F0' }}>
+                    style={{ color: val === ',' ? 'rgba(255,255,255,0.15)' : val === '✓' ? '#00C49A' : '#E2E8F0' }}>
                     {val}
                   </div>
                 ))}
@@ -277,7 +277,7 @@ function PlanCard({ plan, isCurrent, onCta }) {
       {plan.popular && (
         <div
           className="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full text-xs font-black text-white whitespace-nowrap"
-          style={{ background: 'linear-gradient(135deg, #FF6B35, #FF8F4F)', boxShadow: '0 4px 14px rgba(255,107,53,0.4)' }}
+          style={{ background: 'linear-gradient(135deg, #7B5EA7, #9B7EC8)', boxShadow: '0 4px 14px rgba(123,94,167,0.4)' }}
         >
           ⚡ Most Popular
         </div>
@@ -352,7 +352,7 @@ function PlanCard({ plan, isCurrent, onCta }) {
             }`}
             style={
               plan.ctaStyle === 'primary'
-                ? { background: 'linear-gradient(135deg, #FF6B35, #FF8F4F)', boxShadow: '0 4px 20px rgba(255,107,53,0.35)', color: 'white' }
+                ? { background: 'linear-gradient(135deg, #7B5EA7, #9B7EC8)', boxShadow: '0 4px 20px rgba(123,94,167,0.35)', color: 'white' }
                 : plan.ctaStyle === 'secondary'
                 ? { background: 'rgba(0,196,154,0.12)', border: '1px solid rgba(0,196,154,0.3)', color: '#00C49A' }
                 : { background: 'rgba(139,92,246,0.12)', border: '1px solid rgba(139,92,246,0.3)', color: '#A78BFA' }

@@ -14,7 +14,7 @@ export default function LoadingScreen() {
 
         {/* Logo */}
         <div className="text-3xl font-black text-white mb-5 tracking-tight">
-          San<span style={{ color: '#FF6B35' }}>4</span>
+          San<span style={{ color: '#7B5EA7' }}>4</span>
         </div>
 
         {/* Loading dots */}
@@ -24,7 +24,7 @@ export default function LoadingScreen() {
               key={i}
               className="w-2 h-2 rounded-full animate-bounce-slow"
               style={{
-                background: '#FF6B35',
+                background: '#7B5EA7',
                 animationDelay: `${i * 0.18}s`,
                 opacity: 0.8,
               }}

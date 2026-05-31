@@ -171,7 +171,7 @@ export default function Progress() {
 
           {/* Blurred teaser */}
           <div className="relative rounded-3xl overflow-hidden mb-6"
-            style={{ border: '1px solid rgba(255,107,53,0.2)' }}>
+            style={{ border: '1px solid rgba(123,94,167,0.2)' }}>
             <div className="p-6 filter blur-sm pointer-events-none select-none" aria-hidden>
               <div className="grid grid-cols-3 gap-3 mb-6">
                 {['Score Trend', 'Filler Trend', 'Weekly Sessions'].map(l => (
@@ -338,10 +338,10 @@ export default function Progress() {
             {progress && (
               <div className="grid grid-cols-2 gap-4 mb-6">
                 <div className="rounded-2xl p-4"
-                  style={{ background: 'linear-gradient(160deg, #10192E 0%, #0B1220 100%)', border: '1px solid rgba(255,107,53,0.2)' }}>
+                  style={{ background: 'linear-gradient(160deg, #10192E 0%, #0B1220 100%)', border: '1px solid rgba(123,94,167,0.2)' }}>
                   <div className="flex items-center gap-2 mb-2">
                     <span className="text-xl">🔥</span>
-                    <span className="text-xs font-bold uppercase tracking-widest" style={{ color: '#FF6B35' }}>Streak</span>
+                    <span className="text-xs font-bold uppercase tracking-widest" style={{ color: '#7B5EA7' }}>Streak</span>
                   </div>
                   <div className="text-3xl font-black text-white">{progress.streak_count || 0}<span className="text-lg"> days</span></div>
                   <div className="text-xs mt-1" style={{ color: '#6B8CAE' }}>

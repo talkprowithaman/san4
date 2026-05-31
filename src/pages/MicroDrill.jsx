@@ -41,7 +41,7 @@ const DRILL_META = {
     colorAlpha:  'rgba(245,158,11,0.12)',
     colorBorder: 'rgba(245,158,11,0.3)',
     description: 'A hard question with no warning. Answer on your feet. Trains your brain to think fast without freezing.',
-    instruction: 'You have 5 seconds to start. Structure as you go. Don\'t panic — think out loud.',
+    instruction: 'You have 5 seconds to start. Structure as you go. Don\'t panic, think out loud.',
     timeLabel:   '90 seconds',
   },
 }
@@ -427,7 +427,7 @@ export default function MicroDrill() {
         <div className="flex gap-2">
           {[0, 1, 2].map(i => (
             <div key={i} className="w-2 h-2 rounded-full animate-bounce"
-              style={{ background: meta?.color || '#FF6B35', animationDelay: `${i * 0.15}s` }} />
+              style={{ background: meta?.color || '#7B5EA7', animationDelay: `${i * 0.15}s` }} />
           ))}
         </div>
       </div>
@@ -504,11 +504,11 @@ export default function MicroDrill() {
           )}
 
           {/* One fix */}
-          <div className="card mb-4" style={{ background: 'rgba(255,107,53,0.06)', borderColor: 'rgba(255,107,53,0.2)' }}>
+          <div className="card mb-4" style={{ background: 'rgba(123,94,167,0.06)', borderColor: 'rgba(123,94,167,0.2)' }}>
             <div className="flex gap-3">
               <span className="text-xl">🔧</span>
               <div>
-                <div className="text-sm font-semibold mb-1" style={{ color: '#FF6B35' }}>The one fix</div>
+                <div className="text-sm font-semibold mb-1" style={{ color: '#7B5EA7' }}>The one fix</div>
                 <p className="text-sm" style={{ color: '#E2E8F0' }}>{report.one_fix}</p>
               </div>
             </div>
@@ -534,7 +534,7 @@ export default function MicroDrill() {
             <button
               onClick={() => setPhase('select')}
               className="flex-1 py-3 rounded-2xl font-bold text-sm text-white transition-all hover:opacity-90"
-              style={{ background: 'linear-gradient(135deg, #FF6B35, #FF8F4F)' }}
+              style={{ background: 'linear-gradient(135deg, #7B5EA7, #9B7EC8)' }}
             >
               Switch drill →
             </button>

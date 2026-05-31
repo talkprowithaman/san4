@@ -4,9 +4,11 @@ export default {
   theme: {
     extend: {
       colors: {
-        primary: '#FF6B35',
+        primary: '#7B5EA7',      // purple — new brand primary
+        accent:  '#4FACFE',      // electric blue — gradient endpoint
         teal:    '#00C49A',
         gold:    '#F59E0B',
+        orange:  '#FF6B35',      // kept for score/data viz only
         indigo:  '#6366F1',
         navy: {
           950: '#030811',

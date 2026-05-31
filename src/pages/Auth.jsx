@@ -31,7 +31,7 @@ export default function Auth() {
   // ── Check-email screen ───────────────────────────────────────────────────────
   if (mode === 'check-email') return (
     <div className="min-h-screen flex items-center justify-center px-4"
-      style={{ background: '#050810' }}>
+      style={{ background: '#0a0a0f' }}>
       <div className="max-w-md w-full text-center rounded-3xl p-10"
         style={{ background: 'linear-gradient(160deg, #10192E 0%, #0B1220 100%)', border: '1px solid rgba(255,255,255,0.08)' }}>
         <div className="text-5xl mb-5">📧</div>
@@ -56,7 +56,7 @@ export default function Auth() {
   return (
     <div
       className="min-h-screen flex items-center justify-center px-4 py-8 relative overflow-hidden"
-      style={{ background: '#050810' }}
+      style={{ background: '#0a0a0f' }}
     >
       {/* Background glows */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden">
@@ -68,7 +68,7 @@ export default function Auth() {
         <div style={{
           position: 'absolute', bottom: '-100px', left: '-80px',
           width: '400px', height: '400px', borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(255,107,53,0.07) 0%, transparent 70%)',
+          background: 'radial-gradient(circle, rgba(123,94,167,0.07) 0%, transparent 70%)',
         }} />
       </div>
 
@@ -81,7 +81,7 @@ export default function Auth() {
           </div>
           <Link to="/" className="inline-block">
             <span className="text-3xl font-black text-white tracking-tight">
-              San<span style={{ color: '#FF6B35' }}>4</span>
+              San<span style={{ color: '#7B5EA7' }}>4</span>
             </span>
           </Link>
           <p className="mt-1 text-sm font-medium" style={{ color: '#6B8CAE' }}>
@@ -109,10 +109,10 @@ export default function Auth() {
                 className="flex-1 py-2.5 rounded-xl text-sm font-bold transition-all"
                 style={{
                   background: mode === m
-                    ? 'linear-gradient(135deg, #FF6B35, #FF8F4F)'
+                    ? 'linear-gradient(135deg, #7B5EA7, #9B7EC8)'
                     : 'transparent',
                   color: mode === m ? 'white' : '#6B8CAE',
-                  boxShadow: mode === m ? '0 4px 14px rgba(255,107,53,0.3)' : 'none',
+                  boxShadow: mode === m ? '0 4px 14px rgba(123,94,167,0.3)' : 'none',
                 }}
               >
                 {m === 'signin' ? 'Sign In' : 'Join Free'}
@@ -192,7 +192,7 @@ export default function Auth() {
               <>No account?{' '}
                 <button onClick={() => { setMode('signup'); setError('') }}
                   className="font-bold hover:text-white transition-colors"
-                  style={{ color: '#FF6B35' }}>
+                  style={{ color: '#7B5EA7' }}>
                   Join free →
                 </button>
               </>
@@ -200,7 +200,7 @@ export default function Auth() {
               <>Already in?{' '}
                 <button onClick={() => { setMode('signin'); setError('') }}
                   className="font-bold hover:text-white transition-colors"
-                  style={{ color: '#FF6B35' }}>
+                  style={{ color: '#7B5EA7' }}>
                   Sign in
                 </button>
               </>
