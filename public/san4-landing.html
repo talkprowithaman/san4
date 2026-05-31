@@ -163,7 +163,13 @@ nav.scrolled{
   display:flex;flex-direction:column;align-items:center;
   justify-content:flex-start;
   overflow:hidden;
-  padding-top:88px;
+  padding-top:72px;
+}
+/* Subtle bottom fade — phone rises through it, looks intentional */
+#hero-pin::after{
+  content:'';position:absolute;bottom:0;left:0;right:0;
+  height:30%;pointer-events:none;z-index:8;
+  background:linear-gradient(to top,rgba(10,10,15,.35) 0%,transparent 100%);
 }
 .hero-bg{
   position:absolute;inset:0;
@@ -193,7 +199,7 @@ nav.scrolled{
   padding:.4rem 1rem;border-radius:100px;
   background:var(--glass);border:1px solid rgba(123,94,167,.4);
   font-size:.8rem;font-weight:600;color:#a78bfa;
-  margin-bottom:1.2rem;
+  margin-bottom:0.7rem;
   opacity:0;animation:fadeUp .6s var(--ease) .3s forwards;
   will-change:transform,opacity;
 }
@@ -205,8 +211,8 @@ nav.scrolled{
 @keyframes pulseDot{0%,100%{transform:scale(1)}50%{transform:scale(1.6);opacity:.7}}
 .hero-h1{
   font-size:clamp(38px,5.5vw,74px);font-weight:800;
-  line-height:1.05;letter-spacing:-.03em;
-  margin-bottom:1rem;
+  line-height:1.0;letter-spacing:-.03em;
+  margin-bottom:0.65rem;
 }
 .h-line{display:block;overflow:hidden}
 .h-word{
@@ -227,7 +233,7 @@ nav.scrolled{
 
 .hero-sub{
   font-size:clamp(15px,1.8vw,18px);font-weight:300;color:var(--muted);
-  margin-bottom:1.75rem;max-width:440px;
+  margin-bottom:1.1rem;max-width:440px;
   opacity:0;animation:fadeUp .6s var(--ease) .9s forwards;
 }
 .hero-btns{
@@ -248,7 +254,7 @@ nav.scrolled{
 .hero-phone-wrap{
   position:absolute;z-index:5;
   left:50%;bottom:0;
-  transform:translateX(-50%) translateY(60%) scale(0.85);
+  transform:translateX(-50%) translateY(22%) scale(0.88);
   transform-origin:center bottom;
   will-change:transform;
 }
@@ -310,6 +316,10 @@ nav.scrolled{
   font-size:12px;font-weight:600;white-space:nowrap;
   opacity:0;will-change:transform,opacity;
   filter:drop-shadow(0 0 20px rgba(123,94,167,.5));
+  animation:floatCardIn 1s var(--ease) 1.4s forwards;
+}
+@keyframes floatCardIn{
+  to{opacity:0.22}
 }
 .fc-label{font-size:9px;color:var(--muted);margin-bottom:2px}
 .fc-val{font-size:14px;font-weight:800}
@@ -778,6 +788,11 @@ footer{padding:60px 5% 40px;border-top:1px solid var(--border);background:#08080
   <div id="hero-pin">
     <div class="hero-bg" id="hero-bg"></div>
     <div class="hero-grid"></div>
+    <!-- Mid-hero glow — fills visual gap between text and phone -->
+    <div style="position:absolute;bottom:25%;left:50%;transform:translateX(-50%);
+      width:500px;height:300px;border-radius:50%;pointer-events:none;
+      background:radial-gradient(ellipse,rgba(123,94,167,.12) 0%,transparent 70%);
+      animation:glowBreath 4s ease-in-out infinite;"></div>
 
     <!-- Floating communication symbols (fly in on scroll — like coins in crypto) -->
     <div class="comm-sym" id="cs1" style="top:14%;left:8%">🎤</div>
@@ -805,6 +820,12 @@ footer{padding:60px 5% 40px;border-top:1px solid var(--border);background:#08080
           <svg class="s-icon" viewBox="0 0 24 24" fill="white"><path d="M3.18 23.76c.3.18.67.19 1.01.02l12.5-6.96-2.76-2.76-10.75 9.7zM20.5 10.56L17.3 8.75 14.2 11.85l3.12 3.13 3.2-1.81c.92-.52.92-2.05-.02-2.61zM.49 1.26C.18 1.64 0 2.17 0 2.84v18.32c0 .67.18 1.2.49 1.58l.07.07 10.26-10.26v-.24L.56 1.19l-.07.07zM13.07 14.94L3.19.24c-.34-.18-.71-.17-1.01.02l10.89 9.81v4.87z"/></svg>
           Google Play
         </a>
+      </div>
+
+      <!-- Scroll hint -->
+      <div style="margin-top:1.5rem;display:flex;flex-direction:column;align-items:center;gap:.4rem;opacity:0;animation:fadeUp .6s var(--ease) 1.5s forwards;">
+        <span style="font-size:.72rem;font-weight:500;color:rgba(255,255,255,.28);letter-spacing:.08em;text-transform:uppercase">Scroll to explore</span>
+        <div style="width:1px;height:28px;background:linear-gradient(to bottom,rgba(123,94,167,.5),transparent)"></div>
       </div>
     </div>
 
@@ -1405,7 +1426,7 @@ function renderHero() {
       ? map(p, 0, 0.5, 0.85, 1.3)
       : map(p, 0.5, 1.0, 1.3, 0.65);
     const ty = p < 0.5
-      ? map(p, 0, 0.5, 60, -5)
+      ? map(p, 0, 0.5, 22, -5)
       : map(p, 0.5, 1.0, -5, -40);
     heroPhone.style.transform = `translateX(-50%) translateY(${ty}%) scale(${sc})`;
   }
