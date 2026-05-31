@@ -314,6 +314,27 @@ nav.scrolled{
 .fc-label{font-size:9px;color:var(--muted);margin-bottom:2px}
 .fc-val{font-size:14px;font-weight:800}
 
+
+/* ── Benefit card accordion ────────────────────────────────────── */
+.bcard{cursor:pointer;user-select:none}
+.bcard-header{display:flex;align-items:center;justify-content:space-between;gap:1rem}
+.bcard-chevron{
+  width:28px;height:28px;border-radius:50%;flex-shrink:0;
+  background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);
+  display:flex;align-items:center;justify-content:center;
+  font-size:.7rem;color:var(--muted);
+  transition:transform .4s var(--ease),background .3s,color .3s;
+}
+.bcard.open .bcard-chevron{transform:rotate(180deg);background:rgba(123,94,167,.2);color:#a78bfa}
+.bcard-body{
+  max-height:0;overflow:hidden;
+  transition:max-height .5s var(--ease),opacity .4s ease;
+  opacity:0;
+}
+.bcard.open .bcard-body{max-height:260px;opacity:1}
+.bcard:hover{transform:translateY(-4px);box-shadow:0 20px 60px rgba(123,94,167,.22);border-color:rgba(123,94,167,.25)}
+.bcard.open{border-color:rgba(123,94,167,.4);box-shadow:0 20px 60px rgba(123,94,167,.25)}
+
 /* ═══════════════════════════════════════════════
    SHARED SECTION STYLES
 ═══════════════════════════════════════════════ */
@@ -837,52 +858,64 @@ footer{padding:60px 5% 40px;border-top:1px solid var(--border);background:#08080
     </div>
     <div class="bcard-grid">
 
-      <div class="bcard sa" data-d="0">
-        <div class="card-illo">
-          <div class="illo-dots"><span></span><span></span><span></span></div>
-          <div class="illo-bub"></div><div class="illo-bar short"></div>
-          <div class="illo-bub u"></div><div class="illo-bar"></div><div class="illo-bub"></div>
+      <div class="bcard sa" data-d="0" onclick="toggleCard(this)">
+        <div class="bcard-header">
+          <div style="display:flex;align-items:center;gap:.85rem">
+            <div class="b-icon" style="margin-bottom:0;flex-shrink:0">😰</div>
+            <div>
+              <h3 style="margin-bottom:.2rem">You go blank</h3>
+              <p style="margin-bottom:0;font-size:.85rem">Five things to say. The meeting starts. You remember two.</p>
+            </div>
+          </div>
+          <span class="bcard-chevron">▾</span>
         </div>
-        <div class="b-icon">😰</div>
-        <h3>You go blank</h3>
-        <p>Five things to say. The meeting starts. You remember two.</p>
-        <ul class="b-bullets">
-          <li>Adrenaline shuts down the sentence-forming part of your brain when stakes are high</li>
-          <li>You rehearsed answers, not real back-and-forth conversations under pressure</li>
-          <li>Without live pressure reps, confidence simply cannot be built before the day</li>
-        </ul>
+        <div class="bcard-body">
+          <ul class="b-bullets" style="margin-top:1.25rem;padding-top:1rem;border-top:1px solid rgba(255,255,255,.07)">
+            <li>Adrenaline shuts down the sentence-forming part of your brain when stakes are high</li>
+            <li>You rehearsed answers, not real back-and-forth conversations under pressure</li>
+            <li>Without live pressure reps, confidence simply cannot be built before the day</li>
+          </ul>
+        </div>
       </div>
 
-      <div class="bcard sa" data-d="150">
-        <div class="card-illo">
-          <div class="illo-dots"><span></span><span></span><span></span></div>
-          <div class="illo-bub u"></div><div class="illo-bar"></div>
-          <div class="illo-bub"></div><div class="illo-bar short"></div><div class="illo-bub u"></div>
+      <div class="bcard sa" data-d="150" onclick="toggleCard(this)">
+        <div class="bcard-header">
+          <div style="display:flex;align-items:center;gap:.85rem">
+            <div class="b-icon" style="margin-bottom:0;flex-shrink:0">🔇</div>
+            <div>
+              <h3 style="margin-bottom:.2rem">No real feedback</h3>
+              <p style="margin-bottom:0;font-size:.85rem">"Be more confident" is not something you can act on.</p>
+            </div>
+          </div>
+          <span class="bcard-chevron">▾</span>
         </div>
-        <div class="b-icon">🔇</div>
-        <h3>No real feedback</h3>
-        <p>"Be more confident" is not something you can act on.</p>
-        <ul class="b-bullets">
-          <li>"Speak slower" and "be confident" give you nothing concrete to actually practise</li>
-          <li>You cannot hear yourself the way a room hears you — ever</li>
-          <li>One bad round quietly shakes confidence for the next three interactions</li>
-        </ul>
+        <div class="bcard-body">
+          <ul class="b-bullets" style="margin-top:1.25rem;padding-top:1rem;border-top:1px solid rgba(255,255,255,.07)">
+            <li>"Speak slower" gives you nothing concrete to actually practise</li>
+            <li>You cannot hear yourself the way a room hears you</li>
+            <li>One bad round quietly shakes confidence for the next three interactions</li>
+          </ul>
+        </div>
       </div>
 
-      <div class="bcard sa" data-d="300">
-        <div class="card-illo">
-          <div class="illo-dots"><span></span><span></span><span></span></div>
-          <div class="illo-bar"></div><div class="illo-bub"></div>
-          <div class="illo-bar short"></div><div class="illo-bub u"></div><div class="illo-bar"></div>
+      <div class="bcard sa" data-d="300" onclick="toggleCard(this)">
+        <div class="bcard-header">
+          <div style="display:flex;align-items:center;gap:.85rem">
+            <div class="b-icon" style="margin-bottom:0;flex-shrink:0">🌍</div>
+            <div>
+              <h3 style="margin-bottom:.2rem">Wrong tools</h3>
+              <p style="margin-bottom:0;font-size:.85rem">Every coaching app was built for California, not Bengaluru.</p>
+            </div>
+          </div>
+          <span class="bcard-chevron">▾</span>
         </div>
-        <div class="b-icon">🌍</div>
-        <h3>Wrong tools</h3>
-        <p>Every coaching app was built for California, not Bengaluru.</p>
-        <ul class="b-bullets">
-          <li>Calibrated for US English and American interview formats only</li>
-          <li>No scenarios for Indian MNCs, B-school GDs, or salary negotiations in ₹</li>
-          <li>Dollar pricing, Western examples, and zero local cultural context</li>
-        </ul>
+        <div class="bcard-body">
+          <ul class="b-bullets" style="margin-top:1.25rem;padding-top:1rem;border-top:1px solid rgba(255,255,255,.07)">
+            <li>Calibrated for US English and American interview formats only</li>
+            <li>No scenarios for Indian MNCs, B-school GDs, or salary negotiations in ₹</li>
+            <li>Dollar pricing, Western examples, and zero local cultural context</li>
+          </ul>
+        </div>
       </div>
 
     </div>
@@ -914,24 +947,87 @@ footer{padding:60px 5% 40px;border-top:1px solid var(--border);background:#08080
           <span style="padding:.3rem .85rem;border-radius:100px;color:#8B5CF6;border:1px solid rgba(139,92,246,.3);font-size:.8rem;font-weight:600">⚡ Influential</span>
           <span style="padding:.3rem .85rem;border-radius:100px;color:#F59E0B;border:1px solid rgba(245,158,11,.3);font-size:.8rem;font-weight:600">👑 Vaksiddha</span>
         </div>
-        <div style="display:flex;flex-direction:column;gap:.75rem">
-          <div class="sa" data-d="400" style="display:flex;align-items:flex-start;gap:.75rem;font-size:.9rem;color:var(--muted);line-height:1.55">
-            <div style="width:28px;height:28px;border-radius:8px;background:rgba(123,94,167,.2);display:flex;align-items:center;justify-content:center;font-size:.8rem;flex-shrink:0">🎯</div>
-            Every session earns XP. Real scores for confidence, pacing, and filler words.
-          </div>
-          <div class="sa" data-d="500" style="display:flex;align-items:flex-start;gap:.75rem;font-size:.9rem;color:var(--muted);line-height:1.55">
-            <div style="width:28px;height:28px;border-radius:8px;background:rgba(123,94,167,.2);display:flex;align-items:center;justify-content:center;font-size:.8rem;flex-shrink:0">🎤</div>
-            Vak listens to your actual audio, not just a transcript. Fillers, pacing, hesitation — all caught.
-          </div>
-          <div class="sa" data-d="600" style="display:flex;align-items:flex-start;gap:.75rem;font-size:.9rem;color:var(--muted);line-height:1.55">
-            <div style="width:28px;height:28px;border-radius:8px;background:rgba(123,94,167,.2);display:flex;align-items:center;justify-content:center;font-size:.8rem;flex-shrink:0">🇮🇳</div>
-            Hindi, Marathi, Telugu, Bengali, Tamil, Kannada — no grammar penalties for Indian English.
-          </div>
-        </div>
+
       </div>
 
-      <!-- Right: evolution card fan -->
-      <div>
+      <!-- Right: Vak mascot + evolution card fan -->
+      <div style="display:flex;flex-direction:column;align-items:center;gap:2rem">
+      <!-- Vak mascot SVG — shown above card fan in right col -->
+      <div style="display:flex;flex-direction:column;align-items:center;gap:1.5rem">
+        <div class="sa" data-d="100" style="display:flex;flex-direction:column;align-items:center">
+          <!-- Mascot wrapper with glow -->
+          <div style="position:relative;display:flex;align-items:center;justify-content:center;margin-bottom:.75rem">
+            <!-- Glow aura behind Vak -->
+            <div style="position:absolute;width:240px;height:240px;border-radius:50%;
+              background:radial-gradient(circle,rgba(139,92,246,.22) 0%,rgba(79,172,254,.08) 50%,transparent 75%);
+              animation:glowBreath 3.5s ease-in-out infinite;pointer-events:none"></div>
+            <svg width="180" height="202" viewBox="0 0 160 180" fill="none" xmlns="http://www.w3.org/2000/svg"
+              style="overflow:visible;animation:float 4s ease-in-out infinite;filter:drop-shadow(0 0 24px rgba(139,92,246,.45))">
+              <!-- Ambient aura level 4 gold -->
+              <ellipse cx="80" cy="108" rx="72" ry="68" fill="#F59E0B" opacity="0.1"/>
+              <!-- Left wing 60deg -->
+              <g transform="translate(42,140) rotate(60)">
+                <path d="M 0,5 C -26,-9 -64,1 -76,13 C -63,29 -26,24 0,18 Z" fill="#EBF5FD" opacity="0.92"/>
+                <path d="M -1,11 C -23,7 -54,13 -65,21 C -50,27 -23,21 -1,16 Z" fill="#B8D8EE" opacity="0.3"/>
+                <line x1="-21" y1="8" x2="-18" y2="21" stroke="#9AC8E2" stroke-width="0.9" opacity="0.45"/>
+                <line x1="-40" y1="7" x2="-35" y2="22" stroke="#9AC8E2" stroke-width="0.9" opacity="0.45"/>
+                <line x1="-58" y1="10" x2="-51" y2="21" stroke="#9AC8E2" stroke-width="0.9" opacity="0.45"/>
+              </g>
+              <!-- Right wing -60deg -->
+              <g transform="translate(118,140) rotate(-60)">
+                <path d="M 0,5 C 26,-9 64,1 76,13 C 63,29 26,24 0,18 Z" fill="#EBF5FD" opacity="0.92"/>
+                <path d="M 1,11 C 23,7 54,13 65,21 C 50,27 23,21 1,16 Z" fill="#B8D8EE" opacity="0.3"/>
+                <line x1="21" y1="8" x2="18" y2="21" stroke="#9AC8E2" stroke-width="0.9" opacity="0.45"/>
+                <line x1="40" y1="7" x2="35" y2="22" stroke="#9AC8E2" stroke-width="0.9" opacity="0.45"/>
+                <line x1="58" y1="10" x2="51" y2="21" stroke="#9AC8E2" stroke-width="0.9" opacity="0.45"/>
+              </g>
+              <!-- Body -->
+              <ellipse cx="80" cy="148" rx="40" ry="27" fill="#E8F4FC"/>
+              <ellipse cx="77" cy="153" rx="27" ry="15" fill="#B0D0E8" opacity="0.2"/>
+              <path d="M 40,148 Q 27,160 33,170 Q 44,158 53,152 Z" fill="#C0DCEE" opacity="0.42"/>
+              <ellipse cx="80" cy="138" rx="34" ry="10" fill="#A8C8E0" opacity="0.14"/>
+              <!-- Neck S-curve -->
+              <path d="M 82,122 C 64,96 114,93 97,68" stroke="#DFF0FA" stroke-width="21" stroke-linecap="round" fill="none"/>
+              <path d="M 80,122 C 65,98 111,95 96,70" stroke="#A8C8E0" stroke-width="7" stroke-linecap="round" fill="none" opacity="0.22"/>
+              <!-- Head -->
+              <circle cx="96" cy="50" r="21" fill="#EAF5FD"/>
+              <ellipse cx="93" cy="55" rx="13" ry="11" fill="#A8C8E0" opacity="0.16"/>
+              <!-- Crown (Hamsa crest) -->
+              <ellipse cx="96" cy="26" rx="5" ry="9.5" fill="#EAF5FD" opacity="0.7"/>
+              <ellipse cx="88" cy="28" rx="3.5" ry="7.5" fill="#EAF5FD" opacity="0.5" transform="rotate(-18,88,28)"/>
+              <ellipse cx="85" cy="31" rx="2.5" ry="5.5" fill="#EAF5FD" opacity="0.35" transform="rotate(-28,85,31)"/>
+              <ellipse cx="104" cy="28" rx="3.5" ry="7.5" fill="#EAF5FD" opacity="0.5" transform="rotate(18,104,28)"/>
+              <ellipse cx="107" cy="31" rx="2.5" ry="5.5" fill="#EAF5FD" opacity="0.35" transform="rotate(28,107,31)"/>
+              <circle cx="96" cy="26" r="2.5" fill="#F59E0B" opacity="0.95"/>
+              <circle cx="88" cy="28" r="2" fill="#F59E0B" opacity="0.7"/>
+              <circle cx="104" cy="28" r="2" fill="#F59E0B" opacity="0.7"/>
+              <!-- Eye -->
+              <circle cx="102" cy="47" r="5.5" fill="#1a2844"/>
+              <circle cx="104" cy="45" r="1.8" fill="#fff" opacity="0.9"/>
+              <circle cx="102" cy="47" r="2.2" fill="#4F46E5" opacity="0.55"/>
+              <circle cx="102" cy="47" r="4.5" fill="none" stroke="#F59E0B" stroke-width="0.85" opacity="0.75"/>
+              <!-- Beak -->
+              <path d="M 112,52 L 122,55 L 118,60 L 110,56 Z" fill="#F59E0B"/>
+              <line x1="110" y1="56" x2="122" y2="55" stroke="#D97706" stroke-width="0.5"/>
+              <!-- Sparkles level 4 -->
+              <circle cx="58" cy="38" r="2.2" fill="#F59E0B" opacity="0.7"/>
+              <circle cx="128" cy="52" r="1.8" fill="#F59E0B" opacity="0.55"/>
+              <circle cx="50" cy="100" r="2.8" fill="#F59E0B" opacity="0.45"/>
+              <circle cx="136" cy="105" r="2.2" fill="#a78bfa" opacity="0.65"/>
+              <circle cx="130" cy="38" r="1.6" fill="#60c8ff" opacity="0.6"/>
+              <circle cx="62" cy="160" r="1.6" fill="#60c8ff" opacity="0.5"/>
+            </svg>
+          </div>
+          <!-- Vak name tag -->
+          <div style="display:inline-flex;align-items:baseline;gap:.6rem;margin-bottom:.35rem">
+            <span style="font-size:1.6rem;font-weight:800;letter-spacing:-.03em;color:#fff">Vak</span>
+            <span style="font-size:1.1rem;font-weight:600;color:#a78bfa">वाक्</span>
+          </div>
+          <div style="font-size:.8rem;color:var(--muted);text-align:center;max-width:200px;line-height:1.5">
+            Sanskrit · <em>"Speech"</em> · Vehicle of Saraswati
+          </div>
+        </div>
+
         <div class="card-fan" id="card-fan">
           <div class="evo-card">
             <div class="evo-dot" style="border-color:#6B8CAE;color:#6B8CAE">🌱</div>
@@ -960,6 +1056,7 @@ footer{padding:60px 5% 40px;border-top:1px solid var(--border);background:#08080
           </div>
         </div>
       </div>
+    </div>
     </div>
 
     <!-- Scenario ticker (replaces the crypto coin marquee rows) -->
@@ -1023,24 +1120,7 @@ footer{padding:60px 5% 40px;border-top:1px solid var(--border);background:#08080
       </div>
     </div>
 
-    <!-- Globe context cards (like "Transaction confirmed" widgets in crypto) -->
-    <div class="globe-cards">
-      <div class="gc sa-l" data-d="0">
-        <div class="gc-ico">🤖</div>
-        <div class="gc-title">Practice with AI scenarios</div>
-        <div class="gc-desc">14 real-world scenarios from HR interviews to salary negotiations. Or add your own speech and get coached on delivery.</div>
-      </div>
-      <div class="gc sa" data-d="150">
-        <div class="gc-ico">📋</div>
-        <div class="gc-title">Prep your talking points</div>
-        <div class="gc-desc">Paste your meeting agenda. Get 6-8 prioritised talking points with delivery tips in under 90 seconds.</div>
-      </div>
-      <div class="gc sa-r" data-d="300">
-        <div class="gc-ico">📈</div>
-        <div class="gc-title">See yourself improve</div>
-        <div class="gc-desc">Track filler words, confidence scores, and pacing week over week. Every session builds on the last one.</div>
-      </div>
-    </div>
+
   </div>
 </section>
 
@@ -1420,6 +1500,15 @@ document.querySelectorAll('a[href^="#"]').forEach(a => {
     if (el) { e.preventDefault(); el.scrollIntoView({ behavior:'smooth', block:'start' }); }
   });
 });
+
+/* ── Accordion cards ─────────────────────────────────── */
+function toggleCard(card) {
+  // Close any other open card
+  document.querySelectorAll('.bcard.open').forEach(c => {
+    if (c !== card) c.classList.remove('open');
+  });
+  card.classList.toggle('open');
+}
 </script>
 </body>
 </html>
