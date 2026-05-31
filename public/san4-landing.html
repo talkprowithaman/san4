@@ -160,8 +160,10 @@ nav.scrolled{
 #hero-container{height:300vh;position:relative}
 #hero-pin{
   position:sticky;top:0;height:100vh;
-  display:flex;align-items:center;justify-content:center;
+  display:flex;flex-direction:column;align-items:center;
+  justify-content:flex-start;
   overflow:hidden;
+  padding-top:88px;
 }
 .hero-bg{
   position:absolute;inset:0;
@@ -182,13 +184,16 @@ nav.scrolled{
   text-align:center;
   display:flex;flex-direction:column;align-items:center;
   will-change:transform,opacity;
+  padding:0 20px;
+  max-width:740px;
+  width:100%;
 }
 .hero-badge{
   display:inline-flex;align-items:center;gap:.5rem;
   padding:.4rem 1rem;border-radius:100px;
   background:var(--glass);border:1px solid rgba(123,94,167,.4);
   font-size:.8rem;font-weight:600;color:#a78bfa;
-  margin-bottom:1.5rem;
+  margin-bottom:1.2rem;
   opacity:0;animation:fadeUp .6s var(--ease) .3s forwards;
   will-change:transform,opacity;
 }
@@ -199,8 +204,8 @@ nav.scrolled{
 }
 @keyframes pulseDot{0%,100%{transform:scale(1)}50%{transform:scale(1.6);opacity:.7}}
 .hero-h1{
-  font-size:clamp(52px,8vw,100px);font-weight:800;
-  line-height:1.0;letter-spacing:-.035em;
+  font-size:clamp(38px,5.5vw,74px);font-weight:800;
+  line-height:1.05;letter-spacing:-.03em;
   margin-bottom:1rem;
 }
 .h-line{display:block;overflow:hidden}
@@ -221,8 +226,8 @@ nav.scrolled{
 @keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
 
 .hero-sub{
-  font-size:clamp(16px,2vw,20px);font-weight:300;color:var(--muted);
-  margin-bottom:2rem;max-width:460px;
+  font-size:clamp(15px,1.8vw,18px);font-weight:300;color:var(--muted);
+  margin-bottom:1.75rem;max-width:440px;
   opacity:0;animation:fadeUp .6s var(--ease) .9s forwards;
 }
 .hero-btns{
@@ -243,7 +248,7 @@ nav.scrolled{
 .hero-phone-wrap{
   position:absolute;z-index:5;
   left:50%;bottom:0;
-  transform:translateX(-50%) translateY(12%) scale(1.4);
+  transform:translateX(-50%) translateY(60%) scale(0.85);
   transform-origin:center bottom;
   will-change:transform;
 }
@@ -1114,39 +1119,6 @@ footer{padding:60px 5% 40px;border-top:1px solid var(--border);background:#08080
   </div>
 </section>
 
-<!-- ══════════════════════════════════
-  SECTION 6 — PRESS MARQUEE
-════════════════════════════════════ -->
-<section id="press">
-  <div class="s-inner">
-    <div class="press-lbl">Featured in</div>
-    <div class="press-wrap">
-      <div class="press-track">
-        <div class="press-logo">DD News</div>
-        <div class="press-logo">ET Education</div>
-        <div class="press-logo">YourStory</div>
-        <div class="press-logo">Inc42</div>
-        <div class="press-logo">The Hindu Education</div>
-        <div class="press-logo">EdTech Review</div>
-        <div class="press-logo">Startup India</div>
-        <div class="press-logo">Economic Times</div>
-        <div class="press-logo">Business Standard</div>
-        <div class="press-logo">NDTV Education</div>
-        <!-- duplicate for seamless loop -->
-        <div class="press-logo">DD News</div>
-        <div class="press-logo">ET Education</div>
-        <div class="press-logo">YourStory</div>
-        <div class="press-logo">Inc42</div>
-        <div class="press-logo">The Hindu Education</div>
-        <div class="press-logo">EdTech Review</div>
-        <div class="press-logo">Startup India</div>
-        <div class="press-logo">Economic Times</div>
-        <div class="press-logo">Business Standard</div>
-        <div class="press-logo">NDTV Education</div>
-      </div>
-    </div>
-  </div>
-</section>
 
 <!-- ══════════════════════════════════
   SECTION 7 — CTA
@@ -1344,43 +1316,50 @@ function renderHero() {
   if (sh <= 0) return;
   const p = clamp01(window.scrollY / sh);  // 0 → 1
 
-  /* Phone: scale 1.4 → 0.6, y: 0 → -100 */
+  /* ── Phone: starts small at bottom (scale 0.85, translateY 45%)
+     Scrolling: rises up and scales in to fill the screen
+     0→0.5  : scale 0.85 → 1.3,  translateY 45% → -5%
+     0.5→1.0: scale 1.3 → 0.65, translateY -5% → -40% (zoom-out reveal)  */
   if (heroPhone) {
-    const sc = map(p, 0, 1.0, 1.4, 0.6);
-    const ty = map(p, 0, 1.0, 0, -100);
-    heroPhone.style.transform = `translateX(-50%) translateY(calc(12% + ${ty}px)) scale(${sc})`;
+    const sc = p < 0.5
+      ? map(p, 0, 0.5, 0.85, 1.3)
+      : map(p, 0.5, 1.0, 1.3, 0.65);
+    const ty = p < 0.5
+      ? map(p, 0, 0.5, 60, -5)
+      : map(p, 0.5, 1.0, -5, -40);
+    heroPhone.style.transform = `translateX(-50%) translateY(${ty}%) scale(${sc})`;
   }
 
-  /* Hero text: fade + shrink on 0 → 0.35 */
+  /* ── Hero text: fades out on scroll 0 → 0.38 ── */
   if (heroText) {
-    heroText.style.opacity   = String(map(p, 0, 0.35, 1, 0));
-    heroText.style.transform = `scale(${map(p, 0, 0.35, 1, 0.92)})`;
+    heroText.style.opacity   = String(map(p, 0, 0.38, 1, 0));
+    heroText.style.transform = `scale(${map(p, 0, 0.38, 1, 0.94)}) translateY(${map(p, 0, 0.38, 0, -24)}px)`;
   }
 
-  /* Communication symbols (like crypto coins) fly in 0.08 → 0.42, fade 0.60 → 0.80 */
-  const fade = map(p, 0.60, 0.80, 1, 0);
+  /* ── Comm symbols fly in at scroll 0.1→0.45, fade at 0.60→0.80 ── */
+  const symFade = map(p, 0.60, 0.80, 1, 0);
   [
-    [cs1, p-0.08,  `translate(${lerp(-300, -8, clamp01((p-0.08)/.32))}px, ${lerp(-150, -5, clamp01((p-0.08)/.32))}px) rotate(${lerp(0,360,clamp01((p-0.08)/.32))}deg)`],
-    [cs2, p-0.10,  `translate(${lerp( 300,  8, clamp01((p-0.10)/.32))}px, ${lerp( 150,  8, clamp01((p-0.10)/.32))}px) rotate(${lerp(0,-360,clamp01((p-0.10)/.32))}deg)`],
-    [cs3, p-0.12,  `translateX(${lerp(160, 6, clamp01((p-0.12)/.30))}px) rotate(${lerp(0,180,clamp01((p-0.12)/.30))}deg)`],
-  ].forEach(([el,t,tf]) => {
+    [cs1, 0.10, `translate(${lerp(-300,-8,clamp01((p-0.10)/.32))}px,${lerp(-150,-5,clamp01((p-0.10)/.32))}px) rotate(${lerp(0,360,clamp01((p-0.10)/.32))}deg)`],
+    [cs2, 0.12, `translate(${lerp(300,8,clamp01((p-0.12)/.32))}px,${lerp(150,8,clamp01((p-0.12)/.32))}px) rotate(${lerp(0,-360,clamp01((p-0.12)/.32))}deg)`],
+    [cs3, 0.14, `translateX(${lerp(160,6,clamp01((p-0.14)/.30))}px) rotate(${lerp(0,180,clamp01((p-0.14)/.30))}deg)`],
+  ].forEach(([el, start, tf]) => {
     if (!el) return;
-    const show = clamp01(t/.32);
-    el.style.opacity   = String(show * fade);
+    const show = clamp01((p - start) / 0.32);
+    el.style.opacity   = String(show * symFade);
     el.style.transform = tf;
   });
 
-  /* Float UI cards slide in at 0.25, hide at 0.75 */
-  const cShow = clamp01((p - 0.25) / 0.20);
-  const cHide = map(p, 0.72, 0.88, 1, 0);
+  /* ── Float cards: appear at 0.28, hide at 0.72 ── */
+  const cShow = clamp01((p - 0.28) / 0.20);
+  const cHide = map(p, 0.70, 0.85, 1, 0);
   const cv    = cShow * cHide;
-  if (fc1) { fc1.style.opacity = String(cv); fc1.style.transform = `rotate(-3deg) translateX(${lerp(-120,-8,cShow)}px) translateY(${lerp(-16,0,cShow)}px)`; }
-  if (fc2) { fc2.style.opacity = String(cv); fc2.style.transform = `rotate(4deg)  translateX(${lerp(120, 8,cShow)}px) translateY(${lerp(16, 0,cShow)}px)`; }
+  if (fc1) { fc1.style.opacity = String(cv); fc1.style.transform = `rotate(-3deg) translateX(${lerp(-120,-8,cShow)}px)`; }
+  if (fc2) { fc2.style.opacity = String(cv); fc2.style.transform = `rotate(4deg)  translateX(${lerp(120,8,cShow)}px)`; }
   if (fc3) { fc3.style.opacity = String(cv); fc3.style.transform = `translateX(${lerp(100,6,cShow)}px)`; }
 
-  /* Background gradient shift purple → blue */
+  /* ── Gradient shift purple → blue ── */
   const r = Math.round(lerp(123,60,p)), g = Math.round(lerp(94,140,p)), b = Math.round(lerp(167,240,p));
-  if (heroBg) heroBg.style.background = `radial-gradient(ellipse 80% 60% at 50% 30%, rgba(${r},${g},${b},.2) 0%, transparent 70%)`;
+  if (heroBg) heroBg.style.background = `radial-gradient(ellipse 80% 60% at 50% 30%, rgba(${r},${g},${b},.22) 0%, transparent 70%)`;
 }
 
 window.addEventListener('scroll', () => {
