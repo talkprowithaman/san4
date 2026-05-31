@@ -1,0 +1,239 @@
+/* ─────────────────────────────────────────────────────────────────────────
+   landing.css  —  CSS-only animations for the redesigned landing page
+   Performance rules: only animate `transform` and `opacity`.
+   ───────────────────────────────────────────────────────────────────────── */
+
+html { scroll-behavior: smooth; }
+
+/* ── Gradient text ──────────────────────────────────────────────────────── */
+.grad-text {
+  background: linear-gradient(135deg, #A78BFA 0%, #7B5EA7 45%, #00C49A 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ── Navbar entrance ────────────────────────────────────────────────────── */
+@keyframes navIn {
+  from { opacity: 0; transform: translateY(-16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.landing-nav { animation: navIn 0.6s cubic-bezier(0.25,0.1,0.25,1) forwards; }
+
+/* ── Scroll-reveal: fade-up ─────────────────────────────────────────────── */
+.sa {
+  opacity: 0;
+  transform: translateY(28px);
+  transition: opacity 0.65s ease, transform 0.65s ease;
+  will-change: transform, opacity;
+}
+.sa.in { opacity: 1; transform: translateY(0); }
+
+/* ── Scroll-reveal: scale-up ────────────────────────────────────────────── */
+.sa-sc {
+  opacity: 0;
+  transform: scale(0.9) translateY(20px);
+  transition: opacity 0.65s ease, transform 0.65s ease;
+  will-change: transform, opacity;
+}
+.sa-sc.in { opacity: 1; transform: scale(1) translateY(0); }
+
+/* ── Scroll-reveal: slide from left ─────────────────────────────────────── */
+.sa-l {
+  opacity: 0;
+  transform: translateX(-50px);
+  transition: opacity 0.65s ease, transform 0.65s ease;
+  will-change: transform, opacity;
+}
+.sa-l.in { opacity: 1; transform: translateX(0); }
+
+/* ── Scroll-reveal: slide from right ────────────────────────────────────── */
+.sa-r {
+  opacity: 0;
+  transform: translateX(50px);
+  transition: opacity 0.65s ease, transform 0.65s ease;
+  will-change: transform, opacity;
+}
+.sa-r.in { opacity: 1; transform: translateX(0); }
+
+/* ── Clip-path headline reveal ──────────────────────────────────────────── */
+.clip-line { overflow: hidden; }
+.clip-line span {
+  display: block;
+  clip-path: inset(0 100% 0 0);
+  transition: clip-path 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+  will-change: clip-path;
+}
+.clip-line.in span { clip-path: inset(0 0% 0 0); }
+
+/* ── AI feature item animations ─────────────────────────────────────────── */
+.ai-feat .feat-icon {
+  transform: scale(0);
+  transition: transform 0.45s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  will-change: transform;
+}
+.ai-feat.in .feat-icon { transform: scale(1); }
+
+.ai-feat .feat-text {
+  opacity: 0;
+  transform: translateX(-30px);
+  transition: opacity 0.5s ease 0.2s, transform 0.5s ease 0.2s;
+  will-change: transform, opacity;
+}
+.ai-feat.in .feat-text { opacity: 1; transform: translateX(0); }
+
+/* ── Evolution card fan ──────────────────────────────────────────────────── */
+.evo-cards { position: relative; display: flex; justify-content: center; align-items: center; }
+.evo-cards .evo-card {
+  position: absolute;
+  transition: transform 0.85s cubic-bezier(0.34, 1.56, 0.64, 1);
+  will-change: transform;
+  transform-origin: bottom center;
+  cursor: default;
+}
+/* Stacked default */
+.evo-cards .evo-card:nth-child(1) { transform: rotate(-8deg)  translateX(-38px); z-index: 1; }
+.evo-cards .evo-card:nth-child(2) { transform: rotate(-4deg)  translateX(-19px); z-index: 2; }
+.evo-cards .evo-card:nth-child(3) { transform: rotate(0deg)   translateX(0px);   z-index: 5; }
+.evo-cards .evo-card:nth-child(4) { transform: rotate(4deg)   translateX(19px);  z-index: 2; }
+.evo-cards .evo-card:nth-child(5) { transform: rotate(8deg)   translateX(38px);  z-index: 1; }
+/* Fanned out */
+.evo-cards.fan .evo-card:nth-child(1) { transform: rotate(-22deg) translateX(-88px) translateY(10px); }
+.evo-cards.fan .evo-card:nth-child(2) { transform: rotate(-11deg) translateX(-44px) translateY(3px);  }
+.evo-cards.fan .evo-card:nth-child(3) { transform: rotate(0deg)   translateX(0px)   translateY(0px);  }
+.evo-cards.fan .evo-card:nth-child(4) { transform: rotate(11deg)  translateX(44px)  translateY(3px);  }
+.evo-cards.fan .evo-card:nth-child(5) { transform: rotate(22deg)  translateX(88px)  translateY(10px); }
+
+/* ── Ticker / scenario marquee ───────────────────────────────────────────── */
+@keyframes tickL { from { transform: translateX(0) } to { transform: translateX(-50%) } }
+@keyframes tickR { from { transform: translateX(-50%) } to { transform: translateX(0) } }
+
+.ticker-left  { animation: tickL linear infinite; will-change: transform; }
+.ticker-right { animation: tickR linear infinite; will-change: transform; }
+
+.ticker-wrap {
+  position: relative;
+  overflow: hidden;
+}
+.ticker-wrap::before,
+.ticker-wrap::after {
+  content: '';
+  position: absolute;
+  top: 0; bottom: 0; width: 80px;
+  z-index: 3; pointer-events: none;
+}
+.ticker-wrap::before { left: 0;  background: linear-gradient(to right, #050810 0%, transparent 100%); }
+.ticker-wrap::after  { right: 0; background: linear-gradient(to left,  #050810 0%, transparent 100%); }
+
+/* ── CSS Globe ───────────────────────────────────────────────────────────── */
+@keyframes globeShift {
+  0%,100% { box-shadow: 0 0 60px rgba(139,92,246,0.28), 0 0 120px rgba(139,92,246,0.1), inset 0 0 40px rgba(139,92,246,0.12); }
+  50%     { box-shadow: 0 0 80px rgba(99,102,241,0.38),  0 0 160px rgba(99,102,241,0.14), inset 0 0 55px rgba(99,102,241,0.18); }
+}
+@keyframes ringSpin  { to { transform: rotateX(75deg) rotateZ(360deg)  } }
+@keyframes ringSpinR { to { transform: rotateX(75deg) rotateZ(-360deg) } }
+
+.globe-wrap {
+  position: relative;
+  width: 310px; height: 310px;
+  margin: 0 auto 4rem;
+}
+.globe-3d {
+  position: absolute; inset: 0;
+  perspective: 900px;
+  transform-style: preserve-3d;
+}
+.globe-sphere {
+  position: absolute; top: 0; left: 0;
+  width: 310px; height: 310px; border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%,
+    rgba(167,139,250,0.55) 0%,
+    rgba(99,102,241,0.4)   30%,
+    rgba(49,46,129,0.65)   60%,
+    rgba(8,4,30,0.95)      100%);
+  border: 1px solid rgba(139,92,246,0.3);
+  animation: globeShift 18s ease-in-out infinite;
+  will-change: box-shadow;
+  z-index: 2;
+}
+.globe-ring {
+  position: absolute;
+  border-radius: 50%;
+  border: 1px solid rgba(139,92,246,0.4);
+  top: 50%; left: 50%;
+  will-change: transform;
+}
+.globe-ring-1 {
+  width: 330px; height: 330px;
+  margin-left: -165px; margin-top: -165px;
+  animation: ringSpin 13s linear infinite;
+}
+.globe-ring-2 {
+  width: 270px; height: 270px;
+  margin-left: -135px; margin-top: -135px;
+  animation: ringSpinR 19s linear infinite;
+  border-color: rgba(167,139,250,0.22);
+}
+
+/* Orbiting icons */
+.globe-orbs { position: absolute; inset: 0; }
+.orb {
+  position: absolute;
+  top: 50%; left: 50%;
+  margin: -18px;
+  width: 36px; height: 36px;
+  will-change: transform;
+}
+
+@keyframes orb1 { from{transform:rotate(0deg)   translateX(172px) rotate(0deg)  } to{transform:rotate(360deg)  translateX(172px) rotate(-360deg) } }
+@keyframes orb2 { from{transform:rotate(60deg)  translateX(172px) rotate(-60deg)} to{transform:rotate(420deg)  translateX(172px) rotate(-420deg)} }
+@keyframes orb3 { from{transform:rotate(120deg) translateX(172px) rotate(-120deg)} to{transform:rotate(480deg) translateX(172px) rotate(-480deg)} }
+@keyframes orb4 { from{transform:rotate(200deg) translateX(172px) rotate(-200deg)} to{transform:rotate(560deg) translateX(172px) rotate(-560deg)} }
+@keyframes orb5 { from{transform:rotate(280deg) translateX(172px) rotate(-280deg)} to{transform:rotate(640deg) translateX(172px) rotate(-640deg)} }
+@keyframes orb6 { from{transform:rotate(330deg) translateX(172px) rotate(-330deg)} to{transform:rotate(690deg) translateX(172px) rotate(-690deg)} }
+
+.orb-1 { animation: orb1  7.5s linear infinite; }
+.orb-2 { animation: orb2  9.5s linear infinite; }
+.orb-3 { animation: orb3 11.5s linear infinite; }
+.orb-4 { animation: orb4 13.0s linear infinite; }
+.orb-5 { animation: orb5 10.0s linear infinite; }
+.orb-6 { animation: orb6 15.0s linear infinite; }
+
+/* ── Button pulsing aura ─────────────────────────────────────────────────── */
+@keyframes btnAura {
+  0%,100% { box-shadow: 0 4px 18px rgba(123,94,167,0.45) }
+  50%     { box-shadow: 0 4px 18px rgba(123,94,167,0.45), 0 0 0 10px rgba(123,94,167,0.12), 0 0 0 22px rgba(123,94,167,0.05) }
+}
+.btn-aura { animation: btnAura 2.2s ease-in-out infinite; }
+
+/* ── Floating deco elements ──────────────────────────────────────────────── */
+@keyframes floatA { from{transform:translateY(0)   rotate(14deg)} to{transform:translateY(-18px) rotate(14deg)} }
+@keyframes floatB { from{transform:translateY(0)}   to{transform:translateY(-14px)} }
+@keyframes floatC { from{transform:translateY(-8px)} to{transform:translateY(6px)}  }
+
+.deco-phone  { animation: floatA 5s   alternate ease-in-out infinite; }
+.deco-card-1 { animation: floatB 7s   alternate ease-in-out infinite; }
+.deco-card-2 { animation: floatC 4s   alternate ease-in-out infinite; }
+
+/* ── Phone badge floats (AI features section) ────────────────────────────── */
+.badge-float-up   { animation: floatB 3.5s alternate ease-in-out infinite; }
+.badge-float-down { animation: floatC 3.0s alternate ease-in-out infinite; }
+
+/* ── Press marquee ───────────────────────────────────────────────────────── */
+@keyframes pressScroll { from{transform:translateX(0)} to{transform:translateX(-50%)} }
+.press-track { animation: pressScroll 15s linear infinite; will-change: transform; }
+
+/* ── Ambient orb drift ───────────────────────────────────────────────────── */
+@keyframes orbDrift1 { 0%,100%{transform:translate(0,0)} 50%{transform:translate(40px,-30px)} }
+@keyframes orbDrift2 { 0%,100%{transform:translate(0,0)} 50%{transform:translate(-35px,25px)} }
+.amb-orb-1 { animation: orbDrift1 20s ease-in-out infinite; }
+.amb-orb-2 { animation: orbDrift2 26s ease-in-out infinite; }
+
+/* ── Responsive ──────────────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .hero-right-col, .ai-phone-col, .deco-phone, .deco-card { display: none !important; }
+}
+@media (max-width: 480px) {
+  .hero-btns  { flex-direction: column !important; }
+  .cta-btns   { flex-direction: column !important; align-items: center !important; }
+}
