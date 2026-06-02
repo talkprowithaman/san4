@@ -410,6 +410,117 @@ Return JSON only (no markdown, no code fences):
   }
 }
 
+// ── Body language — single frame quick analysis ──────────────────────────────
+// Called every ~30 s during the session for live coaching tips.
+// Uses gemini-1.5-flash which supports inline image data.
+export async function analyzeBodyLanguageFrame(scriptTitle, frameBase64, mimeType = 'image/jpeg') {
+  const model  = genAI.getGenerativeModel({ model: AUDIO_MODEL })
+  const prompt = `You are an expert communication coach specialising in body language and non-verbal delivery.
+
+Analyse this single video frame of someone reading/delivering a speech.
+Script: "${scriptTitle}"
+
+In this snapshot, quickly assess:
+1. POSTURE — upright and confident, or slouching?
+2. EYE CONTACT — looking at the camera (audience), or down at the script?
+3. FACIAL EXPRESSION — engaged and confident, nervous, or blank?
+4. HAND/SHOULDER TENSION — relaxed or stiff?
+
+Return JSON only (no markdown):
+{
+  "posture_score": <integer 0-100>,
+  "eye_contact_score": <integer 0-100>,
+  "expression_score": <integer 0-100>,
+  "gesture_score": <integer 0-100>,
+  "overall_presence": <integer 0-100>,
+  "instant_tip": "One ultra-specific, actionable tip for THIS exact moment — under 12 words",
+  "observation": "What you specifically observe in this frame — 1 sentence, very concrete"
+}`
+
+  try {
+    const result = await model.generateContent([
+      { inlineData: { mimeType, data: frameBase64 } },
+      { text: prompt },
+    ])
+    const text = result.response.text().trim()
+    return JSON.parse(text.replace(/^```json\s*/i, '').replace(/\s*```$/i, ''))
+  } catch (err) {
+    console.warn('analyzeBodyLanguageFrame failed:', err.message)
+    return null
+  }
+}
+
+// ── Body language — full session analysis (multiple frames + optional audio) ──
+// Sends up to 6 evenly-spaced frames and the audio recording to Gemini
+// for a comprehensive, session-level body language coaching report.
+export async function analyzeBodyLanguageFull(
+  scriptTitle, scriptText, frames = [], audioBase64 = null, audioMimeType = 'audio/webm'
+) {
+  const model = genAI.getGenerativeModel({ model: AUDIO_MODEL })
+
+  const parts = []
+
+  // Add up to 6 frames (evenly spaced across the session)
+  const selected = frames.length <= 6 ? frames : (() => {
+    const step = (frames.length - 1) / 5
+    return [0,1,2,3,4,5].map(i => frames[Math.round(i * step)])
+  })()
+
+  selected.forEach(f => {
+    parts.push({ inlineData: { mimeType: f.mimeType || 'image/jpeg', data: f.base64 } })
+  })
+
+  // Add audio if available
+  if (audioBase64) {
+    parts.push({ inlineData: { mimeType: audioMimeType, data: audioBase64 } })
+  }
+
+  parts.push({ text: `You are an expert communication coach specialising in body language, executive presence, and non-verbal delivery. You are reviewing ${selected.length} video frames from a speech/script-reading session${audioBase64 ? ', plus the full audio recording' : ''}.
+
+Script being delivered: "${scriptTitle}"
+---
+${scriptText ? scriptText.slice(0, 600) : '(custom script)'}
+---
+
+Analyse the speaker's complete body language and physical presence across the full session. Be specific — cite exactly what you see. Avoid generic advice.
+
+Assess each dimension:
+1. POSTURE — consistent? Straight back, open chest, vs. slouching or shrinking?
+2. EYE CONTACT — % of time looking at camera (audience) vs. looking down at script?
+3. FACIAL EXPRESSION — range and match to content? Engaged vs. blank or tense?
+4. HAND GESTURES — purposeful and natural, or stiff, hidden, or fidgeting?
+5. OVERALL PRESENCE — do they command attention? Is there energy and intentionality?
+
+Return JSON only (no markdown, no code fences):
+{
+  "overall_score": <integer 0-100>,
+  "posture_score": <integer 0-100>,
+  "eye_contact_score": <integer 0-100>,
+  "expression_score": <integer 0-100>,
+  "gesture_score": <integer 0-100>,
+  "presence_score": <integer 0-100>,
+  "strengths": ["specific observed strength with detail", "another strength"],
+  "improvements": ["specific improvement with example from what you saw", "another improvement"],
+  "action_item": "The single highest-impact thing to practise before the next session",
+  "summary": "2-sentence honest assessment of their physical presence — be specific, not generic",
+  "coaching_notes": {
+    "posture": "Specific posture observation + 1-line advice",
+    "eye_contact": "Specific eye contact observation + 1-line advice",
+    "gestures": "Specific gesture observation + 1-line advice",
+    "expression": "Specific expression observation + 1-line advice"
+  }
+}` })
+
+  try {
+    const result = await model.generateContent(parts)
+    const text = result.response.text().trim()
+    return JSON.parse(text.replace(/^```json\s*/i, '').replace(/\s*```$/i, ''))
+  } catch (err) {
+    console.warn('analyzeBodyLanguageFull failed:', err.message)
+    return null
+  }
+}
+
 // ── Meeting prep ──────────────────────────────────────────────────────────────
 export async function generateTalkingPoints(meetingTitle, agenda) {
   const model = genAI.getGenerativeModel({ model: MODEL })

@@ -12,6 +12,7 @@ import ScriptReading  from './pages/ScriptReading'
 import DailyChallenge from './pages/DailyChallenge'
 import MicroDrill     from './pages/MicroDrill'
 import Progress       from './pages/Progress'
+import BodyLanguage   from './pages/BodyLanguage'
 
 export default function App() {
   return (
@@ -32,6 +33,7 @@ export default function App() {
         <Route path="/daily-challenge" element={<ProtectedRoute><DailyChallenge /></ProtectedRoute>} />
         <Route path="/micro-drill"     element={<ProtectedRoute><MicroDrill /></ProtectedRoute>} />
         <Route path="/progress"        element={<ProtectedRoute><Progress /></ProtectedRoute>} />
+        <Route path="/body-language"   element={<ProtectedRoute><BodyLanguage /></ProtectedRoute>} />
 
         {/* Fallback */}
         <Route path="*" element={<Navigate to="/" replace />} />

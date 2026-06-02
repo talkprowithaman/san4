@@ -436,7 +436,7 @@ export default function Practice() {
           <div className="flex-1 h-px" style={{ background: 'rgba(255,255,255,0.07)' }} />
         </div>
 
-        <div className="grid md:grid-cols-2 gap-4 mb-8">
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
           {/* Teleprompter Mode */}
           <Link
             to="/script-reading"
@@ -483,6 +483,37 @@ export default function Practice() {
               </div>
             </div>
             <span style={{ color: '#F59E0B', fontSize: '1.1rem' }}>→</span>
+          </Link>
+
+          {/* Body Language — Pro */}
+          <Link
+            to="/body-language"
+            className="flex items-center gap-4 rounded-3xl p-5 transition-all hover:brightness-110 relative overflow-hidden"
+            style={{
+              background: 'linear-gradient(135deg, rgba(0,196,154,0.1), rgba(0,196,154,0.04))',
+              border: '1px solid rgba(0,196,154,0.25)',
+            }}
+          >
+            {/* Pro badge */}
+            <div
+              className="absolute top-2.5 right-3 text-xs font-bold px-2 py-0.5 rounded-full"
+              style={{ background: 'rgba(245,158,11,0.15)', color: '#F59E0B', border: '1px solid rgba(245,158,11,0.3)' }}
+            >
+              ⚡ Pro
+            </div>
+            <div
+              className="shrink-0 w-12 h-12 flex items-center justify-center rounded-2xl text-2xl"
+              style={{ background: 'rgba(0,196,154,0.15)' }}
+            >
+              📹
+            </div>
+            <div className="flex-1 min-w-0 pr-8">
+              <div className="text-white font-black text-sm mb-0.5">Body Language</div>
+              <div className="text-xs" style={{ color: '#6B8CAE' }}>
+                Camera-on mode: AI coaches posture, eye contact &amp; gestures live
+              </div>
+            </div>
+            <span style={{ color: '#00C49A', fontSize: '1.1rem' }}>→</span>
           </Link>
         </div>
 
