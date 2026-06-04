@@ -1,5 +1,8 @@
 // ── Script library for Teleprompter Mode ─────────────────────────────────────
-// tier: 'free' → available to all | 'pro' → Pro users only
+// tier: 'free'        → always available to all
+// tier: 'progression' → free once the user unlocks the specified scenario level
+//                       (unlockScenario = scenario ID that must be in unlockedSet)
+// tier: 'pro'         → Vak Pro subscription required
 
 export const SCRIPTS = [
   {
@@ -53,7 +56,9 @@ We will have more details and expert analysis after this short break. Stay with 
     category:    'Public Speaking',
     duration:    '~80 sec',
     difficulty:  2,
-    tier:        'pro',
+    tier:        'progression',
+    unlockScenario: 'team_meeting', // free once the user has unlocked Level 3
+    unlockLabel: 'Clear Level 3 (Daily Standup) to unlock',
     description: 'Open a TED-style talk with storytelling, warmth, and controlled authority.',
     text: `Imagine for a moment that you are six years old.
 
@@ -79,7 +84,9 @@ The question is — what will you do with the next thirty minutes?`,
     category:    'Broadcast',
     duration:    '~70 sec',
     difficulty:  1,
-    tier:        'pro',
+    tier:        'progression',
+    unlockScenario: 'gd_round', // free once the user has unlocked Level 5
+    unlockLabel: 'Clear Level 5 (Group Discussion) to unlock',
     description: 'Present a regional weather update with confidence, numbers, and city names.',
     text: `Good morning, and here is your national weather update for the week ahead.
 

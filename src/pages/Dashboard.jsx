@@ -33,7 +33,7 @@ export default function Dashboard() {
     setLoading(false)
   }
 
-  const { isPro, sessionsRemaining, canStartSession, weeklySessionCount } = useSubscription()
+  const { isPro } = useSubscription()
 
   const firstName  = profile?.name?.split(' ')[0] || 'there'
   const level      = levelInfo?.current.level     || 1
@@ -265,59 +265,26 @@ export default function Dashboard() {
           )}
         </div>
 
-        {/* Weekly sessions pill */}
+        {/* Summit teaser (free users only) */}
         {!isPro && (
           <div
-            className="mt-4 rounded-2xl px-4 py-3 flex items-center justify-between gap-3 reveal"
+            className="mt-4 rounded-2xl p-4 reveal flex items-center gap-3"
             style={{
-              background: canStartSession ? 'rgba(0,196,154,0.05)' : 'rgba(239,68,68,0.05)',
-              border: `1px solid ${canStartSession ? 'rgba(0,196,154,0.18)' : 'rgba(239,68,68,0.18)'}`,
+              background: 'linear-gradient(135deg, rgba(245,158,11,0.07), rgba(139,92,246,0.05))',
+              border: '1px solid rgba(245,158,11,0.2)',
             }}
           >
-            <div className="flex items-center gap-2">
-              <span className="text-xs" style={{ color: canStartSession ? '#00C49A' : '#F87171' }}>
-                {canStartSession ? '●' : '●'}
-              </span>
-              <span className="text-sm font-medium" style={{ color: canStartSession ? '#00C49A' : '#F87171' }}>
-                {canStartSession
-                  ? `${sessionsRemaining} free session${sessionsRemaining !== 1 ? 's' : ''} left this week`
-                  : 'Weekly limit reached. Resets Sunday'}
-              </span>
-              <span className="text-xs" style={{ color: 'rgba(255,255,255,0.2)' }}>({weeklySessionCount}/3)</span>
+            <span className="text-2xl shrink-0">🏔️</span>
+            <div className="flex-1 min-w-0">
+              <p className="text-white font-bold text-sm">Keep climbing — 10 levels are completely free</p>
+              <p className="text-xs mt-0.5" style={{ color: 'rgba(255,255,255,0.4)' }}>
+                Score above the pass threshold in each level to unlock the next. Pro unlocks The Summit (Levels 11–14).
+              </p>
             </div>
-            <Link to="/pricing" className="text-xs font-bold" style={{ color: '#7B5EA7' }}>
-              Upgrade →
+            <Link to="/practice" className="text-xs font-bold px-3 py-1.5 rounded-full shrink-0"
+              style={{ background: 'rgba(245,158,11,0.15)', color: '#F59E0B', border: '1px solid rgba(245,158,11,0.3)' }}>
+              Climb →
             </Link>
-          </div>
-        )}
-
-        {/* Upgrade banner */}
-        {!isPro && (
-          <div
-            className="mt-4 rounded-2xl p-5 reveal"
-            style={{
-              background: 'linear-gradient(160deg, rgba(123,94,167,0.1), rgba(123,94,167,0.05))',
-              border: '1px solid rgba(123,94,167,0.25)',
-              boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.04)',
-            }}
-          >
-            <div className="flex items-center justify-between flex-wrap gap-3">
-              <div>
-                <div
-                  className="inline-flex items-center gap-1.5 text-xs font-bold px-2.5 py-1 rounded-full mb-2"
-                  style={{ background: 'rgba(245,158,11,0.12)', color: '#F59E0B' }}
-                >
-                  🎉 Founding Member Offer
-                </div>
-                <h3 className="text-white font-bold">Upgrade to Vak Pro · ₹299/month</h3>
-                <p className="text-sm mt-0.5" style={{ color: 'rgba(255,255,255,0.35)' }}>
-                  Unlimited sessions · Deep reports · Full scenario library
-                </p>
-              </div>
-              <Link to="/pricing" className="btn-primary text-sm">
-                See plans →
-              </Link>
-            </div>
           </div>
         )}
 

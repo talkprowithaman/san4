@@ -2,7 +2,8 @@ import { useState, useEffect, useRef, useMemo } from 'react'
 import { Link }            from 'react-router-dom'
 import { useAuth }         from '../hooks/useAuth'
 import { useProgress }     from '../hooks/useProgress'
-import { useSubscription } from '../hooks/useSubscription'
+import { useSubscription }    from '../hooks/useSubscription'
+import { useScenarioUnlocks } from '../hooks/useScenarioUnlocks'
 import { supabase }        from '../lib/supabase'
 import { analyzeScriptReading, analyzeScriptReadingFromAudio, LANGUAGES } from '../lib/gemini'
 import { SCRIPTS }         from '../lib/scripts'
@@ -92,6 +93,7 @@ export default function ScriptReading() {
   const { user }    = useAuth()
   const { awardXP } = useProgress()
   const { isPro }   = useSubscription()
+  const { unlockedSet } = useScenarioUnlocks()
 
   // phases: select | custom_input | countdown | reading | analyzing | report
   const [phase,       setPhase]       = useState('select')
@@ -531,7 +533,13 @@ export default function ScriptReading() {
 
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
             {SCRIPTS.map(s => {
-              const locked = s.tier === 'pro' && !isPro
+              // 'pro' = subscription required
+              // 'progression' = free once the required scenario is unlocked
+              const locked = s.tier === 'pro'
+                ? !isPro
+                : s.tier === 'progression'
+                ? !isPro && !unlockedSet.has(s.unlockScenario)
+                : false
               return (
                 <button
                   key={s.id}
@@ -548,10 +556,13 @@ export default function ScriptReading() {
                   onMouseLeave={e => { if (!locked) e.currentTarget.style.border = '1px solid rgba(139,92,246,0.2)' }}
                 >
                   {locked && (
-                    <div className="absolute inset-0 flex flex-col items-center justify-center rounded-3xl gap-1"
-                      style={{ background: 'rgba(6,14,26,0.55)', backdropFilter: 'blur(2px)' }}>
+                    <div className="absolute inset-0 flex flex-col items-center justify-center rounded-3xl gap-1.5 px-4 text-center"
+                      style={{ background: 'rgba(6,14,26,0.65)', backdropFilter: 'blur(2px)' }}>
                       <div className="text-2xl">🔒</div>
-                      <div className="text-xs font-bold" style={{ color: '#7B5EA7' }}>Pro only</div>
+                      {s.tier === 'progression'
+                        ? <div className="text-xs font-semibold leading-snug" style={{ color: '#00C49A' }}>{s.unlockLabel}</div>
+                        : <div className="text-xs font-bold" style={{ color: '#F59E0B' }}>Vak Pro · ₹299/mo</div>
+                      }
                     </div>
                   )}
                   <div className="text-3xl mb-3">{s.icon}</div>
@@ -572,21 +583,24 @@ export default function ScriptReading() {
             })}
           </div>
 
-          {!isPro && (
-            <div className="rounded-2xl p-5 flex items-center justify-between gap-4 flex-wrap"
-              style={{ background: 'rgba(123,94,167,0.06)', border: '1px solid rgba(123,94,167,0.2)' }}>
-              <div>
-                <p className="text-white font-semibold mb-0.5">🔒 4 scripts unlocked with Vak Pro</p>
-                <p className="text-sm" style={{ color: '#6B8CAE' }}>
-                  TED Talk, Weather forecast, IPL commentary, Product launch keynote
-                </p>
+          <div className="rounded-2xl p-5 flex items-start gap-4 flex-wrap"
+            style={{ background: 'linear-gradient(135deg,rgba(245,158,11,0.06),rgba(139,92,246,0.04))', border: '1px solid rgba(245,158,11,0.18)' }}>
+            <div className="flex-1 min-w-0">
+              <p className="text-white font-semibold mb-2">🎯 How scripts unlock</p>
+              <div className="space-y-1 text-xs" style={{ color: '#6B8CAE' }}>
+                <p>✅ <strong className="text-white">Cabin Crew & News Anchor</strong> — Always free</p>
+                <p>🌲 <strong className="text-white">TED Talk</strong> — Free after clearing Level 3 (Daily Standup) with 68%+</p>
+                <p>⛰️ <strong className="text-white">Weather Forecast</strong> — Free after clearing Level 5 (Group Discussion) with 72%+</p>
+                <p>👑 <strong className="text-white">IPL Commentary & Product Launch</strong> — Vak Pro · ₹299/month</p>
               </div>
-              <Link to="/pricing" className="text-sm font-bold px-4 py-2 rounded-full whitespace-nowrap"
-                style={{ background: '#7B5EA7', color: 'white' }}>
+            </div>
+            {!isPro && (
+              <Link to="/pricing" className="text-xs font-bold px-3 py-1.5 rounded-full whitespace-nowrap shrink-0"
+                style={{ background: 'rgba(245,158,11,0.15)', color: '#F59E0B', border: '1px solid rgba(245,158,11,0.3)' }}>
                 Upgrade →
               </Link>
-            </div>
-          )}
+            )}
+          </div>
         </main>
       </div>
     )
