@@ -3,7 +3,7 @@ import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import { useAuth }     from '../hooks/useAuth'
 import { useProgress } from '../hooks/useProgress'
 import { supabase }    from '../lib/supabase'
-import { sendPracticeMessage, analyzeSession, analyzeSessionFromAudio, LANGUAGES } from '../lib/gemini'
+import { sendPracticeMessage, analyzeSession, analyzeSessionFromAudio, LANGUAGES, OPENING_LINES } from '../lib/gemini'
 import Navbar      from '../components/Navbar'
 import RewardCard  from '../components/RewardCard'
 import VakMascot   from '../components/VakMascot'
@@ -77,6 +77,7 @@ export default function PracticeSession() {
   const [liveText,    setLiveText]    = useState('')   // shown while recording
   const [ttsOn,       setTtsOn]       = useState(true)
   const [vakSpeaking, setVakSpeaking] = useState(false)
+  const [micBlocked,  setMicBlocked]  = useState(false) // mic permission denied
 
   // ── ESL mode state ────────────────────────────────────────────────────────
   const [eslMode, setEslMode] = useState(() => {
@@ -143,37 +144,39 @@ export default function PracticeSession() {
   // ── Start session — fires once when user clicks "Start" on the setup screen
   useEffect(() => { if (setupDone) beginSession() }, [setupDone]) // eslint-disable-line
 
-  async function beginSession() {
+  function beginSession() {
     setStarted(true)
 
-    // ── Start MediaRecorder silently — this is the assessment backup ─────────
-    // Even if Web Speech API fails to transcribe, we always have the raw audio
-    // and Gemini can analyse it directly at the end of the session.
-    try {
-      const stream  = await navigator.mediaDevices.getUserMedia({ audio: true, video: false })
-      audioStreamRef.current = stream
-      const mime    = pickMime()
-      audioMimeRef.current = mime
-      const rec = new MediaRecorder(stream, { mimeType: mime, audioBitsPerSecond: 32000 })
-      rec.ondataavailable = e => { if (e.data.size > 0) audioChunksRef.current.push(e.data) }
-      rec.start(1000)  // collect in 1-second chunks
-      mediaRecRef.current = rec
-    } catch (err) {
-      console.warn('MediaRecorder unavailable, will rely on STT only:', err.message)
-    }
-
-    setAiThinking(true)
-    try {
-      const opening = await sendPracticeMessage(scenario.id, [], 'Start the session now.', { eslMode })
-      setMessages([{ role: 'ai', content: opening }])
-      speak(opening)
-    } catch (err) {
-      const fallback = "Let's begin. I'm ready when you are."
-      setMessages([{ role: 'ai', content: fallback }])
-      speak(fallback)
-    }
-    setAiThinking(false)
+    // ── Vak speaks instantly — opening lines are fixed per scenario, so no
+    // Gemini round-trip is needed. The first real API call happens with the
+    // user's first response.
+    const opening = OPENING_LINES[scenario.id] || "Let's begin. I'm ready when you are."
+    setMessages([{ role: 'ai', content: opening }])
+    speak(opening)
     if (!voiceMode) textRef.current?.focus()
+
+    // ── Mic + MediaRecorder in parallel — never blocks the session start.
+    // The recording is the assessment backup: even if STT fails, Gemini
+    // analyses the raw audio at the end.
+    startRecorder()
+  }
+
+  function startRecorder() {
+    navigator.mediaDevices.getUserMedia({ audio: true, video: false })
+      .then(stream => {
+        audioStreamRef.current = stream
+        const mime = pickMime()
+        audioMimeRef.current = mime
+        const rec = new MediaRecorder(stream, { mimeType: mime, audioBitsPerSecond: 32000 })
+        rec.ondataavailable = e => { if (e.data.size > 0) audioChunksRef.current.push(e.data) }
+        rec.start(1000)  // collect in 1-second chunks
+        mediaRecRef.current = rec
+        setMicBlocked(false)
+      })
+      .catch(err => {
+        console.warn('Mic unavailable:', err.message)
+        setMicBlocked(true)   // visible banner with recovery steps
+      })
   }
 
   // ── Speech Recognition setup ──────────────────────────────────────────────
@@ -235,17 +238,12 @@ export default function PracticeSession() {
       switch (e.error) {
         case 'not-allowed':
         case 'permission-denied':
-          alert('Microphone access denied.\n\nOpen your browser settings → Site permissions → Microphone → Allow.')
-          isListeningRef.current = false
-          setListening(false)
-          setVoiceMode(false)
-          break
-
         case 'audio-capture':
-          alert('No microphone detected. Please plug in a mic and try again.')
+          // Show the in-app recovery banner instead of a blocking alert.
+          // Keep voice mode on — the text input below the mic always works.
+          setMicBlocked(true)
           isListeningRef.current = false
           setListening(false)
-          setVoiceMode(false)
           break
 
         case 'no-speech':
@@ -912,6 +910,33 @@ export default function PracticeSession() {
                     🔊 Replay
                   </button>
                 )}
+              </div>
+            )}
+
+            {/* Mic blocked — visible recovery banner */}
+            {micBlocked && (
+              <div className="w-full rounded-2xl px-4 py-3 mb-3"
+                style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.35)' }}>
+                <div className="flex items-start gap-3">
+                  <span className="text-xl shrink-0">🎙️🚫</span>
+                  <div className="flex-1">
+                    <div className="text-sm font-bold mb-1" style={{ color: '#F87171' }}>
+                      Microphone is blocked
+                    </div>
+                    <p className="text-xs leading-relaxed mb-2" style={{ color: '#FCA5A5' }}>
+                      Click the <strong>🔒 lock icon</strong> in your address bar → set
+                      <strong> Microphone to Allow</strong> → then tap retry. Or just type your
+                      responses below — everything still works.
+                    </p>
+                    <button
+                      onClick={startRecorder}
+                      className="text-xs font-bold px-3 py-1.5 rounded-full"
+                      style={{ background: 'rgba(239,68,68,0.2)', color: '#F87171', border: '1px solid rgba(239,68,68,0.4)' }}
+                    >
+                      🔄 Retry mic access
+                    </button>
+                  </div>
+                </div>
               </div>
             )}
 

@@ -2,8 +2,12 @@ import { GoogleGenerativeAI } from '@google/generative-ai'
 
 const genAI = new GoogleGenerativeAI(import.meta.env.VITE_GEMINI_API_KEY)
 
-// ── Model name — update here if it changes ───────────────────────────────────
-const MODEL = 'gemini-flash-latest'
+// ── Model names — update here if they change ─────────────────────────────────
+// Chat/interactive: flash-lite responds in ~1s. The 'gemini-flash-latest'
+// alias now resolves to a thinking model that takes 15-30s per reply —
+// measured 2026-06-11 — which made sessions feel broken. Do not use it
+// for anything interactive.
+const MODEL = 'gemini-2.5-flash-lite'
 
 // ── Scenario system prompts ───────────────────────────────────────────────────
 const SCENARIO_PROMPTS = {
@@ -85,6 +89,26 @@ React authentically based on how the user frames it: defensive if they're blunt,
 When the user says "end session", write: [SESSION_ENDED]`,
 }
 
+// ── Fixed opening lines — instant session start, no API round-trip ───────────
+// These mirror the 'Start with: "…"' instruction in each scenario prompt, so
+// the model believes it already delivered them when the conversation continues.
+export const OPENING_LINES = {
+  hr_interview:           "Thanks for coming in — please, have a seat. Let's get started. Tell me about yourself.",
+  social_conversation:    "Hey! Haven't seen you here before. I'm Rahul. What do you do?",
+  team_meeting:           "Morning! Let's keep it quick — what are you working on today and are there any blockers?",
+  client_presentation:    "Alright, you have 15 minutes. What have you got for us?",
+  performance_review:     "Thanks for coming in. How do you feel this year went overall?",
+  salary_negotiation:     "So I understand you wanted to discuss your compensation. What's on your mind?",
+  gd_round:               "Welcome everyone. Today's GD topic is: 'Should India prioritise economic growth over environmental sustainability?' Please begin.",
+  first_date:             "Hi! It's nice to finally meet in person. How was the commute?",
+  say_no_professionally:  "I need this done by tonight — drop everything else.",
+  leadership_update:      "Okay — you've got two minutes. What's the situation and what do you need from me?",
+  pitch_skeptic:          "I'll be honest — I'm not convinced we need this. We're already stretched thin. What have you got?",
+  cold_networking:        "Hi — I don't think we've met. Are you enjoying the event?",
+  conflict_mediation:     "I'm glad you called this meeting. Rahul keeps presenting my work as his own and I've had enough.",
+  sensitive_conversation: "Hey — you mentioned you wanted to talk about something? What's up?",
+}
+
 // ── Main chat function ────────────────────────────────────────────────────────
 // options: { eslMode: false }
 export async function sendPracticeMessage(scenarioId, history, userMessage, options = {}) {
@@ -102,6 +126,12 @@ export async function sendPracticeMessage(scenarioId, history, userMessage, opti
     role:  msg.role === 'user' ? 'user' : 'model',
     parts: [{ text: msg.content }],
   }))
+
+  // Gemini requires chat history to open with a user turn. With the hardcoded
+  // opening line, history starts with Vak ('model') — seed a synthetic user turn.
+  if (geminiHistory.length > 0 && geminiHistory[0].role === 'model') {
+    geminiHistory.unshift({ role: 'user', parts: [{ text: 'Start the session now.' }] })
+  }
 
   const chat   = model.startChat({ history: geminiHistory })
   const result = await chat.sendMessage(userMessage)
@@ -296,9 +326,12 @@ Return JSON only (no markdown, no code fences):
   }
 }
 
-// ── Audio model — gemini-1.5-flash is the stable model with confirmed audio support ──
-// gemini-flash-latest is a text alias and may not handle inline audio blobs.
-const AUDIO_MODEL = 'gemini-1.5-flash'
+// ── Audio/vision model — used once per session for the end-of-session report ──
+// gemini-1.5-flash was RETIRED by Google (404s as of 2026-06) — every audio
+// analysis silently failed and fell back to generic feedback. The flash-latest
+// alias is slower (thinking model) but multimodal and quality-focused; fine
+// for the one analysis call behind the "Vak is reviewing…" screen.
+const AUDIO_MODEL = 'gemini-flash-latest'
 
 // ── Regional language map ────────────────────────────────────────────────────
 export const LANGUAGES = [
@@ -414,7 +447,10 @@ Return JSON only (no markdown, no code fences):
 // Called every ~30 s during the session for live coaching tips.
 // Uses gemini-1.5-flash which supports inline image data.
 export async function analyzeBodyLanguageFrame(scriptTitle, frameBase64, mimeType = 'image/jpeg') {
-  const model  = genAI.getGenerativeModel({ model: AUDIO_MODEL })
+  // Live tip fires every 30 s — must use the fast model (flash-lite is
+  // multimodal too); the thinking model would still be mid-response when
+  // the next frame arrives.
+  const model  = genAI.getGenerativeModel({ model: MODEL })
   const prompt = `You are an expert communication coach specialising in body language and non-verbal delivery.
 
 Analyse this single video frame of someone reading/delivering a speech.
