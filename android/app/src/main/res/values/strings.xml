@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">San4</string>
+    <string name="title_activity_main">San4</string>
+    <string name="package_name">in.san4.app</string>
+    <string name="custom_url_scheme">in.san4.app</string>
+</resources>

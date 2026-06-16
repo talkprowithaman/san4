@@ -1,0 +1,18 @@
+{
+  "appId": "in.san4.app",
+  "appName": "San4",
+  "webDir": "dist",
+  "server": {
+    "androidScheme": "https"
+  },
+  "android": {
+    "allowMixedContent": false
+  },
+  "plugins": {
+    "SplashScreen": {
+      "launchShowDuration": 1200,
+      "backgroundColor": "#050810",
+      "showSpinner": false
+    }
+  }
+}

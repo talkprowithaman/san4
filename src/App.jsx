@@ -1,4 +1,7 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { useEffect } from 'react'
+import { BrowserRouter, HashRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { Capacitor } from '@capacitor/core'
+import { App as CapApp } from '@capacitor/app'
 import ProtectedRoute from './components/ProtectedRoute'
 import Landing        from './pages/Landing'
 import Auth           from './pages/Auth'
@@ -14,9 +17,24 @@ import MicroDrill     from './pages/MicroDrill'
 import Progress       from './pages/Progress'
 import BodyLanguage   from './pages/BodyLanguage'
 
+// In the native Android/iOS shell there is no SPA server fallback, so deep
+// links and hard refreshes on a path route would 404. HashRouter keeps all
+// routing client-side there. The web build keeps clean BrowserRouter URLs.
+const Router = Capacitor.isNativePlatform() ? HashRouter : BrowserRouter
+
 export default function App() {
+  // Android hardware back button: go back through history, or exit at the root.
+  useEffect(() => {
+    if (!Capacitor.isNativePlatform()) return
+    const handle = CapApp.addListener('backButton', ({ canGoBack }) => {
+      if (canGoBack) window.history.back()
+      else CapApp.exitApp()
+    })
+    return () => { handle.then(h => h.remove()) }
+  }, [])
+
   return (
-    <BrowserRouter>
+    <Router>
       <Routes>
         {/* Public */}
         <Route path="/"              element={<Landing />} />
@@ -38,6 +56,6 @@ export default function App() {
         {/* Fallback */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
-    </BrowserRouter>
+    </Router>
   )
 }
