@@ -1,6 +1,62 @@
 import { GoogleGenerativeAI } from '@google/generative-ai'
+import { Capacitor } from '@capacitor/core'
+import { supabase }  from './supabase'
 
-const genAI = new GoogleGenerativeAI(import.meta.env.VITE_GEMINI_API_KEY)
+// ── Gemini transport — via serverless proxy ──────────────────────────────────
+// The API key lives only on the server (/api/gemini). The client builds the
+// request and POSTs it through the proxy so the key is never in the web bundle
+// or the Android APK.
+//
+// Web: same-origin '/api/gemini' (Vite dev forwards it to the deployment).
+// Native: absolute URL — the WebView origin (https://localhost) has no /api.
+const API_BASE = Capacitor.isNativePlatform() ? 'https://san4-delta.vercel.app' : ''
+
+// Migration fallback: while VITE_GEMINI_API_KEY is still set (i.e. before the
+// server-side GEMINI_API_KEY is configured), fall back to calling Gemini
+// directly so the live app never breaks. Once VITE_GEMINI_API_KEY is removed
+// from the deployment, this path is dead and the key is fully protected.
+const LEGACY_KEY = import.meta.env.VITE_GEMINI_API_KEY
+let _legacySdk = null
+function legacySdk() {
+  if (!_legacySdk && LEGACY_KEY) _legacySdk = new GoogleGenerativeAI(LEGACY_KEY)
+  return _legacySdk
+}
+
+// Core call: returns the model's response text. `contents` is a Gemini
+// Content[] (array of { role, parts }).
+async function geminiRequest({ model, contents, systemInstruction, generationConfig }) {
+  try {
+    const { data: { session } } = await supabase.auth.getSession()
+    const res = await fetch(`${API_BASE}/api/gemini`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
+      },
+      body: JSON.stringify({ model, contents, systemInstruction, generationConfig }),
+    })
+    if (!res.ok) {
+      const detail = await res.text().catch(() => '')
+      throw new Error(`proxy ${res.status}: ${detail.slice(0, 160)}`)
+    }
+    const data = await res.json()
+    return (data.text || '').trim()
+  } catch (err) {
+    if (legacySdk()) {
+      console.warn('Gemini proxy unavailable, using legacy direct key:', err.message)
+      const m = legacySdk().getGenerativeModel({ model, systemInstruction, generationConfig })
+      const result = await m.generateContent({ contents })
+      return result.response.text().trim()
+    }
+    throw err
+  }
+}
+
+// Single-turn helper: `parts` is a string or an array of Part objects.
+function geminiGenerate(model, parts, opts = {}) {
+  const userParts = typeof parts === 'string' ? [{ text: parts }] : parts
+  return geminiRequest({ model, contents: [{ role: 'user', parts: userParts }], ...opts })
+}
 
 // ── Model names — update here if they change ─────────────────────────────────
 // Chat/interactive: flash-lite responds in ~1s. The 'gemini-flash-latest'
@@ -117,33 +173,25 @@ export async function sendPracticeMessage(scenarioId, history, userMessage, opti
     ? '\n\nIMPORTANT: This user is practising in English as a second language (they may think primarily in Hindi, Marathi, or another Indian language). Be warm and patient. If they fumble for a word, gently offer it. Do NOT correct grammar or pronunciation — focus only on communication clarity and confidence.'
     : ''
 
-  const model = genAI.getGenerativeModel({
-    model: MODEL,
-    systemInstruction: basePrompt + eslNote,
-  })
-
   const geminiHistory = history.map(msg => ({
     role:  msg.role === 'user' ? 'user' : 'model',
     parts: [{ text: msg.content }],
   }))
 
-  // Gemini requires chat history to open with a user turn. With the hardcoded
-  // opening line, history starts with Vak ('model') — seed a synthetic user turn.
+  // Gemini requires the conversation to open with a user turn. With the
+  // hardcoded opening line, history starts with Vak ('model') — seed one.
   if (geminiHistory.length > 0 && geminiHistory[0].role === 'model') {
     geminiHistory.unshift({ role: 'user', parts: [{ text: 'Start the session now.' }] })
   }
 
-  const chat   = model.startChat({ history: geminiHistory })
-  const result = await chat.sendMessage(userMessage)
-  return result.response.text()
+  const contents = [...geminiHistory, { role: 'user', parts: [{ text: userMessage }] }]
+  return geminiRequest({ model: MODEL, contents, systemInstruction: basePrompt + eslNote })
 }
 
 // ── Session analysis — voice-aware ────────────────────────────────────────────
 // voiceMeta: { avgWpm, totalSpeakingSeconds } — optional, pass null for text mode
 // options: { eslMode: false }
 export async function analyzeSession(scenarioTitle, messages, voiceMeta = null, options = {}) {
-  const model = genAI.getGenerativeModel({ model: MODEL })
-
   const userMessages = messages.filter(m => m.role === 'user')
   const transcript   = userMessages.map(m => m.content).join('\n\n')
 
@@ -184,8 +232,7 @@ Return JSON only (no markdown, no code fences):
   "pacing_note": "One sentence on their speaking pace and what to do about it"` : ''}
 }`
 
-  const result = await model.generateContent(prompt)
-  const text   = result.response.text().trim()
+  const text = await geminiGenerate(MODEL, prompt)
 
   try {
     const clean = text.replace(/^```json\s*/i, '').replace(/\s*```$/i, '')
@@ -205,8 +252,6 @@ Return JSON only (no markdown, no code fences):
 // ── Quick drill + daily challenge analysis ────────────────────────────────────
 // drillType: 'bluf' | 'unexpected_question' | 'daily_challenge'
 export async function analyzeQuickDrill(drillType, prompt, userResponse, timeTaken = 0) {
-  const model = genAI.getGenerativeModel({ model: MODEL })
-
   const drillContext = {
     bluf: `The user was given a complex situation and had to explain it starting with the BOTTOM LINE UP FRONT (BLUF) — conclusion first, then context. Check: did they lead with the key point, or did they bury it?`,
     unexpected_question: `The user was hit with an unexpected, high-pressure question and had to answer on the spot. Check: were they coherent, did they structure a response under pressure, did they avoid panicking?`,
@@ -237,8 +282,7 @@ Be specific, direct, and concise. Return JSON only (no markdown):
   "encouragement": "One warm, specific sentence of encouragement"
 }`
 
-  const result = await model.generateContent(fullPrompt)
-  const text   = result.response.text().trim()
+  const text = await geminiGenerate(MODEL, fullPrompt)
 
   try {
     const clean = text.replace(/^```json\s*/i, '').replace(/\s*```$/i, '')
@@ -256,8 +300,6 @@ Be specific, direct, and concise. Return JSON only (no markdown):
 // ── Script reading / teleprompter analysis ────────────────────────────────────
 // voiceMeta: { avgWpm, totalSpeakingSeconds, fillerCount, pauseCount }
 export async function analyzeScriptReading(scriptTitle, scriptText, transcript, voiceMeta = null) {
-  const model = genAI.getGenerativeModel({ model: MODEL })
-
   const pacingNote = voiceMeta
     ? `Speaking pace: ${voiceMeta.avgWpm} WPM (ideal for clear speech: 120–150 WPM). Total reading time: ${voiceMeta.totalSpeakingSeconds}s. Real-time filler count: ${voiceMeta.fillerCount}. Long pauses detected: ${voiceMeta.pauseCount}.`
     : ''
@@ -302,8 +344,7 @@ Return JSON only (no markdown, no code fences):
   "pacing_note": "One sentence on their speaking pace and what to adjust"
 }`
 
-  const result = await model.generateContent(prompt)
-  const text   = result.response.text().trim()
+  const text = await geminiGenerate(MODEL, prompt)
 
   try {
     const clean = text.replace(/^```json\s*/i, '').replace(/\s*```$/i, '')
@@ -355,7 +396,6 @@ function langNote(langCode) {
 // Gemini receives raw audio, transcribes + coaches in one call.
 // Uses gemini-1.5-flash (NOT the gemini-flash-latest alias) — confirmed audio support.
 export async function analyzeSessionFromAudio(scenarioTitle, audioBase64, mimeType = 'audio/webm', lang = 'en-US') {
-  const model  = genAI.getGenerativeModel({ model: AUDIO_MODEL })
   const prompt = `You are a professional communication coach.
 Listen to this audio recording from a "${scenarioTitle}" practice session.
 Focus only on the human speaker. Ignore any AI/TTS voice you may hear.${langNote(lang)}
@@ -379,11 +419,10 @@ Return JSON only (no markdown, no code fences):
 }`
 
   try {
-    const result = await model.generateContent([
+    const text = await geminiGenerate(AUDIO_MODEL, [
       { inlineData: { mimeType, data: audioBase64 } },
       { text: prompt },
     ])
-    const text = result.response.text().trim()
     return JSON.parse(text.replace(/^```json\s*/i, '').replace(/\s*```$/i, ''))
   } catch (err) {
     console.warn('analyzeSessionFromAudio failed:', err.message)
@@ -395,7 +434,6 @@ Return JSON only (no markdown, no code fences):
 export async function analyzeScriptReadingFromAudio(
   scriptTitle, scriptText, audioBase64, mimeType = 'audio/webm', lang = 'en-US'
 ) {
-  const model  = genAI.getGenerativeModel({ model: AUDIO_MODEL })
   const prompt = `You are a professional voice and speech coach.
 Listen to this audio of someone reading a script aloud.${langNote(lang)}
 
@@ -431,11 +469,10 @@ Return JSON only (no markdown, no code fences):
 }`
 
   try {
-    const result = await model.generateContent([
+    const text = await geminiGenerate(AUDIO_MODEL, [
       { inlineData: { mimeType, data: audioBase64 } },
       { text: prompt },
     ])
-    const text = result.response.text().trim()
     return JSON.parse(text.replace(/^```json\s*/i, '').replace(/\s*```$/i, ''))
   } catch (err) {
     console.warn('analyzeScriptReadingFromAudio failed:', err.message)
@@ -450,7 +487,6 @@ export async function analyzeBodyLanguageFrame(scriptTitle, frameBase64, mimeTyp
   // Live tip fires every 30 s — must use the fast model (flash-lite is
   // multimodal too); the thinking model would still be mid-response when
   // the next frame arrives.
-  const model  = genAI.getGenerativeModel({ model: MODEL })
   const prompt = `You are an expert communication coach specialising in body language and non-verbal delivery.
 
 Analyse this single video frame of someone reading/delivering a speech.
@@ -474,11 +510,10 @@ Return JSON only (no markdown):
 }`
 
   try {
-    const result = await model.generateContent([
+    const text = await geminiGenerate(MODEL, [
       { inlineData: { mimeType, data: frameBase64 } },
       { text: prompt },
     ])
-    const text = result.response.text().trim()
     return JSON.parse(text.replace(/^```json\s*/i, '').replace(/\s*```$/i, ''))
   } catch (err) {
     console.warn('analyzeBodyLanguageFrame failed:', err.message)
@@ -492,8 +527,6 @@ Return JSON only (no markdown):
 export async function analyzeBodyLanguageFull(
   scriptTitle, scriptText, frames = [], audioBase64 = null, audioMimeType = 'audio/webm'
 ) {
-  const model = genAI.getGenerativeModel({ model: AUDIO_MODEL })
-
   const parts = []
 
   // Add up to 6 frames (evenly spaced across the session)
@@ -548,8 +581,7 @@ Return JSON only (no markdown, no code fences):
 }` })
 
   try {
-    const result = await model.generateContent(parts)
-    const text = result.response.text().trim()
+    const text = await geminiGenerate(AUDIO_MODEL, parts)
     return JSON.parse(text.replace(/^```json\s*/i, '').replace(/\s*```$/i, ''))
   } catch (err) {
     console.warn('analyzeBodyLanguageFull failed:', err.message)
@@ -559,8 +591,6 @@ Return JSON only (no markdown, no code fences):
 
 // ── Meeting prep ──────────────────────────────────────────────────────────────
 export async function generateTalkingPoints(meetingTitle, agenda) {
-  const model = genAI.getGenerativeModel({ model: MODEL })
-
   const prompt = `You are a communication strategist helping an Indian professional prepare for a "${meetingTitle}" meeting.
 
 MEETING CONTEXT / AGENDA:
@@ -581,8 +611,7 @@ Return JSON only (no markdown):
   "watch_out": "One thing to be careful about in this meeting"
 }`
 
-  const result = await model.generateContent(prompt)
-  const text   = result.response.text().trim()
+  const text = await geminiGenerate(MODEL, prompt)
 
   try {
     const clean = text.replace(/^```json\s*/i, '').replace(/\s*```$/i, '')
