@@ -1,6 +1,13 @@
 import { Link, useNavigate } from 'react-router-dom'
+import { Capacitor }        from '@capacitor/core'
 import { useAuth }         from '../hooks/useAuth'
 import { useSubscription } from '../hooks/useSubscription'
+
+// Google Play forbids in-app payment for digital subscriptions. In the native
+// app we send users to the website to subscribe (web-only purchase model);
+// the app reads their plan back from Supabase. On web, Razorpay runs as normal.
+const IS_NATIVE = Capacitor.isNativePlatform()
+const WEB_BASE  = 'https://san4-delta.vercel.app'
 import VakMascot           from '../components/VakMascot'
 import Navbar              from '../components/Navbar'
 
@@ -93,15 +100,23 @@ export default function Pricing() {
   const navigate = useNavigate()
 
   function handleCta(plan) {
-    if (plan.comingSoon) {
-      window.open('mailto:aman@san4.in?subject=Vak Pro Plus Waitlist', '_blank')
-      return
-    }
     if (plan.id === 'free') {
       navigate(user ? '/dashboard' : '/auth?mode=signup')
       return
     }
-    if (plan.id === 'pro') {
+
+    // ── Native app: no in-app digital payment (Play policy). Open the website
+    // pricing page in the system browser so the user subscribes on the web. ──
+    if (IS_NATIVE) {
+      window.open(`${WEB_BASE}/pricing`, '_system')
+      return
+    }
+
+    if (plan.comingSoon) {
+      window.open('mailto:aman@san4.in?subject=Vak Pro Plus Waitlist', '_blank')
+      return
+    }
+    if (plan.id === 'pro' || plan.id === 'pro_plus') {
       // Pre-fill email so you can match payment to account in Razorpay dashboard
       const base = 'https://rzp.io/rzp/m54y50n'
       const url  = user?.email
@@ -179,14 +194,22 @@ export default function Pricing() {
 
         {/* Plans grid */}
         <div className="grid lg:grid-cols-3 gap-6 items-start">
-          {PLANS.map((plan, idx) => (
-            <PlanCard
-              key={plan.id}
-              plan={plan}
-              isCurrent={currentPlan === plan.id}
-              onCta={() => handleCta(plan)}
-            />
-          ))}
+          {PLANS.map((plan) => {
+            // In the native app, paid plans send users to the web to subscribe —
+            // relabel the button and clear the "coming soon" disabled state so it
+            // remains tappable.
+            const displayPlan = IS_NATIVE && plan.id !== 'free'
+              ? { ...plan, cta: 'Subscribe on the web', comingSoon: false }
+              : plan
+            return (
+              <PlanCard
+                key={plan.id}
+                plan={displayPlan}
+                isCurrent={currentPlan === plan.id}
+                onCta={() => handleCta(plan)}
+              />
+            )
+          })}
         </div>
 
         {/* FAQ / reassurance row */}
