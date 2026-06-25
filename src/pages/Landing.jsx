@@ -2,7 +2,10 @@
 // Pure React + CSS animations (IntersectionObserver, no framer-motion).
 import { useState, useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
-import VakMascot from '../components/VakMascot'
+import VakMascot     from '../components/VakMascot'
+import RippleCursor  from '../components/RippleCursor'
+import HeroWaveform  from '../components/HeroWaveform'
+import { useSmoothScroll } from '../hooks/useSmoothScroll'
 import './landing.css'
 
 // ── Count-up stat ─────────────────────────────────────────────────────────────
@@ -59,19 +62,16 @@ const STATS = [
   { to:0,  suf:'',  label:'AI coaches built specifically for India. Until now.' },
 ]
 
-// ── Context cards ─────────────────────────────────────────────────────────────
+// ── Context cards (expandable) ─────────────────────────────────────────────────
 const CTX = [
-  { icon:'💡', title:'Built for Bharat',    desc:'Accent-neutral AI trained on Indian English, Hindi-English code-switching, and regional speech patterns.' },
-  { icon:'🎯', title:'Scenario library',    desc:'14 real-world practice scenarios from HR rounds to client pitches to salary negotiations.' },
-  { icon:'📈', title:'Measurable growth',   desc:'Track filler words, confidence score, pace, and structure improvement across every session.' },
-  { icon:'🔒', title:'Private by design',   desc:'Your sessions stay yours. We never store audio after analysis. Train without fear of judgment.' },
-]
-
-// ── AI feature items ──────────────────────────────────────────────────────────
-const FEATS = [
-  { icon:'🎙️', title:'Real-time speech analysis',  desc:'Vak transcribes and scores your delivery as you speak — pace, filler words, confidence markers, and structure. Instant, specific, actionable.' },
-  { icon:'🧠', title:'Gemini-powered coaching',    desc:'After each response, Vak gives you one targeted improvement note. Not a wall of text — one thing. The thing that matters most right now.' },
-  { icon:'📈', title:'Progress that compounds',    desc:'Every session updates your skill profile. Vak tracks what you\'ve improved and what still needs work. Your feedback gets sharper the more you practise.' },
+  { icon:'💡', title:'Built for Bharat', short:'Tuned to how India speaks.',
+    more:'Accent-neutral AI trained on Indian English, Hindi-English code-switching, and regional speech. It understands you, not a textbook American voice.' },
+  { icon:'🎯', title:'Scenario library', short:'14 real situations, not drills.',
+    more:'HR rounds, group discussions, client pitches, salary negotiations. Each one plays out like the real thing, with a counterpart who pushes back.' },
+  { icon:'📈', title:'Measurable growth', short:'See yourself get sharper.',
+    more:'Track filler words, confidence, pace, and structure across every session. Your progress becomes a number that climbs, not a vague feeling.' },
+  { icon:'🔒', title:'Private by design', short:'Your voice stays yours.',
+    more:'We never store your audio after analysis. Practise the awkward stuff freely, with no human listening and nothing to be embarrassed about.' },
 ]
 
 // ── Press names ───────────────────────────────────────────────────────────────
@@ -119,83 +119,31 @@ function Pill({ label, accent }) {
   )
 }
 
-// ── Phone mockup — AI feedback screen ────────────────────────────────────────
-function AiPhone() {
+// ── Expandable context card — click to read more, saves space ────────────────
+function ExpandCard({ item, open, onToggle }) {
   return (
-    <div className="relative" style={{ width: 260 }}>
-      {/* Glow */}
-      <div className="absolute inset-0 -z-10 blur-3xl opacity-20 rounded-full"
-        style={{ background: 'radial-gradient(circle, #7B5EA7, transparent 70%)' }} />
-      {/* Frame */}
-      <div className="relative overflow-hidden"
-        style={{
-          width:260, height:520, borderRadius:44,
-          background:'#050810',
-          border:'8px solid rgba(255,255,255,0.10)',
-          boxShadow:'0 0 0 1px rgba(255,255,255,0.04), 0 60px 120px rgba(15,23,42,0.5)',
-        }}>
-        {/* Notch */}
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-24 h-6 rounded-b-2xl z-10"
-          style={{ background: 'rgba(0,0,0,0.6)' }} />
-        {/* Screen */}
-        <div className="absolute inset-0 pt-8 px-3 flex flex-col gap-2.5 overflow-hidden">
-          {/* Header */}
-          <div className="flex items-center gap-2 pb-2"
-            style={{ borderBottom:'1px solid rgba(255,255,255,0.06)' }}>
-            <div className="w-7 h-7 rounded-full flex items-center justify-center text-base shrink-0"
-              style={{ background:'rgba(139,92,246,0.2)' }}>🦢</div>
-            <span className="text-xs font-semibold text-white">Feedback · HR Interview</span>
-          </div>
-          {/* Overall score */}
-          <div className="rounded-xl p-3 text-center"
-            style={{ background:'rgba(0,196,154,0.1)', border:'1px solid rgba(0,196,154,0.25)' }}>
-            <div className="text-2xl font-black" style={{ color:'#00C49A' }}>84%</div>
-            <div className="text-xs font-semibold mt-0.5" style={{ color:'#00C49A' }}>Overall Score</div>
-          </div>
-          {/* Chips */}
-          <div className="grid grid-cols-3 gap-1.5">
-            {[['3','#F87171','Fillers'],['Good','#00C49A','Pace'],['Strong','#8B5CF6','Structure']].map(([v,c,l])=>(
-              <div key={l} className="rounded-xl p-2 text-center"
-                style={{ background:'rgba(255,255,255,0.07)' }}>
-                <div className="font-black text-sm" style={{ color:c }}>{v}</div>
-                <div className="text-xs" style={{ color:'#6B8CAE' }}>{l}</div>
-              </div>
-            ))}
-          </div>
-          {/* Action item */}
-          <div className="rounded-xl p-2.5"
-            style={{ background:'rgba(123,94,167,0.08)', border:'1px solid rgba(123,94,167,0.2)' }}>
-            <div className="text-xs font-semibold mb-0.5" style={{ color:'#7B5EA7' }}>🎯 Action item</div>
-            <p className="text-white text-xs leading-relaxed">
-              Pause 2 s before answering. Your best answers came after a pause.
-            </p>
-          </div>
-          {/* Score bars */}
-          {[['Clarity','#7B5EA7',84],['Confidence','#00C49A',78],['Pacing','#F59E0B',91]].map(([l,c,v])=>(
-            <div key={l}>
-              <div className="flex justify-between text-xs mb-1">
-                <span style={{ color:'#94A3B8' }}>{l}</span>
-                <span style={{ color:c }}>{v}%</span>
-              </div>
-              <div className="h-1.5 rounded-full overflow-hidden"
-                style={{ background:'rgba(255,255,255,0.08)' }}>
-                <div className="h-full rounded-full" style={{ width:`${v}%`, background:c }} />
-              </div>
-            </div>
-          ))}
-        </div>
+    <button onClick={onToggle}
+      className="w-full text-left rounded-2xl p-5 transition-all"
+      style={{ background:'linear-gradient(145deg,#0F1929,#070C18)',
+        border:`1px solid ${open ? 'rgba(139,92,246,0.4)' : 'rgba(255,255,255,0.07)'}` }}>
+      <div className="flex items-start justify-between gap-2 mb-2.5">
+        <span className="text-2xl">{item.icon}</span>
+        <span className="w-6 h-6 rounded-full flex items-center justify-center text-sm font-bold transition-transform"
+          style={{ background:'rgba(139,92,246,0.15)', color:'#A78BFA',
+            transform: open ? 'rotate(45deg)' : 'rotate(0deg)' }}>+</span>
       </div>
-      {/* Floating badge — top right */}
-      <div className="badge-float-up absolute -top-3 -right-4 px-3 py-1.5 rounded-xl text-xs font-bold text-white whitespace-nowrap"
-        style={{ background:'rgba(123,94,167,0.25)', border:'1px solid rgba(123,94,167,0.4)', backdropFilter:'blur(8px)' }}>
-        🎯 Clarity +12%
+      <h3 className="text-white font-bold text-sm mb-1">{item.title}</h3>
+      <p className="text-xs" style={{ color:'#8B95A8' }}>{item.short}</p>
+      <div style={{ maxHeight: open ? 320 : 0, overflow:'hidden', transition:'max-height 0.4s ease' }}>
+        <p className="text-xs leading-relaxed mt-3 pt-3"
+          style={{ color:'#6B8CAE', borderTop:'1px solid rgba(255,255,255,0.07)' }}>{item.more}</p>
       </div>
-      {/* Floating badge — bottom left */}
-      <div className="badge-float-down absolute -bottom-3 -left-4 px-3 py-1.5 rounded-xl text-xs font-bold text-white whitespace-nowrap"
-        style={{ background:'rgba(255,107,53,0.2)', border:'1px solid rgba(255,107,53,0.35)', backdropFilter:'blur(8px)' }}>
-        🔥 Streak Day 4
-      </div>
-    </div>
+      {!open && (
+        <span className="text-xs font-semibold mt-2.5 inline-flex items-center gap-1" style={{ color:'#A78BFA' }}>
+          Read more <span style={{ fontSize:'0.9em' }}>↓</span>
+        </span>
+      )}
+    </button>
   )
 }
 
@@ -203,6 +151,9 @@ function AiPhone() {
 export default function Landing() {
   const fanRef   = useRef(null)
   const [fanOn, setFanOn] = useState(false)
+  const [openCtx, setOpenCtx] = useState(null)
+
+  useSmoothScroll()  // Lenis momentum scroll (desktop only)
 
   // ── Scroll animator — observes all .sa/.clip-line/.ai-feat elements ───────
   useEffect(() => {
@@ -236,6 +187,10 @@ export default function Landing() {
   return (
     <div style={{ background:'#050810', color:'#F1F5F9' }}>
 
+      {/* Cinematic overlays — pointer aura + ripples, and film grain */}
+      <RippleCursor />
+      <div className="film-grain" aria-hidden="true" />
+
       {/* ══ NAVBAR ════════════════════════════════════════════════════════ */}
       <nav className="landing-nav fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-6 lg:px-10 h-16"
         style={{
@@ -249,13 +204,13 @@ export default function Landing() {
         </span>
 
         <div className="hidden md:flex items-center gap-8">
-          {['Why San4','Meet Vak','Features','Pricing'].map(t => (
-            <a key={t} href="#" className="text-sm transition-colors"
+          {[['How it works','/how-it-works'],['Pricing','/pricing']].map(([t, to]) => (
+            <Link key={t} to={to} className="text-sm transition-colors"
               style={{ color:'rgba(255,255,255,0.45)' }}
               onMouseEnter={e=>e.currentTarget.style.color='white'}
               onMouseLeave={e=>e.currentTarget.style.color='rgba(255,255,255,0.45)'}>
               {t}
-            </a>
+            </Link>
           ))}
         </div>
 
@@ -291,6 +246,9 @@ export default function Landing() {
             backgroundSize:'72px 72px',
           }}/>
 
+        {/* Living voice waveform */}
+        <HeroWaveform />
+
         <div className="max-w-7xl mx-auto px-6 lg:px-10 w-full grid lg:grid-cols-2 gap-12 items-center py-24 relative z-10">
 
           {/* ── Left column ─────────────────────────────────────────────── */}
@@ -301,7 +259,7 @@ export default function Landing() {
               <div className="sa" data-delay="0">
                 <span className="text-white">One Coach.</span>
               </div>
-              <div className="sa grad-text" data-delay="250">
+              <div className="sa grad-text grad-flow" data-delay="250">
                 Every Voice.
               </div>
             </h1>
@@ -309,9 +267,9 @@ export default function Landing() {
             {/* Body */}
             <p className="sa text-lg leading-relaxed mb-8 max-w-lg" data-delay="440"
               style={{ color:'rgba(255,255,255,0.55)' }}>
-              Vak is your AI practice partner. He gives you brutally honest, specific
-              feedback — not platitudes. The more you practise, the more precisely he
-              knows where you need work.
+              Your AI practice partner for interviews, meetings, and tough conversations.
+              Honest, specific feedback instead of empty praise. The more you practise,
+              the sharper it gets.
             </p>
 
             {/* CTA row */}
@@ -478,73 +436,13 @@ export default function Landing() {
           ))}
         </div>
 
-        {/* ── Context cards ─────────────────────────────────────────────── */}
-        <div className="max-w-5xl mx-auto grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* ── Context cards (click to expand) ───────────────────────────── */}
+        <div className="max-w-5xl mx-auto grid sm:grid-cols-2 lg:grid-cols-4 gap-4 items-start">
           {CTX.map((c, i) => (
-            <div key={c.title} className="sa-sc rounded-2xl p-5" data-delay={i * 80}
-              style={{ background:'linear-gradient(145deg,#0F1929,#070C18)', border:'1px solid rgba(255,255,255,0.07)' }}>
-              <div className="text-2xl mb-3">{c.icon}</div>
-              <h3 className="text-white font-bold text-sm mb-1.5">{c.title}</h3>
-              <p className="text-xs leading-relaxed" style={{ color:'#6B8CAE' }}>{c.desc}</p>
+            <div key={c.title} className="sa-sc" data-delay={i * 80}>
+              <ExpandCard item={c} open={openCtx === i} onToggle={() => setOpenCtx(openCtx === i ? null : i)} />
             </div>
           ))}
-        </div>
-      </section>
-
-      {/* ══ SECTION 5 — AI FEATURES ════════════════════════════════════════ */}
-      <section id="features" className="py-28 px-6 lg:px-10 relative overflow-hidden"
-        style={{ background:'#050810' }}>
-        <div className="max-w-7xl mx-auto">
-
-          <p className="sa text-xs font-bold uppercase tracking-widest text-center mb-10"
-            style={{ color:'#6B8CAE' }}>Under the hood</p>
-
-          <div className="grid lg:grid-cols-2 gap-16 items-center">
-
-            {/* Left: headline + feature list */}
-            <div>
-              {/* Clip-path line reveals */}
-              <h2 className="font-black leading-[1.1] mb-6"
-                style={{ fontSize:'clamp(30px,4.5vw,52px)' }}>
-                <div className="clip-line" data-delay="0">
-                  <span className="text-white">The world's first</span>
-                </div>
-                <div className="clip-line" data-delay="160">
-                  <span className="grad-text">AI coach built</span>
-                </div>
-                <div className="clip-line" data-delay="320">
-                  <span className="text-white">for Indian voices.</span>
-                </div>
-              </h2>
-
-              <p className="sa text-base leading-relaxed mb-10 max-w-lg" data-delay="440"
-                style={{ color:'rgba(255,255,255,0.55)' }}>
-                Vak listens, transcribes, scores, and coaches — all in real time.
-                No human reviews your sessions. No judgment. Just data and a
-                clear path forward.
-              </p>
-
-              <div className="space-y-7">
-                {FEATS.map((f, i) => (
-                  <div key={f.title} className="ai-feat flex gap-5 items-start" data-delay={i * 130}>
-                    <div className="feat-icon shrink-0 w-12 h-12 rounded-2xl flex items-center justify-center text-2xl"
-                      style={{ background:'rgba(139,92,246,0.12)', border:'1px solid rgba(139,92,246,0.22)' }}>
-                      {f.icon}
-                    </div>
-                    <div className="feat-text">
-                      <h3 className="text-white font-bold text-sm mb-1">{f.title}</h3>
-                      <p className="text-sm leading-relaxed" style={{ color:'#6B8CAE' }}>{f.desc}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Right: phone mockup */}
-            <div className="ai-phone-col flex justify-center items-center">
-              <AiPhone />
-            </div>
-          </div>
         </div>
       </section>
 
@@ -585,7 +483,7 @@ export default function Landing() {
 
           <p className="sa text-lg mb-8 max-w-xl mx-auto" data-delay="150"
             style={{ color:'rgba(255,255,255,0.5)' }}>
-            Join thousands of Indian professionals practising with Vak —
+            Join thousands of Indian professionals practising with Vak,
             the AI coach that actually gets you.
           </p>
 
@@ -606,12 +504,21 @@ export default function Landing() {
               style={{ background:'linear-gradient(135deg,#7B5EA7,#9B7EC8)' }}>
               Start practising free →
             </Link>
-            <a href="#features"
+            <Link to="/how-it-works"
               className="text-base font-semibold px-10 py-5 rounded-full transition-all hover:opacity-80"
               style={{ color:'white', border:'1px solid rgba(255,255,255,0.25)' }}>
-              Watch a demo
-            </a>
+              See how it works
+            </Link>
           </div>
+
+          {/* Quiet link to the technical breakdown */}
+          <Link to="/how-it-works"
+            className="sa inline-block mt-8 text-sm transition-colors" data-delay="450"
+            style={{ color:'rgba(255,255,255,0.4)' }}
+            onMouseEnter={e=>e.currentTarget.style.color='rgba(255,255,255,0.75)'}
+            onMouseLeave={e=>e.currentTarget.style.color='rgba(255,255,255,0.4)'}>
+            Curious what powers Vak? See what's under the hood →
+          </Link>
         </div>
 
         {/* Deco phone (desktop only) */}
@@ -656,9 +563,9 @@ export default function Landing() {
           <div>
             <h4 className="text-white font-bold text-xs uppercase tracking-widest mb-5">Product</h4>
             <ul className="space-y-3">
-              {['Why San4','Meet Vak','Features','Pricing'].map(t=>(
+              {[['How it works','/how-it-works'],['Pricing','/pricing'],['Get your score','/assessment'],['Sign in','/auth']].map(([t, to])=>(
                 <li key={t}>
-                  <Link to="/" className="text-sm transition-colors"
+                  <Link to={to} className="text-sm transition-colors"
                     style={{ color:'#6B8CAE' }}
                     onMouseEnter={e=>e.currentTarget.style.color='white'}
                     onMouseLeave={e=>e.currentTarget.style.color='#6B8CAE'}>
