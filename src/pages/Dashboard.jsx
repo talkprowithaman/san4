@@ -163,10 +163,32 @@ export default function Dashboard() {
         </div>
 
         {/* Play button */}
-        <Link to="/practice" className="btn-play mb-5 reveal reveal-d2">
+        <Link to="/practice" className="btn-play mb-3 reveal reveal-d2">
           <span className="text-xl">🎮</span>
           <span>Start Practice</span>
           <span style={{ opacity: 0.6, fontSize: '0.85rem' }}>→</span>
+        </Link>
+
+        {/* CEFR assessment hook */}
+        <Link
+          to="/assessment"
+          className="flex items-center gap-3 px-5 py-4 rounded-2xl mb-5 transition-all reveal reveal-d2"
+          style={{
+            background: 'linear-gradient(135deg, rgba(139,92,246,0.14), rgba(123,94,167,0.06))',
+            border: '1px solid rgba(139,92,246,0.3)',
+          }}
+          onMouseEnter={e => e.currentTarget.style.borderColor = 'rgba(139,92,246,0.55)'}
+          onMouseLeave={e => e.currentTarget.style.borderColor = 'rgba(139,92,246,0.3)'}
+        >
+          <span className="text-2xl">🎯</span>
+          <div className="flex-1">
+            <div className="text-white font-semibold text-sm">Get your English score</div>
+            <div className="text-xs mt-0.5" style={{ color: 'rgba(255,255,255,0.4)' }}>
+              Free 2-min assessment → CEFR level (A1–C2)
+            </div>
+          </div>
+          <span className="text-xs font-bold px-2.5 py-1 rounded-full"
+            style={{ background: 'rgba(139,92,246,0.2)', color: '#A78BFA' }}>FREE</span>
         </Link>
 
         {/* Meeting Prep quick link */}
@@ -188,6 +210,35 @@ export default function Dashboard() {
           </div>
           <span style={{ color: '#00C49A', fontSize: '1rem' }}>→</span>
         </Link>
+
+        {/* Quick tools row */}
+        <div className="grid grid-cols-2 gap-3 mb-6 reveal reveal-d3">
+          <Link to="/reminders"
+            className="flex items-center gap-2.5 px-4 py-3.5 rounded-2xl transition-all"
+            style={{ background: 'linear-gradient(160deg, #0E1A2C, #091322)', border: '1px solid rgba(255,107,53,0.2)' }}
+            onMouseEnter={e => e.currentTarget.style.borderColor = 'rgba(255,107,53,0.4)'}
+            onMouseLeave={e => e.currentTarget.style.borderColor = 'rgba(255,107,53,0.2)'}>
+            <span className="text-xl">⏰</span>
+            <div className="min-w-0">
+              <div className="text-white font-semibold text-xs">Daily reminder</div>
+              <div className="text-xs truncate" style={{ color: 'rgba(255,255,255,0.35)' }}>Build the habit</div>
+            </div>
+          </Link>
+          <Link to="/call-analyzer"
+            className="flex items-center gap-2.5 px-4 py-3.5 rounded-2xl transition-all"
+            style={{ background: 'linear-gradient(160deg, #0E1A2C, #091322)', border: '1px solid rgba(139,92,246,0.2)' }}
+            onMouseEnter={e => e.currentTarget.style.borderColor = 'rgba(139,92,246,0.4)'}
+            onMouseLeave={e => e.currentTarget.style.borderColor = 'rgba(139,92,246,0.2)'}>
+            <span className="text-xl">📞</span>
+            <div className="min-w-0">
+              <div className="text-white font-semibold text-xs flex items-center gap-1.5">
+                Call Analyzer
+                <span className="text-xs font-bold px-1.5 rounded-full" style={{ background: 'rgba(139,92,246,0.2)', color: '#A78BFA' }}>Elite</span>
+              </div>
+              <div className="text-xs truncate" style={{ color: 'rgba(255,255,255,0.35)' }}>Real meeting feedback</div>
+            </div>
+          </Link>
+        </div>
 
         {/* Situation of the Day */}
         <div className="reveal reveal-d4">

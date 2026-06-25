@@ -16,6 +16,10 @@ import DailyChallenge from './pages/DailyChallenge'
 import MicroDrill     from './pages/MicroDrill'
 import Progress       from './pages/Progress'
 import BodyLanguage   from './pages/BodyLanguage'
+import Assessment     from './pages/Assessment'
+import CallAnalyzer   from './pages/CallAnalyzer'
+import Reminders      from './pages/Reminders'
+import ReminderScheduler from './components/ReminderScheduler'
 
 // In the native Android/iOS shell there is no SPA server fallback, so deep
 // links and hard refreshes on a path route would 404. HashRouter keeps all
@@ -35,6 +39,7 @@ export default function App() {
 
   return (
     <Router>
+      <ReminderScheduler />
       <Routes>
         {/* Public */}
         <Route path="/"              element={<Landing />} />
@@ -52,6 +57,9 @@ export default function App() {
         <Route path="/micro-drill"     element={<ProtectedRoute><MicroDrill /></ProtectedRoute>} />
         <Route path="/progress"        element={<ProtectedRoute><Progress /></ProtectedRoute>} />
         <Route path="/body-language"   element={<ProtectedRoute><BodyLanguage /></ProtectedRoute>} />
+        <Route path="/assessment"      element={<ProtectedRoute><Assessment /></ProtectedRoute>} />
+        <Route path="/call-analyzer"   element={<ProtectedRoute><CallAnalyzer /></ProtectedRoute>} />
+        <Route path="/reminders"       element={<ProtectedRoute><Reminders /></ProtectedRoute>} />
 
         {/* Fallback */}
         <Route path="*" element={<Navigate to="/" replace />} />

@@ -4,6 +4,8 @@ import { useAuth }     from '../hooks/useAuth'
 import { useProgress } from '../hooks/useProgress'
 import { supabase }    from '../lib/supabase'
 import { sendPracticeMessage, analyzeSession, analyzeSessionFromAudio, LANGUAGES, OPENING_LINES } from '../lib/gemini'
+import { PERSONAS, FREE_PERSONA_IDS, getPersona } from '../lib/personas'
+import { useSubscription } from '../hooks/useSubscription'
 import Navbar      from '../components/Navbar'
 import RewardCard  from '../components/RewardCard'
 import VakMascot   from '../components/VakMascot'
@@ -58,6 +60,7 @@ export default function PracticeSession() {
   const { user }        = useAuth()
   const navigate        = useNavigate()
   const { awardXP }     = useProgress()
+  const { isPro }       = useSubscription()
 
   const scenario = state?.scenario || { id: scenarioId, title: scenarioId, icon: '🎭' }
 
@@ -108,6 +111,17 @@ export default function PracticeSession() {
       try { localStorage.setItem('san4_esl_mode', 'true') } catch {}
     }
   }, [lang])
+
+  // ── Persona state (accent / context of the counterpart) ────────────────────
+  const [personaId, setPersonaId] = useState(() => {
+    try { return localStorage.getItem('san4_persona') || 'default' } catch { return 'default' }
+  })
+  const persona    = getPersona(personaId)
+  const personaRef = useRef(persona)
+  useEffect(() => {
+    personaRef.current = getPersona(personaId)
+    try { localStorage.setItem('san4_persona', personaId) } catch {}
+  }, [personaId])
 
   // ── Text mode state ───────────────────────────────────────────────────────
   const [textInput, setTextInput] = useState('')
@@ -333,9 +347,16 @@ export default function PracticeSession() {
     window.speechSynthesis.cancel()
 
     const utt    = new SpeechSynthesisUtterance(text)
-    utt.lang     = 'en-IN'
+    utt.lang     = personaRef.current?.ttsLang || 'en-IN'
     utt.rate     = 0.95
     utt.pitch    = 1.1
+
+    // Best-effort: match a system voice to the persona's locale so the accent
+    // is audible, not just textual.
+    const voices = window.speechSynthesis.getVoices?.() || []
+    const match  = voices.find(v => v.lang === utt.lang) ||
+                   voices.find(v => v.lang?.startsWith(utt.lang.split('-')[0]))
+    if (match) utt.voice = match
 
     utt.onstart  = () => setVakSpeaking(true)
     utt.onend    = () => setVakSpeaking(false)
@@ -355,7 +376,10 @@ export default function PracticeSession() {
     setAiThinking(true)
 
     try {
-      const response = await sendPracticeMessage(scenario.id, messages, text, { eslMode })
+      const response = await sendPracticeMessage(scenario.id, messages, text, {
+        eslMode,
+        personaPrompt: personaRef.current?.prompt || '',
+      })
 
       if (response.includes('[SESSION_ENDED]')) {
         const clean = response.replace('[SESSION_ENDED]', '').trim()
@@ -499,6 +523,41 @@ export default function PracticeSession() {
           <p className="text-sm" style={{ color: '#6B8CAE' }}>
             Vak plays the other person. Speak naturally. Your voice is recorded and analysed.
           </p>
+        </div>
+
+        {/* Persona / accent picker */}
+        <div className="w-full mb-5">
+          <div className="text-xs font-bold mb-2 uppercase tracking-widest" style={{ color: '#6B8CAE' }}>
+            🎭 Who you'll talk to
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+            {PERSONAS.map(p => {
+              const locked   = !p.free && !isPro
+              const selected = personaId === p.id
+              return (
+                <button
+                  key={p.id}
+                  onClick={() => { if (locked) { navigate('/pricing'); return } setPersonaId(p.id) }}
+                  className="relative text-left rounded-2xl p-3 transition-all"
+                  style={{
+                    background: selected ? 'rgba(139,92,246,0.15)' : 'rgba(255,255,255,0.04)',
+                    border:     `1px solid ${selected ? 'rgba(139,92,246,0.5)' : 'rgba(255,255,255,0.08)'}`,
+                    opacity:    locked ? 0.7 : 1,
+                  }}
+                  title={p.blurb}
+                >
+                  {locked && (
+                    <span className="absolute top-2 right-2 text-xs font-bold px-1.5 py-0.5 rounded-full"
+                      style={{ background: 'rgba(245,158,11,0.15)', color: '#F59E0B' }}>🔒 Pro</span>
+                  )}
+                  <div className="text-lg mb-0.5">{p.flag}</div>
+                  <div className="text-white font-bold text-xs leading-tight">{p.name}</div>
+                  <div className="text-xs mt-0.5" style={{ color: selected ? '#A78BFA' : '#6B8CAE' }}>{p.accent}</div>
+                </button>
+              )
+            })}
+          </div>
+          <p className="text-xs mt-2" style={{ color: '#6B8CAE' }}>{persona.blurb}</p>
         </div>
 
         {/* Language picker */}

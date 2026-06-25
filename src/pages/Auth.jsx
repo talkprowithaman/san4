@@ -14,7 +14,12 @@ export default function Auth() {
   const { user } = useAuthStore()
   const navigate = useNavigate()
 
-  useEffect(() => { if (user) navigate('/dashboard') }, [user])
+  useEffect(() => {
+    if (!user) return
+    const next = params.get('next')
+    // Only allow internal paths (prevent open-redirect via the query param)
+    navigate(next && next.startsWith('/') ? next : '/dashboard')
+  }, [user])
 
   function update(key, val) { setForm(f => ({ ...f, [key]: val })); setError('') }
 

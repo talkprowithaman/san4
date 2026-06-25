@@ -316,16 +316,16 @@ export default function Landing() {
 
             {/* CTA row */}
             <div className="sa flex flex-wrap gap-3 mb-8 hero-btns" data-delay="600">
-              <Link to="/auth?mode=signup"
+              <Link to="/auth?mode=signup&next=/assessment"
                 className="btn-aura text-sm font-bold text-white px-7 py-4 rounded-full transition-all hover:opacity-90 active:scale-95"
                 style={{ background:'linear-gradient(135deg,#7B5EA7,#9B7EC8)' }}>
-                Start practising free →
+                🎯 Get your free English score →
               </Link>
-              <a href="#features"
+              <Link to="/auth?mode=signup"
                 className="text-sm font-semibold px-7 py-4 rounded-full transition-all hover:opacity-80"
                 style={{ color:'rgba(255,255,255,0.7)', border:'1px solid rgba(255,255,255,0.2)' }}>
-                Watch a demo
-              </a>
+                Start practising free
+              </Link>
             </div>
 
             {/* Tag pills */}

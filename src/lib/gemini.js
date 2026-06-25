@@ -172,6 +172,8 @@ export async function sendPracticeMessage(scenarioId, history, userMessage, opti
   const eslNote    = options.eslMode
     ? '\n\nIMPORTANT: This user is practising in English as a second language (they may think primarily in Hindi, Marathi, or another Indian language). Be warm and patient. If they fumble for a word, gently offer it. Do NOT correct grammar or pronunciation — focus only on communication clarity and confidence.'
     : ''
+  // Persona overlay — varies the counterpart's accent / context (personas.js).
+  const personaNote = options.personaPrompt || ''
 
   const geminiHistory = history.map(msg => ({
     role:  msg.role === 'user' ? 'user' : 'model',
@@ -185,7 +187,7 @@ export async function sendPracticeMessage(scenarioId, history, userMessage, opti
   }
 
   const contents = [...geminiHistory, { role: 'user', parts: [{ text: userMessage }] }]
-  return geminiRequest({ model: MODEL, contents, systemInstruction: basePrompt + eslNote })
+  return geminiRequest({ model: MODEL, contents, systemInstruction: basePrompt + eslNote + personaNote })
 }
 
 // ── Session analysis — voice-aware ────────────────────────────────────────────
@@ -390,6 +392,92 @@ function langNote(langCode) {
   const lang = LANGUAGES.find(l => l.code === langCode)
   const name = lang?.label || 'an Indian language'
   return `\n\nIMPORTANT: The user is speaking in ${name}. Transcribe their speech as-is. Evaluate their spoken communication in ${name} — fluency, confidence, filler words, and pacing all apply equally. Your JSON values (scores, strengths, improvements, summary, action_item) should be written in English so they're readable in the app UI.`
+}
+
+function safeJsonParse(text, fallback = null) {
+  try {
+    return JSON.parse(text.replace(/^```json\s*/i, '').replace(/\s*```$/i, '').trim())
+  } catch {
+    return fallback
+  }
+}
+
+// ── CEFR assessment — top-of-funnel score ────────────────────────────────────
+// The 2-minute front door: the user reads a passage + answers a spontaneous
+// question, Gemini returns a CEFR band (A1–C2) and 0-100 sub-scores. We already
+// compute the same dimensions in session analysis — this packages them as the
+// onboarding hook.
+export async function analyzeCEFRAssessment(audioBase64, mimeType = 'audio/webm', promptText = '') {
+  const prompt = `You are a certified language assessor evaluating a spoken English sample using the CEFR (Common European Framework of Reference) scale: A1, A2, B1, B2, C1, C2.
+
+The speaker was asked to: ${promptText || 'read a short passage aloud and then answer a spontaneous question about their work.'}
+
+Listen to the recording. First transcribe what the human said. Then assess their spoken English across four dimensions and assign an overall CEFR level. Be fair but honest — most Indian professionals land in the B1–B2 range. Reserve C1/C2 for genuinely advanced, near-native fluency.
+
+Return JSON only (no markdown, no code fences):
+{
+  "transcript": "exact transcription of what the speaker said",
+  "cefr_level": "one of A1, A2, B1, B2, C1, C2",
+  "cefr_label": "short human label, e.g. 'Upper Intermediate'",
+  "overall_score": <integer 0-100>,
+  "pronunciation": <integer 0-100>,
+  "grammar": <integer 0-100>,
+  "vocabulary": <integer 0-100>,
+  "fluency": <integer 0-100>,
+  "band_description": "2-sentence description of what this CEFR level means for real-world communication",
+  "strengths": ["one specific strength citing what they said", "another"],
+  "improvements": ["one specific, actionable improvement", "another"],
+  "next_step": "One concrete next practice recommendation to move up a band"
+}`
+
+  try {
+    const text = await geminiGenerate(AUDIO_MODEL, [
+      { inlineData: { mimeType, data: audioBase64 } },
+      { text: prompt },
+    ])
+    return safeJsonParse(text, null)
+  } catch (err) {
+    console.warn('analyzeCEFRAssessment failed:', err.message)
+    return null
+  }
+}
+
+// ── Call Analyzer — real meeting recording feedback (Vak Elite) ───────────────
+// User uploads a Zoom/Meet/Teams recording (audio or video). Gemini reviews the
+// user's contribution and returns meeting-grade coaching.
+export async function analyzeMeetingRecording(mediaBase64, mimeType = 'audio/webm', context = '') {
+  const prompt = `You are an executive communication coach reviewing a recording of a real work meeting (e.g. a Zoom, Google Meet, or Microsoft Teams call).
+
+${context ? `Context the user gave about this meeting: "${context}"` : ''}
+
+Multiple people may be speaking. Focus your coaching on the user's OWN contributions — how they communicated, not the meeting outcome. Estimate where you can; never fabricate exact numbers you cannot infer.
+
+Return JSON only (no markdown, no code fences):
+{
+  "summary": "2-sentence honest assessment of how the user came across in this meeting",
+  "overall_score": <integer 0-100>,
+  "talk_ratio_note": "Estimate how much the user spoke vs others, and whether that was appropriate",
+  "clarity_score": <integer 0-100>,
+  "confidence_score": <integer 0-100>,
+  "filler_word_count": <integer estimate>,
+  "top_filler_words": ["list", "of", "fillers", "you", "heard"],
+  "key_moments": ["A specific moment where the user did well or poorly, quoting/paraphrasing what was said"],
+  "strengths": ["specific strength with example", "another"],
+  "improvements": ["specific, actionable improvement with example", "another"],
+  "action_items": ["One concrete behaviour to change in the next meeting", "another"],
+  "what_to_say_differently": "One specific sentence the user said, rewritten the way a polished communicator would have said it"
+}`
+
+  try {
+    const text = await geminiGenerate(AUDIO_MODEL, [
+      { inlineData: { mimeType, data: mediaBase64 } },
+      { text: prompt },
+    ])
+    return safeJsonParse(text, null)
+  } catch (err) {
+    console.warn('analyzeMeetingRecording failed:', err.message)
+    return null
+  }
 }
 
 // ── Audio-based session analysis ─────────────────────────────────────────────

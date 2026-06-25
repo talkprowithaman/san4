@@ -63,6 +63,7 @@ const PLANS = [
       { text: 'Summit Levels 11–14: Pitch to a Skeptic, Conflict Mediation, Sensitive Conversation, First Date', included: true },
       { text: 'All 6 teleprompter scripts (IPL Commentary, Product Launch + more)', included: true },
       { text: 'Body Language coaching — camera-on analysis',           included: true },
+      { text: 'Global accent personas (British, American, Australian, Singaporean)', included: true },
       { text: 'Deep coaching reports with actionable specifics',       included: true },
       { text: 'Unlimited meeting prep',                                included: true },
       { text: 'Regional language support (Hindi, Marathi, Telugu…)',   included: true },
@@ -85,7 +86,8 @@ const PLANS = [
     ctaStyle:  'ghost',
     features: [
       { text: 'Everything in Vak Pro',                                 included: true },
-      { text: 'Live meeting assist — real-time coaching in your meetings', included: true, soon: true },
+      { text: 'Call Analyzer — upload real Zoom/Meet/Teams recordings for feedback', included: true },
+      { text: 'Live in-meeting assist — Vak joins your calls in real time', included: true, soon: true },
       { text: 'WhatsApp/Telegram elite community (close-knit, curated)', included: true },
       { text: 'Priority support & early feature access',               included: true },
       { text: 'Monthly group coaching call with Aman',                 included: true, soon: true },
@@ -188,7 +190,16 @@ export default function Pricing() {
             className="inline-flex items-center gap-2 mt-5 px-5 py-2.5 rounded-2xl text-sm font-semibold"
             style={{ background: 'rgba(245,158,11,0.1)', border: '1px solid rgba(245,158,11,0.25)', color: '#F59E0B' }}
           >
-            🎉 Early Bird: Pro at ₹299 instead of ₹399. Lock it in before we scale.
+            🎉 Early Bird: Pro at ₹299 instead of ₹499. Lock it in before we scale.
+          </div>
+
+          {/* 30-day money-back guarantee */}
+          <div className="flex items-center justify-center gap-2 mt-4">
+            <div className="inline-flex items-center gap-2 px-5 py-2.5 rounded-2xl text-sm font-bold"
+              style={{ background: 'rgba(0,196,154,0.1)', border: '1px solid rgba(0,196,154,0.3)', color: '#00C49A' }}>
+              <span className="text-lg">🛡️</span>
+              30-day money-back guarantee — if Vak doesn't make you a sharper communicator, we refund you. No questions.
+            </div>
           </div>
         </div>
 
@@ -215,8 +226,8 @@ export default function Pricing() {
         {/* FAQ / reassurance row */}
         <div className="mt-16 grid sm:grid-cols-3 gap-6 text-center">
           {[
-            { icon: '🔒', title: 'Secure payments', body: 'Powered by Razorpay. Your card details never touch our servers.' },
-            { icon: '↩️', title: 'Cancel anytime',  body: 'No annual lock-in. Cancel your Pro plan at any time, no questions asked.' },
+            { icon: '🛡️', title: '30-day money-back', body: "Try Pro risk-free for a month. Not sharper? Email us and we refund you, no questions asked." },
+            { icon: '↩️', title: 'Cancel anytime',  body: 'No annual lock-in. Cancel your plan at any time, no questions asked.' },
             { icon: '🇮🇳', title: 'Made for India',  body: 'Indian scenarios, Indian pricing. No dollar conversion, no US bias.' },
           ].map(({ icon, title, body }) => (
             <div key={title} className="px-4">
