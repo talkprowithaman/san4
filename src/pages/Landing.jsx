@@ -7,6 +7,7 @@ import RippleCursor    from '../components/RippleCursor'
 import HeroWaveform    from '../components/HeroWaveform'
 import IntroReveal     from '../components/IntroReveal'
 import DraggableMarquee from '../components/DraggableMarquee'
+import ProductShowcase  from '../components/ProductShowcase'
 import { useSmoothScroll } from '../hooks/useSmoothScroll'
 import { useParallax }     from '../hooks/useParallax'
 import './landing.css'
@@ -39,25 +40,6 @@ function CountUp({ to, suffix = '' }) {
 const ROW1 = ['💼 HR Interview','💰 Salary Negotiation','📊 Client Presentation','👥 Daily Standup','⭐ Performance Review','🗣️ Group Discussion','🤝 Cold Networking']
 const ROW2 = ['📈 Leadership Update','🎯 Pitch to a Skeptic','🚫 Say No Professionally','⚖️ Conflict Mediation','💬 Sensitive Conversation','❤️ First Date','📜 Script Reading']
 
-// ── Evolution cards ───────────────────────────────────────────────────────────
-const EVO = [
-  { icon:'🌱', name:'Hesitant',   xp:'0 XP',     color:'#6B8CAE', pct:14  },
-  { icon:'🌿', name:'Aware',       xp:'300 XP',   color:'#00C49A', pct:34  },
-  { icon:'🔥', name:'Expressive',  xp:'800 XP',   color:'#FF6B35', pct:55  },
-  { icon:'⚡',  name:'Influential', xp:'1,800 XP', color:'#8B5CF6', pct:76  },
-  { icon:'👑', name:'Vaksiddha',   xp:'4,000 XP', color:'#F59E0B', pct:100 },
-]
-
-// ── Globe orbit icons ─────────────────────────────────────────────────────────
-const ORBS = [
-  { icon:'🎤', cls:'orb-1' },
-  { icon:'💬', cls:'orb-2' },
-  { icon:'📊', cls:'orb-3' },
-  { icon:'🎯', cls:'orb-4' },
-  { icon:'🌐', cls:'orb-5' },
-  { icon:'⭐', cls:'orb-6' },
-]
-
 // ── India stats ───────────────────────────────────────────────────────────────
 const STATS = [
   { to:93, suf:'%', label:'% of Indian graduates not industry-ready' },
@@ -76,51 +58,6 @@ const CTX = [
   { icon:'🔒', title:'Private by design', short:'Your voice stays yours.',
     more:'We never store your audio after analysis. Practise the awkward stuff freely, with no human listening and nothing to be embarrassed about.' },
 ]
-
-// ── Press names ───────────────────────────────────────────────────────────────
-const PRESS = ['Mimecoach','YourStory','Inc42','Hindu BusinessLine','Economic Times','VC Circle','Entrackr','Sheroes','NDTV Profit','BW Businessworld']
-
-// ── Press pill (needs its own hover state — can't use useState inside .map) ──
-function PressPill({ name }) {
-  const [h, setH] = useState(false)
-  return (
-    <div
-      onMouseEnter={()=>setH(true)} onMouseLeave={()=>setH(false)}
-      className="shrink-0 px-6 py-2.5 text-sm font-semibold transition-all"
-      style={{
-        background:   h ? 'rgba(255,255,255,0.07)' : 'rgba(255,255,255,0.03)',
-        border:       '1px solid rgba(255,255,255,0.08)',
-        borderRadius: 12,
-        color:        h ? 'rgba(255,255,255,0.85)' : 'rgba(255,255,255,0.38)',
-        cursor:       'default',
-        transition:   'background 0.2s, color 0.2s',
-      }}>
-      {name}
-    </div>
-  )
-}
-
-// ── Ticker pill component ─────────────────────────────────────────────────────
-function Pill({ label, accent }) {
-  const [hover, setHover] = useState(false)
-  return (
-    <div
-      onMouseEnter={() => setHover(true)}
-      onMouseLeave={() => setHover(false)}
-      className="shrink-0 text-sm font-medium px-5 py-2 whitespace-nowrap select-none"
-      style={{
-        background:   hover ? `${accent}1a` : `${accent}0a`,
-        border:       `1px solid ${hover ? accent : `${accent}30`}`,
-        borderRadius: 100,
-        color:        accent,
-        transition:   'background 0.2s, border-color 0.2s',
-        cursor:       'default',
-      }}
-    >
-      {label}
-    </div>
-  )
-}
 
 // ── Expandable context card — click to read more, saves space ────────────────
 function ExpandCard({ item, open, onToggle }) {
@@ -152,8 +89,6 @@ function ExpandCard({ item, open, onToggle }) {
 
 // ── Main component ────────────────────────────────────────────────────────────
 export default function Landing() {
-  const fanRef   = useRef(null)
-  const [fanOn, setFanOn] = useState(false)
   const [openCtx, setOpenCtx] = useState(null)
 
   useSmoothScroll()  // Lenis momentum scroll (desktop only)
@@ -175,17 +110,6 @@ export default function Landing() {
     return () => obs.disconnect()
   }, [])
 
-  // ── Evolution card fan — fans out on scroll-in, snaps back 2.2 s later ───
-  useEffect(() => {
-    const el = fanRef.current; if (!el) return
-    const obs = new IntersectionObserver(([entry]) => {
-      if (!entry.isIntersecting) return
-      setFanOn(true)
-      setTimeout(() => setFanOn(false), 2200)
-    }, { threshold: 0.6 })
-    obs.observe(el)
-    return () => obs.disconnect()
-  }, [])
 
   // ─────────────────────────────────────────────────────────────────────────
   return (
@@ -340,40 +264,12 @@ export default function Landing() {
               </p>
             </div>
 
-            {/* Evolution card fan */}
-            <div ref={fanRef} style={{ position:'relative', height:210, width:'100%', maxWidth:400 }}>
-              <div className={`evo-cards${fanOn ? ' fan' : ''}`}
-                style={{ position:'absolute', inset:0 }}>
-                {EVO.map((card,i) => (
-                  <div key={card.name} className="evo-card"
-                    style={{
-                      width:130,
-                      background:'rgba(8,14,26,0.96)',
-                      border:`1px solid ${card.color}40`,
-                      borderRadius:18,
-                      padding:'14px 12px',
-                      backdropFilter:'blur(12px)',
-                      boxShadow:`0 8px 28px rgba(0,0,0,0.35), inset 0 0 0 1px ${card.color}14`,
-                    }}>
-                    <div className="w-8 h-8 rounded-full flex items-center justify-center text-lg mb-2"
-                      style={{ background:`${card.color}20` }}>
-                      {card.icon}
-                    </div>
-                    <div className="text-white font-bold text-xs mb-0.5">{card.name}</div>
-                    <div className="text-xs mb-2.5" style={{ color:'#6B8CAE' }}>{card.xp}</div>
-                    <div className="h-1 rounded-full overflow-hidden"
-                      style={{ background:'rgba(255,255,255,0.08)' }}>
-                      <div className="h-full rounded-full"
-                        style={{ width:`${card.pct}%`, background:card.color }}/>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
           </div>
         </div>
       </section>
+
+      {/* ══ PRODUCT SHOWCASE — see the app before signing up ═══════════════ */}
+      <ProductShowcase />
 
       {/* ══ SECTION 4 — WHY IT MATTERS ════════════════════════════════════ */}
       <section className="py-28 px-6 lg:px-10 relative overflow-hidden"
@@ -395,26 +291,6 @@ export default function Landing() {
           </p>
         </div>
 
-        {/* ── CSS Globe ─────────────────────────────────────────────────── */}
-        <div className="globe-wrap sa-sc">
-          {/* 3-D rings layer */}
-          <div className="globe-3d">
-            <div className="globe-sphere" />
-            <div className="globe-ring globe-ring-1" />
-            <div className="globe-ring globe-ring-2" />
-          </div>
-          {/* 2-D orbiting icons layer */}
-          <div className="globe-orbs">
-            {ORBS.map(({ icon, cls }) => (
-              <div key={icon} className={`orb ${cls}`}>
-                <div className="w-9 h-9 rounded-full flex items-center justify-center text-base"
-                  style={{ background:'rgba(8,14,26,0.88)', border:'1px solid rgba(139,92,246,0.3)', backdropFilter:'blur(8px)' }}>
-                  {icon}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
 
         {/* ── Stat counters ──────────────────────────────────────────────── */}
         <div className="max-w-5xl mx-auto grid md:grid-cols-3 gap-12 text-center mb-16">
@@ -436,21 +312,6 @@ export default function Landing() {
               <ExpandCard item={c} open={openCtx === i} onToggle={() => setOpenCtx(openCtx === i ? null : i)} />
             </div>
           ))}
-        </div>
-      </section>
-
-      {/* ══ SECTION 6 — PRESS ══════════════════════════════════════════════ */}
-      <section className="py-14 overflow-hidden"
-        style={{ background:'#050810', borderTop:'1px solid rgba(255,255,255,0.06)' }}>
-        <p className="sa text-xs font-bold uppercase tracking-widest text-center mb-8"
-          style={{ color:'rgba(107,140,174,0.55)' }}>As seen in</p>
-
-        <div className="ticker-wrap" style={{ height:52 }}>
-          <div className="press-track flex gap-4 w-max">
-            {[...PRESS,...PRESS].map((name,i) => (
-              <PressPill key={i} name={name} />
-            ))}
-          </div>
         </div>
       </section>
 
