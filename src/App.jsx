@@ -19,6 +19,7 @@ import BodyLanguage   from './pages/BodyLanguage'
 import Assessment     from './pages/Assessment'
 import CallAnalyzer   from './pages/CallAnalyzer'
 import Reminders      from './pages/Reminders'
+import HowItWorks     from './pages/HowItWorks'
 import ReminderScheduler from './components/ReminderScheduler'
 
 // In the native Android/iOS shell there is no SPA server fallback, so deep
@@ -46,6 +47,7 @@ export default function App() {
         <Route path="/auth"          element={<Auth />} />
         <Route path="/auth/callback" element={<AuthCallback />} />
         <Route path="/pricing"       element={<Pricing />} />
+        <Route path="/how-it-works"  element={<HowItWorks />} />
 
         {/* Protected */}
         <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
