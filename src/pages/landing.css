@@ -137,6 +137,13 @@ html.lenis, html.lenis body { height: auto; }
 /* ── Draggable marquee grab affordance ────────────────────────────────────── */
 .drag-marquee:active { cursor: grabbing; }
 
+/* ── Showcase screen swap (ProductShowcase.jsx) ───────────────────────────── */
+.screen-swap { animation: screenIn 0.45s ease both; }
+@keyframes screenIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
 /* Respect reduced motion — kill the showy bits */
 @media (prefers-reduced-motion: reduce) {
   .grad-flow { animation: none; }
