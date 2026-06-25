@@ -93,11 +93,57 @@ html.lenis, html.lenis body { height: auto; }
 .lenis.lenis-stopped { overflow: hidden; }
 .lenis.lenis-smooth iframe { pointer-events: none; }
 
+/* ── Intro reveal (IntroReveal.jsx) ───────────────────────────────────────── */
+.intro-reveal {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  background: #050810;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: opacity 0.6s ease, transform 0.6s ease;
+}
+.intro-exit { opacity: 0; transform: translateY(-24px); pointer-events: none; }
+.intro-inner { display: flex; flex-direction: column; align-items: center; gap: 18px; }
+.intro-eq { display: flex; align-items: flex-end; gap: 5px; height: 32px; }
+.intro-eq span {
+  width: 4px; height: 100%;
+  border-radius: 2px;
+  background: linear-gradient(180deg, #A78BFA, #00C49A);
+  transform: scaleY(0.25);
+  transform-origin: bottom;
+  animation: eqPulse 0.9s ease-in-out infinite;
+}
+@keyframes eqPulse {
+  0%, 100% { transform: scaleY(0.25); }
+  50%      { transform: scaleY(1); }
+}
+.intro-word { font-size: 2rem; font-weight: 900; color: #fff; letter-spacing: -0.02em; }
+.intro-track {
+  width: 180px; height: 3px; border-radius: 3px;
+  background: rgba(255,255,255,0.1); overflow: hidden;
+}
+.intro-fill { height: 100%; background: linear-gradient(90deg, #7B5EA7, #00C49A); transition: width 0.1s linear; }
+.intro-pct { font-size: 0.75rem; font-weight: 700; color: #6B8CAE; }
+.intro-skip {
+  position: absolute; bottom: 28px;
+  font-size: 0.7rem; letter-spacing: 0.15em; text-transform: uppercase;
+  color: rgba(255,255,255,0.25);
+}
+
+/* ── Draggable marquee grab affordance ────────────────────────────────────── */
+.drag-marquee:active { cursor: grabbing; }
+
 /* Respect reduced motion — kill the showy bits */
 @media (prefers-reduced-motion: reduce) {
   .grad-flow { animation: none; }
   .film-grain { animation: none; }
   .vk-cursor-layer { display: none; }
+  .intro-reveal { display: none; }
+  .intro-eq span { animation: none; transform: scaleY(0.6); }
 }
 
 /* ── Navbar entrance ────────────────────────────────────────────────────── */

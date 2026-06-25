@@ -2,10 +2,13 @@
 // Pure React + CSS animations (IntersectionObserver, no framer-motion).
 import { useState, useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
-import VakMascot     from '../components/VakMascot'
-import RippleCursor  from '../components/RippleCursor'
-import HeroWaveform  from '../components/HeroWaveform'
+import VakMascot       from '../components/VakMascot'
+import RippleCursor    from '../components/RippleCursor'
+import HeroWaveform    from '../components/HeroWaveform'
+import IntroReveal     from '../components/IntroReveal'
+import DraggableMarquee from '../components/DraggableMarquee'
 import { useSmoothScroll } from '../hooks/useSmoothScroll'
+import { useParallax }     from '../hooks/useParallax'
 import './landing.css'
 
 // ── Count-up stat ─────────────────────────────────────────────────────────────
@@ -154,6 +157,7 @@ export default function Landing() {
   const [openCtx, setOpenCtx] = useState(null)
 
   useSmoothScroll()  // Lenis momentum scroll (desktop only)
+  useParallax()      // subtle scroll-depth on [data-parallax] elements
 
   // ── Scroll animator — observes all .sa/.clip-line/.ai-feat elements ───────
   useEffect(() => {
@@ -187,7 +191,10 @@ export default function Landing() {
   return (
     <div style={{ background:'#050810', color:'#F1F5F9' }}>
 
-      {/* Cinematic overlays — pointer aura + ripples, and film grain */}
+      {/* Branded intro reveal (first visit per session) */}
+      <IntroReveal />
+
+      {/* Cinematic overlays: pointer aura + ripples, and film grain */}
       <RippleCursor />
       <div className="film-grain" aria-hidden="true" />
 
@@ -296,35 +303,21 @@ export default function Landing() {
               ))}
             </div>
 
-            {/* ── Scenario tickers ─────────────────────────────────────────── */}
+            {/* ── Scenario reel (drag to explore) ──────────────────────────── */}
             <div className="sa" data-delay="900">
               <p className="text-xs font-bold uppercase tracking-widest mb-4 text-center"
                 style={{ color:'rgba(107,140,174,0.75)' }}>
-                14 scenarios to practise
+                14 scenarios to practise · drag to explore
               </p>
-
-              {/* Row 1 — scrolls LEFT (22 s) */}
-              <div className="ticker-wrap mb-3" style={{ height:44 }}>
-                <div className="ticker-left flex gap-3 w-max" style={{ animationDuration:'22s' }}>
-                  {[...ROW1,...ROW1].map((s,i)=>(
-                    <Pill key={`r1-${i}`} label={s} accent="#A78BFA" />
-                  ))}
-                </div>
+              <div className="mb-3">
+                <DraggableMarquee items={ROW1} accent="#A78BFA" direction="left"  speed={42} />
               </div>
-
-              {/* Row 2 — scrolls RIGHT (26 s) */}
-              <div className="ticker-wrap" style={{ height:44 }}>
-                <div className="ticker-right flex gap-3 w-max" style={{ animationDuration:'26s' }}>
-                  {[...ROW2,...ROW2].map((s,i)=>(
-                    <Pill key={`r2-${i}`} label={s} accent="#00C49A" />
-                  ))}
-                </div>
-              </div>
+              <DraggableMarquee items={ROW2} accent="#00C49A" direction="right" speed={36} />
             </div>
           </div>
 
           {/* ── Right column: Vak + evolution cards ────────────────────── */}
-          <div className="hero-right-col flex flex-col items-center gap-6">
+          <div className="hero-right-col flex flex-col items-center gap-6" data-parallax="0.05">
 
             {/* Vak character */}
             <div className="relative flex flex-col items-center">
