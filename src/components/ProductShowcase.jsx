@@ -142,9 +142,9 @@ function ReportContent() {
       </div>
       <div className="grid grid-cols-3 gap-1.5">
         {[['Confidence','78%','#00C49A'],['Pacing','91%','#00C49A'],['Fillers','3','#FF6B35']].map(([l,v,c]) => (
-          <div key={l} className="rounded-xl p-2 text-center" style={{ background: 'rgba(255,255,255,0.05)' }}>
+          <div key={l} className="rounded-xl px-1 py-2 text-center" style={{ background: 'rgba(255,255,255,0.05)' }}>
             <div className="font-black text-sm" style={{ color: c }}>{v}</div>
-            <div className="text-xs" style={{ color: '#6B8CAE' }}>{l}</div>
+            <div className="leading-tight" style={{ color: '#6B8CAE', fontSize: 10.5 }}>{l}</div>
           </div>
         ))}
       </div>
