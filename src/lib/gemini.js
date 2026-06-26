@@ -9,7 +9,7 @@ import { supabase }  from './supabase'
 //
 // Web: same-origin '/api/gemini' (Vite dev forwards it to the deployment).
 // Native: absolute URL — the WebView origin (https://localhost) has no /api.
-const API_BASE = Capacitor.isNativePlatform() ? 'https://san4-delta.vercel.app' : ''
+const API_BASE = Capacitor.isNativePlatform() ? 'https://san4.vercel.app' : ''
 
 // Migration fallback: while VITE_GEMINI_API_KEY is still set (i.e. before the
 // server-side GEMINI_API_KEY is configured), fall back to calling Gemini
@@ -64,6 +64,57 @@ function geminiGenerate(model, parts, opts = {}) {
 // measured 2026-06-11 — which made sessions feel broken. Do not use it
 // for anything interactive.
 const MODEL = 'gemini-2.5-flash-lite'
+
+// ── Natural neural TTS (the interviewer's voice) ────────────────────────────
+// Browser speechSynthesis sounds robotic; Gemini TTS is genuinely natural.
+// Returns raw PCM (base64) + sampleRate — the caller wraps it in WAV and plays
+// it. While the migration key (VITE_GEMINI_API_KEY) is present we call Google
+// directly (same trust model as the legacy fallback above); otherwise we POST
+// to an /api/tts proxy (to be added server-side when the key moves off-client).
+const TTS_MODEL = 'gemini-2.5-flash-preview-tts'
+const TTS_VOICE = 'Sulafat' // warm, natural
+
+export async function synthesizeSpeech(text) {
+  const trimmed = (text || '').trim()
+  if (!trimmed) throw new Error('no text')
+
+  const body = {
+    // Keep the style cue SHORT — long instructions make the TTS model return
+    // finishReason "OTHER" with no audio.
+    contents: [{ parts: [{ text: `Say warmly and naturally: ${trimmed}` }] }],
+    generationConfig: {
+      responseModalities: ['AUDIO'],
+      speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: TTS_VOICE } } },
+    },
+  }
+
+  if (LEGACY_KEY) {
+    const res = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/${TTS_MODEL}:generateContent`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-goog-api-key': LEGACY_KEY },
+        body: JSON.stringify(body),
+      }
+    )
+    if (!res.ok) throw new Error(`tts ${res.status}`)
+    const data = await res.json()
+    const part = data?.candidates?.[0]?.content?.parts?.find(p => p.inlineData)
+    if (!part?.inlineData?.data) throw new Error('no audio')
+    const rate = parseInt((part.inlineData.mimeType?.match(/rate=(\d+)/) || [])[1], 10) || 24000
+    return { audioBase64: part.inlineData.data, sampleRate: rate }
+  }
+
+  const res = await fetch(`${API_BASE}/api/tts`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ text: trimmed }),
+  })
+  if (!res.ok) throw new Error(`tts proxy ${res.status}`)
+  const data = await res.json()
+  if (!data?.audioBase64) throw new Error('no audio')
+  return { audioBase64: data.audioBase64, sampleRate: data.sampleRate || 24000 }
+}
 
 // ── Scenario system prompts ───────────────────────────────────────────────────
 const SCENARIO_PROMPTS = {

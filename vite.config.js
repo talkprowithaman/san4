@@ -10,7 +10,7 @@ export default defineConfig({
     // Gemini proxy without running `vercel dev`.
     proxy: {
       '/api': {
-        target: 'https://san4-delta.vercel.app',
+        target: 'https://san4.vercel.app',
         changeOrigin: true,
         secure: true,
       },

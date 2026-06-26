@@ -51,6 +51,14 @@ function Bar({ label, value, icon }) {
   )
 }
 
+// Your score stays valid for this long; retake unlocks after, to measure real
+// improvement rather than re-testing the same thing repeatedly.
+const RETAKE_DAYS = 30
+const cefrKey = (user) => `san4_cefr_${user?.id || 'guest'}`
+function fmtDate(ts) {
+  return new Date(ts).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })
+}
+
 export default function Assessment() {
   const { user } = useAuth()
   const navigate = useNavigate()
@@ -60,6 +68,21 @@ export default function Assessment() {
   const [seconds, setSeconds] = useState(0)
   const [report,  setReport]  = useState(null)
   const [error,   setError]   = useState(null)
+  const [lockedUntil, setLockedUntil] = useState(null) // retake gate timestamp
+
+  // ── Restore a previously saved score so the level persists across visits ──
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(cefrKey(user))
+      if (!raw) return
+      const saved = JSON.parse(raw)
+      if (saved?.result && saved?.takenAt) {
+        setReport(saved.result)
+        setLockedUntil(saved.takenAt + RETAKE_DAYS * 86400000)
+        setPhase('report')
+      }
+    } catch { /* ignore */ }
+  }, [user])
 
   const mediaRecRef    = useRef(null)
   const audioChunksRef = useRef([])
@@ -142,6 +165,13 @@ export default function Assessment() {
         messages:         [],
       }).then(() => {}, () => {})
     }
+
+    // Persist locally so the level stays consistent and we don't re-prompt the
+    // test on every visit. Retake unlocks after RETAKE_DAYS.
+    try {
+      localStorage.setItem(cefrKey(user), JSON.stringify({ result, takenAt: Date.now() }))
+    } catch { /* ignore */ }
+    setLockedUntil(Date.now() + RETAKE_DAYS * 86400000)
 
     setReport(result)
     setPhase('report')
@@ -319,19 +349,40 @@ export default function Assessment() {
             </Link>
           </div>
 
-          <div className="flex gap-3">
-            <button onClick={() => { setReport(null); setError(null); setPhase('intro') }}
-              className="flex-1 py-3 rounded-2xl font-bold text-sm transition-all hover:opacity-90"
-              style={{ background: 'rgba(139,92,246,0.12)', border: '1px solid rgba(139,92,246,0.3)', color: '#A78BFA' }}>
-              🔁 Retake
-            </button>
-            <button
-              onClick={() => navigator.share?.({ title: 'My Vak English score', text: `I scored ${band} (${report.cefr_label}) on my Vak English assessment! 🦢` }).catch(() => {})}
-              className="flex-1 py-3 rounded-2xl font-bold text-sm text-white transition-all hover:opacity-90"
-              style={{ background: 'linear-gradient(135deg,#7B5EA7,#9B7EC8)' }}>
-              📲 Share my score
-            </button>
-          </div>
+          {(() => {
+            const locked = lockedUntil && Date.now() < lockedUntil
+            return (
+              <>
+                {locked && (
+                  <p className="text-xs text-center mb-3" style={{ color: '#6B8CAE' }}>
+                    🔒 Your score is saved and valid till <strong style={{ color: '#94A3B8' }}>{fmtDate(lockedUntil)}</strong>.
+                    Keep practising — retake then to see how much you've improved.
+                  </p>
+                )}
+                <div className="flex gap-3">
+                  {locked ? (
+                    <button disabled
+                      className="flex-1 py-3 rounded-2xl font-bold text-sm cursor-not-allowed"
+                      style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: '#6B8CAE' }}>
+                      🔒 Retake on {fmtDate(lockedUntil)}
+                    </button>
+                  ) : (
+                    <button onClick={() => { setReport(null); setError(null); setPhase('intro') }}
+                      className="flex-1 py-3 rounded-2xl font-bold text-sm transition-all hover:opacity-90"
+                      style={{ background: 'rgba(139,92,246,0.12)', border: '1px solid rgba(139,92,246,0.3)', color: '#A78BFA' }}>
+                      🔁 Retake
+                    </button>
+                  )}
+                  <button
+                    onClick={() => navigator.share?.({ title: 'My Vak English score', text: `I scored ${band} (${report.cefr_label}) on my Vak English assessment! 🦢` }).catch(() => {})}
+                    className="flex-1 py-3 rounded-2xl font-bold text-sm text-white transition-all hover:opacity-90"
+                    style={{ background: 'linear-gradient(135deg,#7B5EA7,#9B7EC8)' }}>
+                    📲 Share my score
+                  </button>
+                </div>
+              </>
+            )
+          })()}
           <div className="h-8" />
         </main>
       </div>

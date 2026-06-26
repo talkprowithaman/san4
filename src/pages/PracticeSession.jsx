@@ -3,7 +3,8 @@ import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import { useAuth }     from '../hooks/useAuth'
 import { useProgress } from '../hooks/useProgress'
 import { supabase }    from '../lib/supabase'
-import { sendPracticeMessage, analyzeSession, analyzeSessionFromAudio, LANGUAGES, OPENING_LINES } from '../lib/gemini'
+import { sendPracticeMessage, analyzeSession, analyzeSessionFromAudio, synthesizeSpeech, LANGUAGES, OPENING_LINES } from '../lib/gemini'
+import { playPcmBase64, stopPlayback } from '../lib/voicePlayer'
 import { PERSONAS, FREE_PERSONA_IDS, getPersona } from '../lib/personas'
 import { useSubscription } from '../hooks/useSubscription'
 import Navbar      from '../components/Navbar'
@@ -73,6 +74,8 @@ export default function PracticeSession() {
   const [seconds,    setSeconds]    = useState(0)
   const [started,    setStarted]    = useState(false)
   const [setupDone,  setSetupDone]  = useState(false)  // gates beginSession()
+  const [emptyEnded, setEmptyEnded] = useState(false)  // ended without speaking
+  const [failed,     setFailed]     = useState(false)  // analysis genuinely failed
 
   // ── Voice state ───────────────────────────────────────────────────────────
   const [voiceMode,   setVoiceMode]   = useState(VOICE_SUPPORTED)
@@ -133,6 +136,7 @@ export default function PracticeSession() {
   const autoSendTimer   = useRef(null)
   const speechStart     = useRef(null)
   const voiceMetaRef    = useRef({ wpmSamples: [], totalSpeakingSeconds: 0 })
+  const ttsReqRef       = useRef(0)   // supersedes stale/pending neural TTS
 
   // ── MediaRecorder — records full session audio as Gemini analysis backup ──
   const mediaRecRef    = useRef(null)
@@ -292,8 +296,7 @@ export default function PracticeSession() {
     recRef.current.lang = langRef.current
 
     // Stop Vak's TTS immediately — user wants to speak
-    window.speechSynthesis?.cancel()
-    setVakSpeaking(false)
+    stopVak()
 
     accRef.current = ''
     setLiveText('')
@@ -341,27 +344,49 @@ export default function PracticeSession() {
     submitMessage(text)
   }
 
+  // ── Stop any Vak speech (neural audio + browser TTS) ──────────────────────
+  function stopVak() {
+    ttsReqRef.current++   // abandon any in-flight neural TTS fetch
+    stopPlayback()
+    window.speechSynthesis?.cancel()
+    setVakSpeaking(false)
+  }
+
   // ── TTS — Vak speaks back ─────────────────────────────────────────────────
-  function speak(text) {
-    if (!ttsOn || !window.speechSynthesis) return
+  // Primary: natural Gemini neural voice. Fallback: browser speechSynthesis
+  // (robotic, but never leaves the user in silence).
+  async function speak(text) {
+    if (!ttsOn || !text) return
+    stopVak()
+    const reqId = ++ttsReqRef.current
+    try {
+      const { audioBase64, sampleRate } = await synthesizeSpeech(text)
+      // A newer utterance (or the user starting to talk) supersedes this one.
+      if (reqId !== ttsReqRef.current || !ttsOn) return
+      await playPcmBase64(audioBase64, sampleRate, {
+        onstart: () => setVakSpeaking(true),
+        onend:   () => setVakSpeaking(false),
+      })
+    } catch (err) {
+      console.warn('Neural TTS failed, using browser voice:', err.message)
+      if (reqId === ttsReqRef.current) browserSpeak(text)
+    }
+  }
+
+  function browserSpeak(text) {
+    if (!window.speechSynthesis) return
     window.speechSynthesis.cancel()
-
-    const utt    = new SpeechSynthesisUtterance(text)
-    utt.lang     = personaRef.current?.ttsLang || 'en-IN'
-    utt.rate     = 0.95
-    utt.pitch    = 1.1
-
-    // Best-effort: match a system voice to the persona's locale so the accent
-    // is audible, not just textual.
+    const utt = new SpeechSynthesisUtterance(text)
+    utt.lang  = personaRef.current?.ttsLang || 'en-IN'
+    utt.rate  = 0.95
+    utt.pitch = 1.1
     const voices = window.speechSynthesis.getVoices?.() || []
     const match  = voices.find(v => v.lang === utt.lang) ||
                    voices.find(v => v.lang?.startsWith(utt.lang.split('-')[0]))
     if (match) utt.voice = match
-
-    utt.onstart  = () => setVakSpeaking(true)
-    utt.onend    = () => setVakSpeaking(false)
-    utt.onerror  = () => setVakSpeaking(false)
-
+    utt.onstart = () => setVakSpeaking(true)
+    utt.onend   = () => setVakSpeaking(false)
+    utt.onerror = () => setVakSpeaking(false)
     window.speechSynthesis.speak(utt)
     setVakSpeaking(true)
   }
@@ -408,13 +433,12 @@ export default function PracticeSession() {
 
   // ── End session ───────────────────────────────────────────────────────────
   async function endSession(finalMessages) {
-    window.speechSynthesis?.cancel()
-    setVakSpeaking(false)
+    stopVak()
     isListeningRef.current = false
     setListening(false)
+    setStarted(false)   // stop the session timer immediately
 
     const msgList = finalMessages || messages
-    setAnalyzing(true)
 
     // ── Stop MediaRecorder and collect audio ──────────────────────────────
     let audioPayload = null
@@ -453,6 +477,18 @@ export default function PracticeSession() {
     // back to the transcript-based path.
     const hasUserMessages = msgList.some(m => m.role === 'user')
 
+    // ── Guard: don't score or award XP for an empty session ───────────────
+    // Opening and ending without speaking should NOT give XP, streak, or a
+    // fabricated 70%. Require either typed/recognised input, or a real chunk
+    // of recorded audio (at least ~12s) before we analyse and reward.
+    const spokeSomething = hasUserMessages || (audioPayload && seconds >= 12)
+    if (!spokeSomething) {
+      audioChunksRef.current = []
+      setEmptyEnded(true)
+      return
+    }
+
+    setAnalyzing(true)
     try {
       let analysis = null
 
@@ -489,18 +525,9 @@ export default function PracticeSession() {
       setReport({ ...analysis, voiceMeta })
     } catch (err) {
       console.error('Analysis error:', err)
-      const fallback = {
-        overall_score: 70, confidence_score: 70, pacing_score: 70,
-        filler_word_count: 0, top_filler_words: [],
-        strengths: ['You completed the session'],
-        improvements: ['Keep practising daily'],
-        action_item: 'Try this scenario again tomorrow.',
-        summary: 'Session completed. Regular practice builds real confidence.',
-        voiceMeta,
-      }
-      const r = await awardXP(fallback.overall_score)
-      setReward(r)
-      setReport(fallback)
+      // Don't fabricate a 70% or award XP on failure — surface it honestly so
+      // the user can retry. A real score must come from a real analysis.
+      setFailed(true)
     }
     setAnalyzing(false)
   }
@@ -638,6 +665,42 @@ export default function PracticeSession() {
         </button>
 
       </main>
+    </div>
+  )
+
+  // ── ENDED WITHOUT SPEAKING — no score, no XP ──────────────────────────────
+  if (emptyEnded) return (
+    <div className="min-h-screen flex items-center justify-center px-4" style={{ background: '#050810' }}>
+      <div className="text-center max-w-sm animate-fade-in">
+        <div className="text-5xl mb-4">🤫</div>
+        <h2 className="text-white font-black text-xl mb-2">No response recorded</h2>
+        <p className="text-sm mb-6" style={{ color: '#6B8CAE' }}>
+          You ended before saying anything, so there's nothing to score — no XP or
+          streak for this one. Jump back in and speak to get your coaching report.
+        </p>
+        <div className="flex gap-3 justify-center">
+          <button onClick={() => navigate('/practice')} className="btn-primary px-5">Try again →</button>
+          <button onClick={() => navigate('/dashboard')} className="btn-secondary px-5">Dashboard</button>
+        </div>
+      </div>
+    </div>
+  )
+
+  // ── ANALYSIS FAILED — surface honestly, no fabricated score / XP ──────────
+  if (failed) return (
+    <div className="min-h-screen flex items-center justify-center px-4" style={{ background: '#050810' }}>
+      <div className="text-center max-w-sm animate-fade-in">
+        <div className="text-5xl mb-4">😕</div>
+        <h2 className="text-white font-black text-xl mb-2">Couldn't score this session</h2>
+        <p className="text-sm mb-6" style={{ color: '#6B8CAE' }}>
+          Something went wrong while analysing your session, so we didn't award XP.
+          Please check your connection and try again.
+        </p>
+        <div className="flex gap-3 justify-center">
+          <button onClick={() => navigate('/practice')} className="btn-primary px-5">Practice again →</button>
+          <button onClick={() => navigate('/dashboard')} className="btn-secondary px-5">Dashboard</button>
+        </div>
+      </div>
     </div>
   )
 
@@ -1084,7 +1147,7 @@ export default function PracticeSession() {
 
             {/* TTS toggle */}
             <button
-              onClick={() => { setTtsOn(v => !v); window.speechSynthesis?.cancel(); setVakSpeaking(false) }}
+              onClick={() => { setTtsOn(v => !v); stopVak() }}
               className="text-xs px-4 py-1.5 rounded-full transition-all"
               style={{
                 background: ttsOn ? 'rgba(0,196,154,0.1)' : 'rgba(255,255,255,0.05)',
