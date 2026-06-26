@@ -8,6 +8,7 @@ import HeroWaveform    from '../components/HeroWaveform'
 import IntroReveal     from '../components/IntroReveal'
 import DraggableMarquee from '../components/DraggableMarquee'
 import ProductShowcase  from '../components/ProductShowcase'
+import FillerWords      from '../components/FillerWords'
 import Testimonials     from '../components/Testimonials'
 import SoundToggle      from '../components/SoundToggle'
 import { playTick }     from '../lib/sound'
@@ -227,8 +228,8 @@ export default function Landing() {
             {/* Tag pills */}
             <div className="sa flex flex-wrap gap-2 mb-12" data-delay="730">
               {['✅ Free to start','🇮🇳 Built for India','🎯 AI feedback','🔒 Private sessions'].map(p=>(
-                <span key={p} className="text-xs font-semibold px-4 py-1.5"
-                  style={{ border:'1px solid rgba(255,255,255,0.14)', color:'rgba(255,255,255,0.55)', borderRadius:100 }}>
+                <span key={p} className="glass-chip text-xs font-semibold px-4 py-1.5"
+                  style={{ color:'rgba(255,255,255,0.7)' }}>
                   {p}
                 </span>
               ))}
@@ -274,6 +275,9 @@ export default function Landing() {
           </div>
         </div>
       </section>
+
+      {/* ══ FILLER WORDS — the problem we catch ════════════════════════════ */}
+      <FillerWords />
 
       {/* ══ PRODUCT SHOWCASE — see the app before signing up ═══════════════ */}
       <ProductShowcase />
