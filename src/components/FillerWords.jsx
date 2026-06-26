@@ -34,7 +34,7 @@ export default function FillerWords() {
             The habits you can't hear
           </p>
           <h2 className="sa font-black text-white" data-delay="100" style={{ fontSize: 'clamp(28px,4.5vw,48px)', lineHeight: 1.15 }}>
-            Cut the <span className="grad-text">umm</span>, the <span className="grad-text">jaise ki</span>, the <span className="grad-text">bhai</span>.
+            Cut the <span className="grad-text">umm</span>, the <span className="grad-text">jaise ki</span>, the <span className="grad-text">matlab</span>.
           </h2>
           <p className="sa text-lg mt-4 max-w-xl mx-auto" data-delay="160" style={{ color: 'rgba(255,255,255,0.5)' }}>
             San4 counts every filler and verbal crutch, in English, Hindi, or Hinglish, so you finally hear your habits and break them.
