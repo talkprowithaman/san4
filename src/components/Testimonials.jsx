@@ -1,17 +1,13 @@
 // ─────────────────────────────────────────────────────────────────────────────
-// Testimonials — section UI. The quotes below are PLACEHOLDERS. Replace each
-// entry with a real, attributable testimonial before relying on this as social
-// proof. Do not ship fabricated reviews to production.
+// Testimonials — real quotes from early users, lightly edited for typos only.
 // ─────────────────────────────────────────────────────────────────────────────
-const PLACEHOLDER = true
-
 const TESTIMONIALS = [
-  { quote: 'I used to freeze in interviews. After two weeks of daily reps with Vak, I walked into my HR round and actually enjoyed it.',
-    name: 'Replace with real name', role: 'Software engineer · Bengaluru', initial: 'R' },
-  { quote: 'The feedback is brutally specific. It told me exactly which filler words I lean on, and now I catch them mid-sentence.',
-    name: 'Replace with real name', role: 'Product manager · Pune', initial: 'R' },
-  { quote: 'Practising salary negotiation against the British exec persona was scarily real. I asked for 20% more and got it.',
-    name: 'Replace with real name', role: 'Consultant · Gurugram', initial: 'R' },
+  { quote: 'I loved talking to Vak. He was so supportive and friendly that I could open up easily.',
+    name: 'Priya', role: 'Delhi', initial: 'P' },
+  { quote: 'The session was absolutely great. I got to know more about how I can upgrade my skills for better opportunities.',
+    name: 'Abhishek Shukla', role: 'Gujarat', initial: 'A' },
+  { quote: 'Just loved talking to Vak! It was a great experience, and I\'ll remember it for life because it was my first interview, and it was actually really good.',
+    name: 'Ankush Mishra', role: 'Uttar Pradesh', initial: 'A' },
 ]
 
 function Stars() {
@@ -28,12 +24,6 @@ export default function Testimonials() {
         <h2 className="sa font-black text-white" data-delay="100" style={{ fontSize: 'clamp(28px,4.5vw,46px)', lineHeight: 1.1 }}>
           Confidence you can hear.
         </h2>
-        {PLACEHOLDER && (
-          <p className="sa text-xs mt-4 inline-block px-3 py-1.5 rounded-full" data-delay="160"
-            style={{ background: 'rgba(245,158,11,0.1)', color: '#F59E0B', border: '1px solid rgba(245,158,11,0.25)' }}>
-            ⚠️ Placeholder quotes — replace with real testimonials before launch
-          </p>
-        )}
       </div>
 
       <div className="max-w-5xl mx-auto grid md:grid-cols-3 gap-5">
@@ -54,9 +44,8 @@ export default function Testimonials() {
         ))}
       </div>
 
-      {/* Real trust line — confirm the number before launch */}
       <p className="sa text-center text-sm mt-12" style={{ color: '#6B8CAE' }}>
-        Built by <span className="text-white font-semibold">Talk Pro with Aman</span>, a 600K+ communication community.
+        Built by <span className="text-white font-semibold">Aman Jindal (@talkprowithaman)</span>, with 600K+ followers across social media.
       </p>
     </section>
   )
