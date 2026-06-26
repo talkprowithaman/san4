@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import VakMascot from './VakMascot'
+import { playTick } from '../lib/sound'
 
 // ─────────────────────────────────────────────────────────────────────────────
 // ProductShowcase — one sticky phone whose screen changes as you scroll. A
@@ -182,7 +183,7 @@ function Dots({ active, onPick, vertical }) {
       {STEPS.map((_, i) => {
         const on = i === active
         return (
-          <button key={i} onClick={() => onPick(i)} aria-label={`Step ${i + 1}`}
+          <button key={i} onClick={() => { playTick('select'); onPick(i) }} aria-label={`Step ${i + 1}`}
             className="rounded-full transition-all duration-300 flex items-center justify-center shrink-0"
             style={{
               width:  on ? 32 : 12,
@@ -261,7 +262,7 @@ export default function ProductShowcase() {
         <div>
           {STEPS.map((s, i) => (
             <div key={i} data-idx={i} ref={el => (stepRefs.current[i] = el)}
-              className="flex flex-col justify-center" style={{ minHeight: '80vh' }}>
+              className="flex flex-col justify-center" style={{ minHeight: '105vh' }}>
               <p className="text-xs font-bold uppercase tracking-widest mb-3 transition-colors"
                 style={{ color: i === active ? '#A78BFA' : 'rgba(167,139,250,0.4)' }}>{s.kicker}</p>
               <h3 className="font-black mb-4 transition-colors" style={{ fontSize: 'clamp(26px,3.2vw,40px)', lineHeight: 1.15, color: i === active ? '#fff' : 'rgba(255,255,255,0.35)' }}>{s.title}</h3>

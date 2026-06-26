@@ -8,6 +8,9 @@ import HeroWaveform    from '../components/HeroWaveform'
 import IntroReveal     from '../components/IntroReveal'
 import DraggableMarquee from '../components/DraggableMarquee'
 import ProductShowcase  from '../components/ProductShowcase'
+import Testimonials     from '../components/Testimonials'
+import SoundToggle      from '../components/SoundToggle'
+import { playTick }     from '../lib/sound'
 import { useSmoothScroll } from '../hooks/useSmoothScroll'
 import { useParallax }     from '../hooks/useParallax'
 import './landing.css'
@@ -118,6 +121,9 @@ export default function Landing() {
       {/* Branded intro reveal (first visit per session) */}
       <IntroReveal />
 
+      {/* Opt-in UI sound toggle (off by default) */}
+      <SoundToggle />
+
       {/* Cinematic overlays: pointer aura + ripples, and film grain */}
       <RippleCursor />
       <div className="film-grain" aria-hidden="true" />
@@ -206,6 +212,7 @@ export default function Landing() {
             {/* CTA row */}
             <div className="sa flex flex-wrap gap-3 mb-8 hero-btns" data-delay="600">
               <Link to="/auth?mode=signup&next=/assessment"
+                onMouseEnter={() => playTick('hover')}
                 className="btn-aura text-sm font-bold text-white px-7 py-4 rounded-full transition-all hover:opacity-90 active:scale-95"
                 style={{ background:'linear-gradient(135deg,#7B5EA7,#9B7EC8)' }}>
                 🎯 Get your free English score →
@@ -314,6 +321,9 @@ export default function Landing() {
           ))}
         </div>
       </section>
+
+      {/* ══ TESTIMONIALS ═══════════════════════════════════════════════════ */}
+      <Testimonials />
 
       {/* ══ SECTION 7 — CTA ═════════════════════════════════════════════════ */}
       <section className="py-40 px-6 lg:px-10 relative text-center overflow-hidden"
