@@ -71,7 +71,7 @@ export default function HowItWorks() {
       {/* Nav */}
       <nav className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-6 lg:px-10 h-16"
         style={{ background:'rgba(4,8,16,0.88)', backdropFilter:'blur(24px)', borderBottom:'1px solid rgba(255,255,255,0.07)' }}>
-        <Link to="/" className="text-xl font-black tracking-tight text-white">San<span style={{ color:'#7B5EA7' }}>4</span></Link>
+        <Link to="/" className="flex items-center gap-2 text-xl font-black tracking-tight text-white" style={{ fontFamily:'Outfit, sans-serif' }}><img src="/san4-icon.png" alt="San4" width={28} height={28} className="rounded-lg" /><span>SAN<span style={{ color:'#7B5EA7' }}>4</span></span></Link>
         <div className="flex items-center gap-3">
           <Link to="/" className="text-sm font-medium px-4 py-2 transition-colors" style={{ color:'rgba(255,255,255,0.5)' }}>← Home</Link>
           <Link to="/auth?mode=signup" className="text-sm font-bold text-white px-5 py-2 rounded-full"

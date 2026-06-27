@@ -85,8 +85,8 @@ export default function Auth() {
             <VakMascot level={2} size={100} />
           </div>
           <Link to="/" className="inline-block">
-            <span className="text-3xl font-black text-white tracking-tight">
-              San<span style={{ color: '#7B5EA7' }}>4</span>
+            <span className="text-3xl font-black text-white tracking-tight" style={{ fontFamily: 'Outfit, sans-serif' }}>
+              SAN<span style={{ color: '#7B5EA7' }}>4</span>
             </span>
           </Link>
           <p className="mt-1 text-sm font-medium" style={{ color: '#6B8CAE' }}>

@@ -7,9 +7,14 @@
   body {
     background: #0a0a0f;
     color: #F1F5F9;
-    font-family: 'Inter', system-ui, sans-serif;
+    /* Brand body font */
+    font-family: 'DM Sans', 'Inter', system-ui, sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+  }
+  /* Brand heading font */
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Outfit', 'DM Sans', system-ui, sans-serif;
   }
   * { box-sizing: border-box; }
 }

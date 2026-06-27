@@ -22,7 +22,9 @@ export default {
         muted: '#6B8CAE',
       },
       fontFamily: {
-        sans: ['Inter', 'system-ui', 'sans-serif'],
+        // Brand typography: DM Sans (body), Outfit (headings/display)
+        sans:    ['DM Sans', 'Inter', 'system-ui', 'sans-serif'],
+        display: ['Outfit', 'DM Sans', 'system-ui', 'sans-serif'],
       },
     },
   },
