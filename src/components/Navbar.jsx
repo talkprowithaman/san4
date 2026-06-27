@@ -36,10 +36,11 @@ export default function Navbar() {
     >
       <div className="max-w-5xl mx-auto px-5 h-15 flex items-center justify-between gap-4" style={{ height: 60 }}>
 
-        {/* Logo */}
+        {/* Logo — swan icon + SAN4 wordmark */}
         <Link to="/dashboard" className="flex items-center gap-2 shrink-0">
-          <span className="text-xl font-black text-white tracking-tight">
-            San<span style={{ color: '#7B5EA7' }}>4</span>
+          <img src="/san4-icon.png" alt="San4" width={28} height={28} className="rounded-lg" />
+          <span className="text-xl font-black text-white tracking-tight" style={{ fontFamily: 'Outfit, sans-serif' }}>
+            SAN<span style={{ color: '#7B5EA7' }}>4</span>
           </span>
         </Link>
 

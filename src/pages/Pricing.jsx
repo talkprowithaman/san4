@@ -155,8 +155,9 @@ export default function Pricing() {
           className="sticky top-0 z-50 flex items-center justify-between px-6 h-16"
           style={{ background: 'rgba(6,14,26,0.88)', backdropFilter: 'blur(20px)', borderBottom: '1px solid rgba(255,255,255,0.07)' }}
         >
-          <Link to="/" className="text-xl font-black text-white tracking-tight">
-            San<span style={{ color: '#7B5EA7' }}>4</span>
+          <Link to="/" className="flex items-center gap-2 text-xl font-black text-white tracking-tight" style={{ fontFamily:'Outfit, sans-serif' }}>
+            <img src="/san4-icon.png" alt="San4" width={28} height={28} className="rounded-lg" />
+            <span>SAN<span style={{ color: '#7B5EA7' }}>4</span></span>
           </Link>
           <div className="flex items-center gap-3">
             <Link to="/auth" className="text-sm font-medium transition-colors" style={{ color: '#6B8CAE' }}>Sign in</Link>

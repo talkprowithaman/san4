@@ -137,8 +137,9 @@ export default function Landing() {
           WebkitBackdropFilter:'blur(24px)',
           borderBottom:'1px solid rgba(255,255,255,0.07)',
         }}>
-        <span className="text-xl font-black tracking-tight text-white">
-          San<span style={{ color:'#7B5EA7' }}>4</span>
+        <span className="flex items-center gap-2 text-xl font-black tracking-tight text-white" style={{ fontFamily:'Outfit, sans-serif' }}>
+          <img src="/san4-icon.png" alt="San4" width={30} height={30} className="rounded-lg" />
+          <span>SAN<span style={{ color:'#7B5EA7' }}>4</span></span>
         </span>
 
         <div className="hidden md:flex items-center gap-8">
@@ -416,9 +417,9 @@ export default function Landing() {
           {/* Col 1 — brand */}
           <div>
             <div className="flex items-center gap-3 mb-4">
-              <VakMascot level={3} size={40} />
-              <span className="text-xl font-black text-white">
-                San<span style={{ color:'#7B5EA7' }}>4</span>
+              <img src="/san4-icon.png" alt="San4" width={40} height={40} className="rounded-xl" />
+              <span className="text-xl font-black text-white" style={{ fontFamily:'Outfit, sans-serif' }}>
+                SAN<span style={{ color:'#7B5EA7' }}>4</span>
               </span>
             </div>
             <p className="text-sm leading-relaxed max-w-xs" style={{ color:'#6B8CAE' }}>

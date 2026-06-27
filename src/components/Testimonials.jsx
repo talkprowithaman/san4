@@ -2,8 +2,8 @@
 // Testimonials — real quotes from early users, lightly edited for typos only.
 // ─────────────────────────────────────────────────────────────────────────────
 const TESTIMONIALS = [
-  { quote: 'I loved talking to Vak. He was so supportive and friendly that I could open up easily.',
-    name: 'Priya', role: 'Delhi', initial: 'P' },
+  { quote: 'I was actually waiting for an app that goes beyond language. All in for building soft skills!',
+    name: 'Dilkash Nawaz', role: 'Jharkhand', initial: 'D' },
   { quote: 'The session was absolutely great. I got to know more about how I can upgrade my skills for better opportunities.',
     name: 'Abhishek Shukla', role: 'Gujarat', initial: 'A' },
   { quote: 'Just loved talking to Vak! It was a great experience, and I\'ll remember it for life because it was my first interview, and it was actually really good.',
