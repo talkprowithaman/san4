@@ -3,8 +3,8 @@ import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import { useAuth }     from '../hooks/useAuth'
 import { useProgress } from '../hooks/useProgress'
 import { supabase }    from '../lib/supabase'
-import { sendPracticeMessage, analyzeSession, analyzeSessionFromAudio, synthesizeSpeech, LANGUAGES, OPENING_LINES } from '../lib/gemini'
-import { playPcmBase64, stopPlayback } from '../lib/voicePlayer'
+import { sendPracticeMessage, analyzeSession, analyzeSessionFromAudio, synthesizeSpeech, transcribeSpeech, LANGUAGES, OPENING_LINES } from '../lib/gemini'
+import { playPcmBase64, stopPlayback, primeAudio } from '../lib/voicePlayer'
 import { PERSONAS, FREE_PERSONA_IDS, getPersona } from '../lib/personas'
 import { useSubscription } from '../hooks/useSubscription'
 import Navbar      from '../components/Navbar'
@@ -81,6 +81,7 @@ export default function PracticeSession() {
   const [voiceMode,   setVoiceMode]   = useState(VOICE_SUPPORTED)
   const [listening,   setListening]   = useState(false)
   const [liveText,    setLiveText]    = useState('')   // shown while recording
+  const [transcribing, setTranscribing] = useState(false) // Gemini STT fallback in flight
   const [ttsOn,       setTtsOn]       = useState(true)
   const [vakSpeaking, setVakSpeaking] = useState(false)
   const [micBlocked,  setMicBlocked]  = useState(false) // mic permission denied
@@ -143,6 +144,13 @@ export default function PracticeSession() {
   const audioChunksRef = useRef([])
   const audioStreamRef = useRef(null)
   const audioMimeRef   = useRef('audio/webm')
+
+  // ── Per-turn recorder — Gemini transcription fallback ─────────────────────
+  // Browser SpeechRecognition is unreliable for Hindi and other Indian
+  // languages. We also record each turn separately; if STT captures nothing,
+  // Gemini transcribes the turn's audio so the user's answer still lands.
+  const turnRecRef    = useRef(null)
+  const turnChunksRef = useRef([])
 
   const bottomRef = useRef(null)
   const textRef   = useRef(null)
@@ -302,6 +310,23 @@ export default function PracticeSession() {
     setLiveText('')
     speechStart.current = Date.now()
 
+    // Per-turn recording on the already-open mic stream. If STT fails
+    // (common for Hindi), Gemini transcribes this clip instead.
+    if (audioStreamRef.current) {
+      try {
+        const turnRec = new MediaRecorder(audioStreamRef.current, {
+          mimeType: audioMimeRef.current, audioBitsPerSecond: 40000,
+        })
+        turnChunksRef.current = []
+        turnRec.ondataavailable = e => { if (e.data.size > 0) turnChunksRef.current.push(e.data) }
+        turnRec.start(500)
+        turnRecRef.current = turnRec
+      } catch (err) {
+        console.warn('Turn recorder failed:', err.message)
+        turnRecRef.current = null
+      }
+    }
+
     try {
       recRef.current.start()
       // Only flip state after start() succeeds
@@ -319,21 +344,54 @@ export default function PracticeSession() {
     }
   }
 
-  function stopAndSend() {
+  async function stopAndSend() {
     isListeningRef.current = false
     try { recRef.current.stop() } catch (_) {}
     clearTimeout(autoSendTimer.current)
     setListening(false)
 
-    const text = accRef.current.trim()
+    // Stop the per-turn recorder and collect its clip
+    let turnBlob = null
+    if (turnRecRef.current && turnRecRef.current.state !== 'inactive') {
+      await new Promise(resolve => {
+        turnRecRef.current.onstop = resolve
+        try { turnRecRef.current.stop() } catch { resolve() }
+      })
+    }
+    if (turnChunksRef.current.length > 0) {
+      turnBlob = new Blob(turnChunksRef.current, { type: audioMimeRef.current })
+      turnChunksRef.current = []
+    }
+    turnRecRef.current = null
+
+    let text = accRef.current.trim()
+    const durSec = speechStart.current ? (Date.now() - speechStart.current) / 1000 : 0
     setLiveText('')
     accRef.current = ''
+
+    // Browser STT caught nothing (typical for Hindi and code-switching):
+    // fall back to Gemini transcription of the turn's actual audio.
+    if (!text && turnBlob && durSec >= 1.5) {
+      setTranscribing(true)
+      try {
+        const buf = await turnBlob.arrayBuffer()
+        const langName = LANGUAGES.find(l => l.code === langRef.current)?.nativeName || 'English or Hindi'
+        text = await transcribeSpeech(
+          arrayBufferToBase64(buf), audioMimeRef.current.split(';')[0], langName
+        )
+      } finally {
+        setTranscribing(false)
+      }
+      if (!text) {
+        setLiveText("Couldn't catch that. Tap the mic and try once more, a little louder.")
+        return
+      }
+    }
 
     if (!text) return
 
     // Track pacing
-    if (speechStart.current) {
-      const durSec = (Date.now() - speechStart.current) / 1000
+    if (durSec > 0) {
       const wpm = Math.round((text.split(/\s+/).length / durSec) * 60)
       if (wpm > 30 && wpm < 400) {
         voiceMetaRef.current.wpmSamples.push(wpm)
@@ -658,7 +716,7 @@ export default function PracticeSession() {
           ))}
         </div>
 
-        <button onClick={() => setSetupDone(true)} className="btn-play w-full">
+        <button onClick={() => { primeAudio(); setSetupDone(true) }} className="btn-play w-full">
           <span className="text-xl">🎮</span>
           <span>Start Session</span>
           <span style={{ opacity: 0.7, fontSize: '0.85rem' }}>→</span>
@@ -675,7 +733,7 @@ export default function PracticeSession() {
         <div className="text-5xl mb-4">🤫</div>
         <h2 className="text-white font-black text-xl mb-2">No response recorded</h2>
         <p className="text-sm mb-6" style={{ color: '#6B8CAE' }}>
-          You ended before saying anything, so there's nothing to score — no XP or
+          You ended before saying anything, so there's nothing to score, so no XP or
           streak for this one. Jump back in and speak to get your coaching report.
         </p>
         <div className="flex gap-3 justify-center">
@@ -1009,6 +1067,8 @@ export default function PracticeSession() {
                 ? '🦢 Vak is speaking…'
                 : listening
                 ? '🎤 Listening…'
+                : transcribing
+                ? '✍️ Writing down what you said…'
                 : aiThinking
                 ? '⏳ Thinking…'
                 : '👆 Tap mic to speak'}
@@ -1096,8 +1156,8 @@ export default function PracticeSession() {
           {/* Mic button + text fallback */}
           <div className="flex flex-col items-center gap-3 w-full">
             <button
-              onClick={listening ? stopAndSend : startListening}
-              disabled={aiThinking || vakSpeaking}
+              onClick={() => { primeAudio(); listening ? stopAndSend() : startListening() }}
+              disabled={aiThinking || vakSpeaking || transcribing}
               className="relative flex items-center justify-center rounded-full transition-all active:scale-95"
               style={{
                 width: 80, height: 80,
@@ -1108,7 +1168,7 @@ export default function PracticeSession() {
                   ? '3px solid rgba(123,94,167,0.6)'
                   : '2px solid rgba(255,255,255,0.15)',
                 boxShadow: listening ? '0 0 30px rgba(123,94,167,0.5)' : 'none',
-                opacity: (aiThinking || vakSpeaking) ? 0.4 : 1,
+                opacity: (aiThinking || vakSpeaking || transcribing) ? 0.4 : 1,
               }}
             >
               <span style={{ fontSize: 32 }}>{listening ? '⏹' : '🎤'}</span>

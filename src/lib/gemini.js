@@ -116,10 +116,25 @@ export async function synthesizeSpeech(text) {
   return { audioBase64: data.audioBase64, sampleRate: data.sampleRate || 24000 }
 }
 
+// ── Robust JSON extraction ────────────────────────────────────────────────────
+// Models occasionally wrap JSON in prose or code fences, or emit stray text
+// after the closing brace. Slice the outermost {...} before parsing.
+function extractJson(text) {
+  const clean = (text || '').replace(/```json/gi, '').replace(/```/g, '').trim()
+  try { return JSON.parse(clean) } catch { /* fall through */ }
+  const start = clean.indexOf('{')
+  const end   = clean.lastIndexOf('}')
+  if (start === -1 || end <= start) return null
+  try { return JSON.parse(clean.slice(start, end + 1)) } catch { return null }
+}
+
+// Shared style rule for anything the user reads on screen.
+const HUMAN_STYLE = 'Write like a real person talking. Never use em dashes or long dashes in your output. Use commas, periods, or start a new sentence instead.'
+
 // ── Daily Rep — instant feedback on one 60-second spoken answer ──────────────
 // The atomic loop: must be FAST (flash-lite, one call) and tiny (one score,
-// one win, one fix). Returns null on failure — callers show a retry, never a
-// fabricated score.
+// one win, one fix). Returns null after retries fail. Callers show a retry
+// screen, never a fabricated score.
 export async function analyzeDailyRep(rep, audioBase64, mimeType = 'audio/webm') {
   const prompt = `You are Vak, San4's warm but honest communication coach for Indian professionals. The user was given this 60-second speaking challenge:
 
@@ -127,29 +142,65 @@ SITUATION: ${rep.situation}
 CHALLENGE: ${rep.prompt}
 WHAT GOOD LOOKS LIKE: ${rep.focus}
 
-LISTEN to their spoken attempt (audio attached). Indian English / Hinglish is fine — never penalise accent or code-switching. Judge communication: did they meet the challenge, how confident and clear did they sound, filler words (English AND Hindi — umm, matlab, jaise ki, you know).
+LISTEN carefully to their spoken attempt (audio attached) and judge the FULL delivery, not just the words:
+1. Content: did they actually meet the challenge?
+2. Pace: rushing, dragging, or comfortable? Where did they speed up or slow down?
+3. Tone and pitch: monotone and flat, or natural variation? Nervous or assured?
+4. Volume and energy: mumbling and trailing off, or projecting with presence?
+5. Filler words in English AND Hindi: umm, uhh, like, you know, basically, matlab, jaise ki, toh, actually. Count what you actually hear.
+Indian English and Hinglish are completely fine. Never penalise accent or code-switching.
 
-Return JSON only (no markdown, no code fences):
+${HUMAN_STYLE}
+
+Return JSON only:
 {
-  "score": <integer 0-100, honest — 80+ means genuinely strong>,
-  "win": "<ONE specific thing they did well, quoting or referencing their actual words>",
+  "score": <integer 0-100, honest, 80+ means genuinely strong>,
+  "win": "<ONE specific thing they did well, referencing their actual words or delivery>",
   "fix": "<ONE specific, actionable thing to do better next time>",
   "filler_count": <integer, fillers you actually heard>,
-  "transcript": "<what they said, faithfully>"
+  "energy": "<one or two words on vocal energy, e.g. 'confident', 'flat', 'rushed', 'warm'>",
+  "pace_note": "<one short sentence on their pace and tone>",
+  "transcript": "<what they said, faithfully, including fillers>"
 }`
 
+  const parts = [
+    { text: prompt },
+    { inlineData: { mimeType, data: audioBase64 } },
+  ]
+
+  // Two attempts: JSON mode + robust extraction makes parse failures rare,
+  // and one retry covers transient model/proxy blips (the "rep 2 kept
+  // failing" class of bug).
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      const text = await geminiGenerate(MODEL, parts, {
+        generationConfig: { responseMimeType: 'application/json' },
+      })
+      const parsed = extractJson(text)
+      if (parsed && typeof parsed.score === 'number') return parsed
+      console.warn('Daily rep: unparseable response, attempt', attempt + 1)
+    } catch (err) {
+      console.error('Daily rep analysis failed, attempt', attempt + 1, err)
+    }
+    await new Promise(r => setTimeout(r, 700))
+  }
+  return null
+}
+
+// ── Per-turn speech transcription ─────────────────────────────────────────────
+// Fallback when the browser's SpeechRecognition can't handle the user's
+// language (Hindi and other Indian languages are unreliable in Web Speech).
+// Gemini hears the actual audio, so Hinglish comes back faithfully.
+export async function transcribeSpeech(audioBase64, mimeType = 'audio/webm', langName = 'English or Hindi') {
   try {
     const text = await geminiGenerate(MODEL, [
-      { text: prompt },
+      { text: `Transcribe this spoken audio faithfully, exactly as spoken (the speaker is using ${langName}, possibly mixed with English). Return ONLY the transcript text. No labels, no quotes, no commentary. If there is no intelligible speech, return an empty string.` },
       { inlineData: { mimeType, data: audioBase64 } },
     ])
-    const clean = text.replace(/^```json\s*/i, '').replace(/\s*```$/i, '')
-    const parsed = JSON.parse(clean)
-    if (typeof parsed.score !== 'number') return null
-    return parsed
+    return (text || '').trim()
   } catch (err) {
-    console.error('Daily rep analysis failed:', err)
-    return null
+    console.error('Transcription failed:', err)
+    return ''
   }
 }
 
@@ -275,7 +326,8 @@ export async function sendPracticeMessage(scenarioId, history, userMessage, opti
   }
 
   const contents = [...geminiHistory, { role: 'user', parts: [{ text: userMessage }] }]
-  return geminiRequest({ model: MODEL, contents, systemInstruction: basePrompt + eslNote + personaNote })
+  const styleNote = `\n\n${HUMAN_STYLE} Speak the way a real Indian professional talks, not like written prose.`
+  return geminiRequest({ model: MODEL, contents, systemInstruction: basePrompt + eslNote + personaNote + styleNote })
 }
 
 // ── Session analysis — voice-aware ────────────────────────────────────────────
@@ -307,6 +359,8 @@ Analyse this transcript carefully for:
 - Response depth: are answers specific with examples, or vague and brief?
 - Pacing: do responses feel rushed (short, incomplete) or well-structured?
 ${voiceMeta ? `- Speaking pace: ${voiceMeta.avgWpm} WPM (flag if < 100 or > 200)` : ''}
+
+Write every user-facing string like a real person talking. Never use em dashes or long dashes; use commas or periods instead.
 
 Return JSON only (no markdown, no code fences):
 {
@@ -417,6 +471,8 @@ Analyse the user's spoken delivery against the original script. Consider:
 4. PACING: Was their WPM appropriate for the script context (${scriptTitle})?
 5. PAUSES: Were pauses natural/deliberate or nervous/hesitant?
 
+Write every user-facing string like a real person talking. Never use em dashes or long dashes; use commas or periods instead.
+
 Return JSON only (no markdown, no code fences):
 {
   "overall_score": <integer 0-100>,
@@ -502,6 +558,8 @@ The speaker was asked to: ${promptText || 'read a short passage aloud and then a
 
 Listen to the recording. First transcribe what the human said. Then assess their spoken English across four dimensions and assign an overall CEFR level. Be fair but honest — most Indian professionals land in the B1–B2 range. Reserve C1/C2 for genuinely advanced, near-native fluency.
 
+Write every user-facing string like a real person talking. Never use em dashes or long dashes; use commas or periods instead.
+
 Return JSON only (no markdown, no code fences):
 {
   "transcript": "exact transcription of what the speaker said",
@@ -539,6 +597,8 @@ export async function analyzeMeetingRecording(mediaBase64, mimeType = 'audio/web
 ${context ? `Context the user gave about this meeting: "${context}"` : ''}
 
 Multiple people may be speaking. Focus your coaching on the user's OWN contributions — how they communicated, not the meeting outcome. Estimate where you can; never fabricate exact numbers you cannot infer.
+
+Write every user-facing string like a real person talking. Never use em dashes or long dashes; use commas or periods instead.
 
 Return JSON only (no markdown, no code fences):
 {
@@ -578,6 +638,8 @@ Focus only on the human speaker. Ignore any AI/TTS voice you may hear.${langNote
 
 First, transcribe exactly what the human speaker said.
 Then analyse their spoken communication quality.
+
+Write every user-facing string like a real person talking. Never use em dashes or long dashes; use commas or periods instead.
 
 Return JSON only (no markdown, no code fences):
 {
@@ -625,6 +687,8 @@ Compare what they actually said against the script. Evaluate:
 3. PACING — ideal is 120–150 WPM for most scripts; IPL/sports commentary faster
 4. FILLER WORDS — um, uh, ah, hmm, "you know", "basically", "I mean", "sort of"
 5. LONG PAUSES — nervous gaps (>2s) vs deliberate dramatic pauses
+
+Write every user-facing string like a real person talking. Never use em dashes or long dashes; use commas or periods instead.
 
 Return JSON only (no markdown, no code fences):
 {
@@ -735,6 +799,8 @@ Assess each dimension:
 3. FACIAL EXPRESSION — range and match to content? Engaged vs. blank or tense?
 4. HAND GESTURES — purposeful and natural, or stiff, hidden, or fidgeting?
 5. OVERALL PRESENCE — do they command attention? Is there energy and intentionality?
+
+Write every user-facing string like a real person talking. Never use em dashes or long dashes; use commas or periods instead.
 
 Return JSON only (no markdown, no code fences):
 {

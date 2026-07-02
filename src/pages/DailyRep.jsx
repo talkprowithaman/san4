@@ -4,7 +4,7 @@ import { useAuth }     from '../hooks/useAuth'
 import { useProgress } from '../hooks/useProgress'
 import { supabase }    from '../lib/supabase'
 import { analyzeDailyRep, synthesizeSpeech } from '../lib/gemini'
-import { playPcmBase64, stopPlayback } from '../lib/voicePlayer'
+import { playPcmBase64, stopPlayback, primeAudio } from '../lib/voicePlayer'
 import {
   getRep, getTodaysReps, getRepCompletions, saveRepCompletion, REPS_PER_DAY, REP_MAX_SECONDS,
 } from '../lib/dailyReps'
@@ -40,6 +40,7 @@ export default function DailyRep() {
   const [result,   setResult]   = useState(null)
   const [xpGained, setXpGained] = useState(0)
   const [micError, setMicError] = useState(null)
+  const [liveText, setLiveText] = useState('') // live transcript while speaking
 
   const mediaRecRef    = useRef(null)
   const audioChunksRef = useRef([])
@@ -48,6 +49,7 @@ export default function DailyRep() {
   const timerRef       = useRef(null)
   const startedAtRef   = useRef(null)
   const stoppingRef    = useRef(false)
+  const sttRef         = useRef(null) // browser SpeechRecognition (best-effort live captions)
 
   // Vak reads the challenge aloud on entry.
   useEffect(() => {
@@ -65,6 +67,7 @@ export default function DailyRep() {
   useEffect(() => () => {
     clearInterval(timerRef.current)
     audioStreamRef.current?.getTracks().forEach(t => t.stop())
+    try { sttRef.current?.abort() } catch { /* ignore */ }
   }, [])
 
   if (!rep) {
@@ -72,8 +75,41 @@ export default function DailyRep() {
     return null
   }
 
+  // Best-effort live captions so users SEE what they're saying as they speak.
+  // The recording is still the source of truth for scoring; if the browser's
+  // STT can't keep up (e.g. Hinglish), the rep still works fine.
+  function startLiveCaptions() {
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition
+    if (!SR) return
+    try {
+      const stt = new SR()
+      stt.lang = 'en-IN'
+      stt.continuous = true
+      stt.interimResults = true
+      let finals = ''
+      stt.onresult = (e) => {
+        let interim = ''
+        for (let i = e.resultIndex; i < e.results.length; i++) {
+          const t = e.results[i][0].transcript
+          if (e.results[i].isFinal) finals += t + ' '
+          else interim += t
+        }
+        setLiveText((finals + ' ' + interim).trim())
+      }
+      stt.onerror = () => {} // captions are cosmetic, never block the rep
+      stt.start()
+      sttRef.current = stt
+    } catch { /* cosmetic */ }
+  }
+
+  function stopLiveCaptions() {
+    try { sttRef.current?.abort() } catch { /* ignore */ }
+    sttRef.current = null
+  }
+
   async function startRecording() {
     setMicError(null)
+    setLiveText('')
     stopPlayback()
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
@@ -89,6 +125,7 @@ export default function DailyRep() {
       stoppingRef.current = false
       setLeft(REP_MAX_SECONDS)
       setPhase('recording')
+      startLiveCaptions()
       timerRef.current = setInterval(() => {
         setLeft(prev => {
           if (prev <= 1) { finishRecording(); return 0 }
@@ -96,7 +133,7 @@ export default function DailyRep() {
         })
       }, 1000)
     } catch {
-      setMicError('Mic access needed — click the 🔒 lock icon in the address bar, allow the microphone, then try again.')
+      setMicError('Mic access needed. Click the 🔒 lock icon in the address bar, allow the microphone, then try again.')
     }
   }
 
@@ -104,6 +141,7 @@ export default function DailyRep() {
     if (stoppingRef.current) return
     stoppingRef.current = true
     clearInterval(timerRef.current)
+    stopLiveCaptions()
 
     const spokeSeconds = (Date.now() - startedAtRef.current) / 1000
     setPhase('analyzing')
@@ -116,7 +154,7 @@ export default function DailyRep() {
     audioStreamRef.current?.getTracks().forEach(t => t.stop())
 
     if (spokeSeconds < 3 || audioChunksRef.current.length === 0) {
-      setMicError("That was too short — take a breath and give it a real go.")
+      setMicError("That was too short. Take a breath and give it a real go.")
       setPhase('ready')
       return
     }
@@ -142,7 +180,7 @@ export default function DailyRep() {
       supabase.from('practice_sessions').insert({
         user_id:           user.id,
         scenario_id:       'daily_rep',
-        scenario_title:    `⚡ Daily Rep — ${rep.category}`,
+        scenario_title:    `⚡ Daily Rep · ${rep.category}`,
         overall_score:     analysis.score,
         confidence_score:  analysis.score,
         pacing_score:      analysis.score,
@@ -154,7 +192,17 @@ export default function DailyRep() {
       }).then(() => {}, () => {})
     }
 
-    setResult({ ...analysis, isDayComplete })
+    // Deterministic pace: words actually spoken / seconds actually recorded.
+    const words = (analysis.transcript || '').split(/\s+/).filter(Boolean).length
+    const wpm = spokeSeconds >= 5 && words >= 5
+      ? Math.round(words / (spokeSeconds / 60))
+      : null
+    const paceVerdict = wpm == null ? null
+      : wpm < 100 ? 'slow'
+      : wpm <= 160 ? 'good pace'
+      : 'fast'
+
+    setResult({ ...analysis, isDayComplete, wpm, paceVerdict })
     setPhase('feedback')
   }
 
@@ -187,7 +235,7 @@ export default function DailyRep() {
         <div className="text-5xl mb-4">😕</div>
         <h2 className="text-white font-black text-xl mb-2">Couldn't score that one</h2>
         <p className="text-sm mb-6" style={{ color: '#6B8CAE' }}>
-          Something went wrong while analysing. Your streak isn't affected — try the rep again.
+          Something went wrong while analysing. Your streak isn't affected, so just try the rep again.
         </p>
         <div className="flex gap-3 justify-center">
           <button onClick={() => { setPhase('ready'); setMicError(null) }} className="btn-primary px-5">Try again</button>
@@ -208,19 +256,54 @@ export default function DailyRep() {
         <div className="text-6xl font-black mb-1" style={{ color: scoreColor(result.score) }}>
           {result.score}%
         </div>
-        <div className="inline-block text-xs font-bold px-3 py-1 rounded-full mb-6"
+        <div className="inline-block text-xs font-bold px-3 py-1 rounded-full mb-4"
           style={{ background: 'rgba(245,158,11,0.12)', color: '#F59E0B', border: '1px solid rgba(245,158,11,0.3)' }}>
           +{xpGained} XP {result.isDayComplete && '· daily goal complete! 🎉'}
         </div>
+
+        {/* Delivery chips: pace, energy, fillers */}
+        <div className="flex flex-wrap justify-center gap-2 mb-5">
+          {result.wpm != null && (
+            <span className="text-xs font-bold px-3 py-1.5 rounded-full"
+              style={{
+                background: 'rgba(0,196,154,0.1)', border: '1px solid rgba(0,196,154,0.3)',
+                color: result.paceVerdict === 'good pace' ? '#00C49A' : '#F59E0B',
+              }}>
+              ⏱️ {result.wpm} wpm · {result.paceVerdict}
+            </span>
+          )}
+          {result.energy && (
+            <span className="text-xs font-bold px-3 py-1.5 rounded-full"
+              style={{ background: 'rgba(139,92,246,0.1)', border: '1px solid rgba(139,92,246,0.3)', color: '#A78BFA' }}>
+              🎙️ {result.energy}
+            </span>
+          )}
+          <span className="text-xs font-bold px-3 py-1.5 rounded-full"
+            style={{
+              background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.25)',
+              color: (result.filler_count ?? 0) > 3 ? '#F87171' : '#00C49A',
+            }}>
+            🗣️ {result.filler_count ?? 0} filler{(result.filler_count ?? 0) === 1 ? '' : 's'}
+          </span>
+        </div>
+        {result.pace_note && (
+          <p className="text-xs mb-5 -mt-2" style={{ color: '#6B8CAE' }}>{result.pace_note}</p>
+        )}
 
         <div className="card text-left mb-3">
           <div className="text-xs font-bold uppercase tracking-widest mb-1" style={{ color: '#00C49A' }}>✓ What worked</div>
           <p className="text-white text-sm leading-relaxed">{result.win}</p>
         </div>
-        <div className="card text-left mb-6">
+        <div className="card text-left mb-3">
           <div className="text-xs font-bold uppercase tracking-widest mb-1" style={{ color: '#7B5EA7' }}>↑ Next time</div>
           <p className="text-white text-sm leading-relaxed">{result.fix}</p>
         </div>
+        {result.transcript && (
+          <div className="card text-left mb-6" style={{ background: 'rgba(255,255,255,0.02)' }}>
+            <div className="text-xs font-bold uppercase tracking-widest mb-1" style={{ color: '#6B8CAE' }}>📝 What Vak heard</div>
+            <p className="text-sm italic leading-relaxed" style={{ color: '#94A3B8' }}>"{result.transcript}"</p>
+          </div>
+        )}
 
         <button onClick={goNext} className="btn-primary w-full py-4 text-base mb-3">
           {result.isDayComplete ? 'Done for today 🎉' : 'Next rep →'}
@@ -257,14 +340,31 @@ export default function DailyRep() {
         )}
 
         {recording && (
-          <div className="text-4xl font-black mb-5 tabular-nums"
+          <div className="text-4xl font-black mb-4 tabular-nums"
             style={{ color: left <= 10 ? '#F87171' : '#00C49A' }}>
             0:{String(left).padStart(2, '0')}
           </div>
         )}
 
+        {/* Live transcript: see what you're actually saying, as you say it */}
+        {recording && (
+          <div className="w-full rounded-2xl px-4 py-3 mb-5 min-h-[64px] max-h-32 overflow-y-auto text-left"
+            style={{
+              background: liveText ? 'rgba(123,94,167,0.08)' : 'rgba(255,255,255,0.03)',
+              border: `1px solid ${liveText ? 'rgba(123,94,167,0.3)' : 'rgba(255,255,255,0.07)'}`,
+            }}>
+            {liveText ? (
+              <p className="text-white text-sm italic leading-relaxed">{liveText}</p>
+            ) : (
+              <p className="text-sm italic" style={{ color: 'rgba(107,140,174,0.6)' }}>
+                Speak up, your words will appear here as you talk…
+              </p>
+            )}
+          </div>
+        )}
+
         <button
-          onClick={recording ? finishRecording : startRecording}
+          onClick={() => { primeAudio(); recording ? finishRecording() : startRecording() }}
           className="relative flex items-center justify-center rounded-full transition-all active:scale-95 mb-3"
           style={{
             width: 88, height: 88,
@@ -278,7 +378,7 @@ export default function DailyRep() {
           <span className="relative" style={{ fontSize: 36 }}>{recording ? '⏹' : '🎤'}</span>
         </button>
         <p className="text-xs" style={{ color: '#6B8CAE' }}>
-          {recording ? 'Tap when you\'re done — or let the timer run out' : 'Tap the mic and just speak. 60 seconds, one take.'}
+          {recording ? 'Tap when you\'re done, or let the timer run out' : 'Tap the mic and just speak. 60 seconds, one take.'}
         </p>
       </main>
       <div className="h-10" />

@@ -327,7 +327,7 @@ export default function Dashboard() {
           >
             <span className="text-2xl shrink-0">🏔️</span>
             <div className="flex-1 min-w-0">
-              <p className="text-white font-bold text-sm">Keep climbing — 10 levels are completely free</p>
+              <p className="text-white font-bold text-sm">Keep climbing. 10 levels are completely free</p>
               <p className="text-xs mt-0.5" style={{ color: 'rgba(255,255,255,0.4)' }}>
                 Score above the pass threshold in each level to unlock the next. Pro unlocks The Summit (Levels 11–14).
               </p>

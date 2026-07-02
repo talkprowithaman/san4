@@ -5,7 +5,7 @@ import Navbar from '../components/Navbar'
 // Keeps primary navigation to four tabs (Duolingo principle: one path,
 // everything else is a shelf).
 const TOOLS = [
-  { to: '/assessment',      icon: '🎯', title: 'English Score',    desc: 'Your CEFR level — the global standard' },
+  { to: '/assessment',      icon: '🎯', title: 'English Score',    desc: 'Your CEFR level, the global standard' },
   { to: '/daily-challenge', icon: '🌟', title: 'Daily Challenge',  desc: 'Situation of the day' },
   { to: '/micro-drill',     icon: '⚡', title: 'Micro Drills',     desc: 'Rapid-fire speaking exercises' },
   { to: '/script-reading',  icon: '📜', title: 'Script Reading',   desc: 'Read aloud, get pacing feedback' },
