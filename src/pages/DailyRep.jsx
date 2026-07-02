@@ -8,6 +8,7 @@ import { playPcmBase64, stopPlayback, primeAudio } from '../lib/voicePlayer'
 import {
   getRep, getTodaysReps, getRepCompletions, saveRepCompletion, REPS_PER_DAY, REP_MAX_SECONDS,
 } from '../lib/dailyReps'
+import { generateShareCard, shareCard } from '../lib/shareCard'
 import VakMascot from '../components/VakMascot'
 
 // ── Helpers (same house patterns as Assessment.jsx) ──────────────────────────
@@ -29,8 +30,8 @@ function scoreColor(v) {
 // ── The 60-second rep: ready → recording → analyzing → feedback ──────────────
 export default function DailyRep() {
   const { repId }   = useParams()
-  const { user }    = useAuth()
-  const { awardXP } = useProgress()
+  const { user, profile } = useAuth()
+  const { awardXP, progress } = useProgress()
   const navigate    = useNavigate()
 
   const rep = getRep(repId)
@@ -347,6 +348,23 @@ export default function DailyRep() {
 
         <button onClick={goNext} className="btn-primary w-full py-4 text-base mb-3">
           {result.isDayComplete ? 'Done for today 🎉' : 'Next rep →'}
+        </button>
+        <button
+          onClick={async () => {
+            const blob = await generateShareCard({
+              big: `${result.score}%`,
+              bigColor: scoreColor(result.score),
+              label: 'Daily Rep score',
+              sub: `"${rep.prompt}"`,
+              streak: progress?.streak_count ?? 0,
+              name: profile?.name || '',
+            })
+            shareCard(blob, `I scored ${result.score}% on today's San4 speaking rep 🎤 Same challenge, same day. Can you beat it? san4.vercel.app`)
+          }}
+          className="w-full py-3 rounded-2xl font-bold text-sm text-white mb-3 transition-all hover:opacity-90"
+          style={{ background: 'linear-gradient(135deg,#7B5EA7,#9B7EC8)' }}
+        >
+          📲 Share this score
         </button>
         <button onClick={() => navigate('/today')} className="text-sm" style={{ color: '#6B8CAE' }}>
           Back to Today
