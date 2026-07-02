@@ -16,7 +16,7 @@ export default function AuthCallback() {
     if (!code) {
       // No code — maybe already authenticated or bad link
       supabase.auth.getSession().then(({ data: { session } }) => {
-        if (session) navigate('/dashboard', { replace: true })
+        if (session) navigate('/today', { replace: true })
         else navigate('/auth', { replace: true })
       })
       return
@@ -28,7 +28,7 @@ export default function AuthCallback() {
         setStatus('error')
       } else {
         setStatus('success')
-        setTimeout(() => navigate('/dashboard', { replace: true }), 1200)
+        setTimeout(() => navigate('/today', { replace: true }), 1200)
       }
     })
   }, [])

@@ -116,6 +116,43 @@ export async function synthesizeSpeech(text) {
   return { audioBase64: data.audioBase64, sampleRate: data.sampleRate || 24000 }
 }
 
+// ── Daily Rep — instant feedback on one 60-second spoken answer ──────────────
+// The atomic loop: must be FAST (flash-lite, one call) and tiny (one score,
+// one win, one fix). Returns null on failure — callers show a retry, never a
+// fabricated score.
+export async function analyzeDailyRep(rep, audioBase64, mimeType = 'audio/webm') {
+  const prompt = `You are Vak, San4's warm but honest communication coach for Indian professionals. The user was given this 60-second speaking challenge:
+
+SITUATION: ${rep.situation}
+CHALLENGE: ${rep.prompt}
+WHAT GOOD LOOKS LIKE: ${rep.focus}
+
+LISTEN to their spoken attempt (audio attached). Indian English / Hinglish is fine — never penalise accent or code-switching. Judge communication: did they meet the challenge, how confident and clear did they sound, filler words (English AND Hindi — umm, matlab, jaise ki, you know).
+
+Return JSON only (no markdown, no code fences):
+{
+  "score": <integer 0-100, honest — 80+ means genuinely strong>,
+  "win": "<ONE specific thing they did well, quoting or referencing their actual words>",
+  "fix": "<ONE specific, actionable thing to do better next time>",
+  "filler_count": <integer, fillers you actually heard>,
+  "transcript": "<what they said, faithfully>"
+}`
+
+  try {
+    const text = await geminiGenerate(MODEL, [
+      { text: prompt },
+      { inlineData: { mimeType, data: audioBase64 } },
+    ])
+    const clean = text.replace(/^```json\s*/i, '').replace(/\s*```$/i, '')
+    const parsed = JSON.parse(clean)
+    if (typeof parsed.score !== 'number') return null
+    return parsed
+  } catch (err) {
+    console.error('Daily rep analysis failed:', err)
+    return null
+  }
+}
+
 // ── Scenario system prompts ───────────────────────────────────────────────────
 const SCENARIO_PROMPTS = {
   hr_interview: `You are a senior HR interviewer at a top Indian MNC (like TCS, Infosys, Deloitte, or HDFC Bank).
