@@ -18,7 +18,7 @@ export default function Auth() {
     if (!user) return
     const next = params.get('next')
     // Only allow internal paths (prevent open-redirect via the query param)
-    navigate(next && next.startsWith('/') ? next : '/dashboard')
+    navigate(next && next.startsWith('/') ? next : '/today')
   }, [user])
 
   function update(key, val) { setForm(f => ({ ...f, [key]: val })); setError('') }

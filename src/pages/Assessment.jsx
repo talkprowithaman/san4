@@ -145,7 +145,7 @@ export default function Assessment() {
     )
 
     if (!result) {
-      setError('Scoring failed — please try again in a moment.')
+      setError('Scoring failed. Please try again in a moment.')
       setPhase('intro')
       return
     }
@@ -246,7 +246,7 @@ export default function Assessment() {
 
           <button onClick={finishRecording} className="btn-primary w-full py-4 text-base"
             style={{ opacity: seconds < 10 ? 0.6 : 1 }} disabled={seconds < 10}>
-            {seconds < 10 ? `Keep speaking… (${10 - seconds}s)` : '✓ Done — score me →'}
+            {seconds < 10 ? `Keep speaking… (${10 - seconds}s)` : '✓ Done, score me →'}
           </button>
         </main>
       </div>

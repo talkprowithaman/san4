@@ -4,6 +4,9 @@ import { Capacitor } from '@capacitor/core'
 import { App as CapApp } from '@capacitor/app'
 import ProtectedRoute from './components/ProtectedRoute'
 import Landing        from './pages/Landing'
+import Today          from './pages/Today'
+import DailyRep       from './pages/DailyRep'
+import Library        from './pages/Library'
 import Auth           from './pages/Auth'
 import Dashboard      from './pages/Dashboard'
 import Practice       from './pages/Practice'
@@ -50,6 +53,9 @@ export default function App() {
         <Route path="/how-it-works"  element={<HowItWorks />} />
 
         {/* Protected */}
+        <Route path="/today"     element={<ProtectedRoute><Today /></ProtectedRoute>} />
+        <Route path="/daily-rep/:repId" element={<ProtectedRoute><DailyRep /></ProtectedRoute>} />
+        <Route path="/library"   element={<ProtectedRoute><Library /></ProtectedRoute>} />
         <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
         <Route path="/practice"  element={<ProtectedRoute><Practice /></ProtectedRoute>} />
         <Route path="/practice/:scenarioId" element={<ProtectedRoute><PracticeSession /></ProtectedRoute>} />

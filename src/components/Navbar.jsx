@@ -3,11 +3,12 @@ import { useAuth }          from '../hooks/useAuth'
 import { useProgress }      from '../hooks/useProgress'
 import { useSubscription }  from '../hooks/useSubscription'
 
+// Four tabs, Duolingo-style: the daily loop, the ladder, the shelf, the self.
 const NAV = [
-  { to: '/dashboard',    label: 'Home',     icon: '🏠' },
-  { to: '/practice',     label: 'Practice', icon: '🎮' },
-  { to: '/meeting-prep', label: 'Prep',     icon: '📋' },
-  { to: '/progress',     label: 'Progress', icon: '📊' },
+  { to: '/today',    label: 'Today',   icon: '🔥' },
+  { to: '/practice', label: 'Climb',   icon: '🧗' },
+  { to: '/library',  label: 'Library', icon: '🧰' },
+  { to: '/progress', label: 'Me',      icon: '📊' },
 ]
 
 export default function Navbar() {
@@ -37,7 +38,7 @@ export default function Navbar() {
       <div className="max-w-5xl mx-auto px-5 h-15 flex items-center justify-between gap-4" style={{ height: 60 }}>
 
         {/* Logo — swan icon + SAN4 wordmark */}
-        <Link to="/dashboard" className="flex items-center gap-2 shrink-0">
+        <Link to="/today" className="flex items-center gap-2 shrink-0">
           <img src="/san4-icon.png" alt="San4" width={28} height={28} className="rounded-lg" />
           <span className="text-xl font-black text-white tracking-tight" style={{ fontFamily: 'Outfit, sans-serif' }}>
             SAN<span style={{ color: '#7B5EA7' }}>4</span>

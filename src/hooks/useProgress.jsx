@@ -36,7 +36,10 @@ export function useProgress() {
 
   // ── Award XP after a completed session ──────────────────────────────────────
   // Returns a reward summary used by RewardCard.
-  async function awardXP(score) {
+  // opts.fixedXP: award a flat amount instead of the score formula — used by
+  // Daily Reps (small, frequent wins) so they don't inflate XP like a full
+  // session. Streak logic runs either way (a rep keeps the streak alive).
+  async function awardXP(score, opts = {}) {
     if (!user) return null
 
     const cur = progress ?? {
@@ -45,7 +48,7 @@ export function useProgress() {
       last_practice_date: null,
     }
 
-    const xpGained   = calcXP(score)
+    const xpGained   = opts.fixedXP ?? calcXP(score)
     const newTotalXP = (cur.total_xp || 0) + xpGained
     const oldLevel   = cur.level || 1
     const newLevel   = levelFromXP(newTotalXP)
