@@ -41,6 +41,7 @@ export default function DailyRep() {
   const [xpGained, setXpGained] = useState(0)
   const [micError, setMicError] = useState(null)
   const [liveText, setLiveText] = useState('') // live transcript while speaking
+  const [captionsDead, setCaptionsDead] = useState(false) // live captions unavailable
 
   const mediaRecRef    = useRef(null)
   const audioChunksRef = useRef([])
@@ -50,6 +51,7 @@ export default function DailyRep() {
   const startedAtRef   = useRef(null)
   const stoppingRef    = useRef(false)
   const sttRef         = useRef(null) // browser SpeechRecognition (best-effort live captions)
+  const recordingRef   = useRef(false) // lets the caption restart loop know when to stop
 
   // Vak reads the challenge aloud on entry.
   useEffect(() => {
@@ -78,16 +80,24 @@ export default function DailyRep() {
   // Best-effort live captions so users SEE what they're saying as they speak.
   // The recording is still the source of truth for scoring; if the browser's
   // STT can't keep up (e.g. Hinglish), the rep still works fine.
+  // Chrome quirk: the recognizer often ends itself after a few seconds (or
+  // when it thinks there's silence). Without a restart loop the captions die
+  // quietly, so we restart while the rep is still recording, and if it keeps
+  // dying we tell the user captions are off rather than showing a dead box.
   function startLiveCaptions() {
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition
-    if (!SR) return
+    if (!SR) { setCaptionsDead(true); return }
     try {
       const stt = new SR()
       stt.lang = 'en-IN'
       stt.continuous = true
       stt.interimResults = true
       let finals = ''
+      let gotAnything = false
+      let restarts = 0
+
       stt.onresult = (e) => {
+        gotAnything = true
         let interim = ''
         for (let i = e.resultIndex; i < e.results.length; i++) {
           const t = e.results[i][0].transcript
@@ -96,15 +106,42 @@ export default function DailyRep() {
         }
         setLiveText((finals + ' ' + interim).trim())
       }
-      stt.onerror = () => {} // captions are cosmetic, never block the rep
+
+      stt.onerror = (e) => {
+        // Hard failures mean captions can't work this session. Cosmetic only.
+        if (['not-allowed', 'service-not-allowed', 'audio-capture'].includes(e.error)) {
+          setCaptionsDead(true)
+          sttRef.current = null
+        }
+      }
+
+      // The recognizer self-terminates constantly; keep reviving it while the
+      // user is still recording.
+      stt.onend = () => {
+        if (sttRef.current !== stt) return           // we stopped it on purpose
+        if (!recordingRef.current) return            // rep is over
+        if (!gotAnything && restarts >= 2) {         // it's just not working
+          setCaptionsDead(true)
+          sttRef.current = null
+          return
+        }
+        restarts++
+        setTimeout(() => {
+          if (sttRef.current === stt && recordingRef.current) {
+            try { stt.start() } catch { setCaptionsDead(true); sttRef.current = null }
+          }
+        }, 150)
+      }
+
       stt.start()
       sttRef.current = stt
-    } catch { /* cosmetic */ }
+    } catch { setCaptionsDead(true) }
   }
 
   function stopLiveCaptions() {
-    try { sttRef.current?.abort() } catch { /* ignore */ }
-    sttRef.current = null
+    const stt = sttRef.current
+    sttRef.current = null // mark as intentional before abort so onend exits
+    try { stt?.abort() } catch { /* ignore */ }
   }
 
   async function startRecording() {
@@ -123,6 +160,8 @@ export default function DailyRep() {
       mediaRecRef.current = recorder
       startedAtRef.current = Date.now()
       stoppingRef.current = false
+      recordingRef.current = true
+      setCaptionsDead(false)
       setLeft(REP_MAX_SECONDS)
       setPhase('recording')
       startLiveCaptions()
@@ -140,6 +179,7 @@ export default function DailyRep() {
   async function finishRecording() {
     if (stoppingRef.current) return
     stoppingRef.current = true
+    recordingRef.current = false
     clearInterval(timerRef.current)
     stopLiveCaptions()
 
@@ -357,7 +397,9 @@ export default function DailyRep() {
               <p className="text-white text-sm italic leading-relaxed">{liveText}</p>
             ) : (
               <p className="text-sm italic" style={{ color: 'rgba(107,140,174,0.6)' }}>
-                Speak up, your words will appear here as you talk…
+                {captionsDead
+                  ? "Live captions aren't available right now, but Vak hears every word. Keep going!"
+                  : 'Speak up, your words will appear here as you talk…'}
               </p>
             )}
           </div>
