@@ -1,8 +1,10 @@
 import { useState, useRef, useEffect } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { useAuth }    from '../hooks/useAuth'
+import { useProgress } from '../hooks/useProgress'
 import { supabase }   from '../lib/supabase'
 import { analyzeCEFRAssessment } from '../lib/gemini'
+import { generateShareCard, shareCard } from '../lib/shareCard'
 import Navbar    from '../components/Navbar'
 import VakMascot from '../components/VakMascot'
 
@@ -60,7 +62,8 @@ function fmtDate(ts) {
 }
 
 export default function Assessment() {
-  const { user } = useAuth()
+  const { user, profile } = useAuth()
+  const { progress } = useProgress()
   const navigate = useNavigate()
 
   // phases: intro | recording | analyzing | report
@@ -374,7 +377,17 @@ export default function Assessment() {
                     </button>
                   )}
                   <button
-                    onClick={() => navigator.share?.({ title: 'My Vak English score', text: `I scored ${band} (${report.cefr_label}) on my Vak English assessment! 🦢` }).catch(() => {})}
+                    onClick={async () => {
+                      const blob = await generateShareCard({
+                        big: band,
+                        bigColor: bColor,
+                        label: 'My English level',
+                        sub: report.cefr_label,
+                        streak: progress?.streak_count ?? 0,
+                        name: profile?.name || '',
+                      })
+                      shareCard(blob, `I'm ${band} (${report.cefr_label}) on the San4 English assessment 🦢 Find your level free: san4.vercel.app`)
+                    }}
                     className="flex-1 py-3 rounded-2xl font-bold text-sm text-white transition-all hover:opacity-90"
                     style={{ background: 'linear-gradient(135deg,#7B5EA7,#9B7EC8)' }}>
                     📲 Share my score

@@ -3,6 +3,8 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useAuth }     from '../hooks/useAuth'
 import { useProgress } from '../hooks/useProgress'
 import { getTodaysReps, getRepCompletions, REPS_PER_DAY } from '../lib/dailyReps'
+import { getFreezes } from '../lib/streakFreeze'
+import { generateShareCard, shareCard } from '../lib/shareCard'
 import Navbar    from '../components/Navbar'
 import VakMascot from '../components/VakMascot'
 
@@ -58,8 +60,17 @@ export default function Today() {
         >
           <div className="text-5xl">{streakInDanger ? '⏳' : '🔥'}</div>
           <div className="flex-1">
-            <div className="text-2xl font-black text-white">
-              {streak} day{streak === 1 ? '' : 's'}
+            <div className="flex items-center gap-2">
+              <div className="text-2xl font-black text-white">
+                {streak} day{streak === 1 ? '' : 's'}
+              </div>
+              {getFreezes(user?.id) > 0 && (
+                <span className="text-xs font-bold px-2.5 py-1 rounded-full"
+                  title="A streak freeze automatically saves your streak if you miss one day. Earn one every 7-day milestone."
+                  style={{ background: 'rgba(79,172,254,0.12)', color: '#4FACFE', border: '1px solid rgba(79,172,254,0.3)' }}>
+                  🧊 ×{getFreezes(user?.id)}
+                </span>
+              )}
             </div>
             <p className="text-sm" style={{ color: streakInDanger ? '#FCA5A5' : '#94A3B8' }}>
               {practisedToday
@@ -138,9 +149,28 @@ export default function Today() {
             <p className="text-sm mb-4" style={{ color: '#94A3B8' }}>
               Ready for a boss battle? Take on a full scenario and climb the ladder.
             </p>
-            <Link to="/practice" className="btn-primary inline-block px-6 py-3 text-sm">
-              Go to the Climb →
-            </Link>
+            <div className="flex gap-3 justify-center">
+              <Link to="/practice" className="btn-primary inline-block px-6 py-3 text-sm">
+                Go to the Climb →
+              </Link>
+              <button
+                onClick={async () => {
+                  const blob = await generateShareCard({
+                    big: `${REPS_PER_DAY}/${REPS_PER_DAY}`,
+                    bigColor: '#00C49A',
+                    label: 'Daily reps done',
+                    sub: 'Three speaking challenges, one take each.',
+                    streak,
+                    name: profile?.name || '',
+                  })
+                  shareCard(blob, `Daily speaking reps done on San4 🎤🔥 ${streak}-day streak. Practise with Vak free: san4.vercel.app`)
+                }}
+                className="px-6 py-3 rounded-2xl font-bold text-sm text-white transition-all hover:opacity-90"
+                style={{ background: 'linear-gradient(135deg,#7B5EA7,#9B7EC8)' }}
+              >
+                📲 Share
+              </button>
+            </div>
           </div>
         )}
 

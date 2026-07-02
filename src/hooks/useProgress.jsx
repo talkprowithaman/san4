@@ -3,6 +3,7 @@ import { create }    from 'zustand'
 import { supabase }  from '../lib/supabase'
 import { useAuthStore } from './useAuth'
 import { calcXP, calcStreak, getLevelInfo, levelFromXP } from '../lib/gamification'
+import { getFreezes, earnFreeze, consumeFreeze, missedExactlyOneDay } from '../lib/streakFreeze'
 
 // ── Zustand store (shared across all components) ─────────────────────────────
 export const useProgressStore = create((set) => ({
@@ -54,10 +55,30 @@ export function useProgress() {
     const newLevel   = levelFromXP(newTotalXP)
     const leveledUp  = newLevel > oldLevel
 
-    const { streak, streakUpdated, brokeStreak } = calcStreak(
+    let { streak, streakUpdated, brokeStreak } = calcStreak(
       cur.last_practice_date,
       cur.streak_count || 0
     )
+
+    // ── Streak freeze rescue ────────────────────────────────────────────────
+    // Missed exactly one day with a freeze in the bank: the freeze burns and
+    // the streak survives. Longer gaps still reset (freezes don't stack over
+    // multi-day absences, or the streak stops meaning anything).
+    let freezeUsed = false
+    if (brokeStreak && missedExactlyOneDay(cur.last_practice_date) && getFreezes(user.id) > 0) {
+      consumeFreeze(user.id)
+      streak = (cur.streak_count || 0) + 1
+      brokeStreak = false
+      freezeUsed = true
+    }
+
+    // Earn a freeze at every 7-day milestone (7, 14, 21…), capped at 2 held.
+    let freezeEarned = false
+    if (streakUpdated && streak > 0 && streak % 7 === 0) {
+      const before = getFreezes(user.id)
+      freezeEarned = earnFreeze(user.id) > before
+    }
+
     const longestStreak = Math.max(streak, cur.longest_streak || 0)
     const today = new Date().toLocaleDateString('en-CA')
 
@@ -88,6 +109,9 @@ export function useProgress() {
       streakCount:   streak,
       streakUpdated,
       brokeStreak,
+      freezeUsed,
+      freezeEarned,
+      freezesLeft:   getFreezes(user.id),
     }
   }
 
