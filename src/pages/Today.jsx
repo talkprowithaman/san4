@@ -61,7 +61,7 @@ export default function Today() {
               {new Date().toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long' })}
             </p>
           </div>
-          <div className="animate-float"><VakMascot level={levelInfo?.current?.level || 1} size={56} /></div>
+          <div className="animate-float"><VakMascot level={levelInfo?.current?.level || 1} size={56} mood={allDone ? 'celebrating' : 'neutral'} /></div>
         </div>
 
         {/* Streak hero */}

@@ -318,7 +318,7 @@ export default function Assessment() {
                 <span className="text-sm font-bold" style={{ color: '#F87171' }}>{fmt(seconds)}</span>
               </div>
             ) : (
-              <div className="animate-float"><VakMascot level={3} size={44} /></div>
+              <div className="animate-float"><VakMascot level={3} size={44} mood="listening" /></div>
             )}
           </div>
 
@@ -375,7 +375,7 @@ export default function Assessment() {
   if (phase === 'analyzing') {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center gap-6" style={{ background: '#060E1A' }}>
-        <div className="animate-float"><VakMascot level={4} size={100} /></div>
+        <div className="animate-float"><VakMascot level={4} size={100} mood="thinking" /></div>
         <div className="text-center">
           <div className="text-white font-bold text-xl mb-2">Scoring how you communicate…</div>
           <div style={{ color: '#6B8CAE' }}>Two numbers coming up: your San4 Score and your English level</div>

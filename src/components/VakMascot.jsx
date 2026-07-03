@@ -11,12 +11,36 @@
 
 const WING_ANGLE = { 1: 5, 2: 22, 3: 42, 4: 60, 5: 74 }
 
-export default function VakMascot({ level = 1, size = 160, className = '' }) {
-  const angle  = WING_ANGLE[Math.min(5, Math.max(1, level))] || 5
-  const isL5   = level === 5
-  const isL4p  = level >= 4
-  const isL3p  = level >= 3
-  const isL2p  = level >= 2
+// Moods — Vak reacts to what's happening (expression sheet, in SVG):
+//  neutral     default, driven purely by level
+//  thinking    eye up, thought dots (Vak is analysing)
+//  listening   eye locked forward, sound arcs by the ear (your turn to speak)
+//  encouraging soft open beak, a crown sparkle (Vak is with you)
+//  celebrating wings high, open beak, sparkles + confetti (you did it)
+//  proud       golden aura and iris, calm (a strong result)
+export default function VakMascot({ level = 1, size = 160, mood = 'neutral', className = '' }) {
+  const celebrating = mood === 'celebrating'
+  const thinking    = mood === 'thinking'
+  const listening   = mood === 'listening'
+  const encouraging = mood === 'encouraging'
+  const proud       = mood === 'proud'
+
+  const angle  = celebrating ? 74 : (WING_ANGLE[Math.min(5, Math.max(1, level))] || 5)
+  const isL5   = level === 5 || celebrating
+  const isL4p  = level >= 4 || celebrating || proud
+  const isL3p  = level >= 3 || celebrating || proud || encouraging
+  const isL2p  = level >= 2 || celebrating || proud || encouraging || listening
+
+  // Eye: down when hesitant, up when thinking, locked forward when listening
+  const pupil = thinking
+    ? { cx: 105, cy: 43 }
+    : listening
+    ? { cx: 108, cy: 46 }
+    : level <= 1 && mood === 'neutral'
+    ? { cx: 105, cy: 48 }
+    : { cx: 107, cy: 46 }
+
+  const beakOpen = celebrating || encouraging
 
   return (
     <svg
@@ -120,24 +144,63 @@ export default function VakMascot({ level = 1, size = 160, className = '' }) {
 
       {/* ── Eye ─────────────────────────────────────────────────────────── */}
       <circle cx="107" cy="46" r="7.5" fill="white" />
-      {/* Pupil — looks down when hesitant, forward when confident */}
-      <circle
-        cx={level <= 1 ? 105 : 107}
-        cy={level <= 1 ? 48  : 46}
-        r="5.2" fill="#0A0F1E"
-      />
+      {/* Pupil — mood-aware (down when hesitant, up when thinking, forward when listening) */}
+      <circle cx={pupil.cx} cy={pupil.cy} r="5.2" fill="#0A0F1E" />
       {/* Catchlight */}
       <circle cx="109" cy="43" r="2.2" fill="white" />
-      {/* Golden iris ring (level 3+) */}
-      {isL3p && (
+      {/* Golden iris ring (level 3+ or proud) */}
+      {(isL3p || proud) && (
         <circle cx="107" cy="46" r="7"
           fill="none" stroke="#F59E0B" strokeWidth="1.2" opacity="0.48" />
       )}
 
-      {/* ── Beak ────────────────────────────────────────────────────────── */}
-      <path d="M 115,50 L 128,54 L 115,58 Q 113,54 115,50 Z" fill="#F59E0B" />
-      <line x1="115" y1="54" x2="128" y2="54"
-        stroke="#D97706" strokeWidth="0.7" opacity="0.5" />
+      {/* ── Beak — opens when Vak is cheering you on ────────────────────── */}
+      {beakOpen ? (
+        <>
+          <path d="M 115,49 L 128,50 L 115,55 Q 113,52 115,49 Z" fill="#F59E0B" />
+          <path d="M 115,56 L 126,58 L 115,60 Q 113,58 115,56 Z" fill="#D97706" />
+        </>
+      ) : (
+        <>
+          <path d="M 115,50 L 128,54 L 115,58 Q 113,54 115,50 Z" fill="#F59E0B" />
+          <line x1="115" y1="54" x2="128" y2="54"
+            stroke="#D97706" strokeWidth="0.7" opacity="0.5" />
+        </>
+      )}
+
+      {/* ── Thought dots (thinking) ─────────────────────────────────────── */}
+      {thinking && (
+        <g fill="#A78BFA">
+          <circle cx="119" cy="30" r="2.2" opacity="0.55" />
+          <circle cx="127" cy="22" r="3"   opacity="0.75" />
+          <circle cx="137" cy="13" r="3.8" opacity="0.95" />
+        </g>
+      )}
+
+      {/* ── Sound arcs (listening) ──────────────────────────────────────── */}
+      {listening && (
+        <g stroke="#00C49A" fill="none" strokeLinecap="round">
+          <path d="M 134,46 Q 139,54 134,62" strokeWidth="2"   opacity="0.85" />
+          <path d="M 141,42 Q 148,54 141,66" strokeWidth="1.6" opacity="0.5" />
+        </g>
+      )}
+
+      {/* ── Crown sparkle (encouraging) ─────────────────────────────────── */}
+      {encouraging && !isL5 && (
+        <path d="M 122,16 L 123.6,12 L 125.2,16 L 129.2,17.6 L 125.2,19.2 L 123.6,23.2 L 122,19.2 L 118,17.6 Z"
+          fill="#F59E0B" opacity="0.9" />
+      )}
+
+      {/* ── Confetti (celebrating) ──────────────────────────────────────── */}
+      {celebrating && (
+        <g>
+          <circle cx="36"  cy="30"  r="2.4" fill="#00C49A" opacity="0.85" />
+          <circle cx="132" cy="86"  r="2"   fill="#4FACFE" opacity="0.8" />
+          <circle cx="44"  cy="92"  r="1.8" fill="#F59E0B" opacity="0.85" />
+          <rect x="140" y="26" width="4" height="4" rx="1" transform="rotate(24,142,28)" fill="#A78BFA" opacity="0.9" />
+          <rect x="24"  y="60" width="4" height="4" rx="1" transform="rotate(-18,26,62)" fill="#F87171" opacity="0.8" />
+        </g>
+      )}
 
       {/* ── Water ripples (level 2+) ────────────────────────────────────── */}
       {isL2p && (
