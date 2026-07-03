@@ -258,7 +258,7 @@ export default function DailyRep() {
   // ── ANALYZING ───────────────────────────────────────────────────────────────
   if (phase === 'analyzing') return (
     <div className="min-h-screen flex flex-col items-center justify-center gap-5" style={{ background: '#050810' }}>
-      <div className="animate-float"><VakMascot level={3} size={90} /></div>
+      <div className="animate-float"><VakMascot level={3} size={90} mood="thinking" /></div>
       <p className="text-white font-bold">Vak is listening back…</p>
       <div className="flex gap-2">
         {[0,1,2].map(i => (
@@ -291,7 +291,8 @@ export default function DailyRep() {
     <div className="min-h-screen" style={{ background: '#050810' }}>
       <main className="max-w-md mx-auto px-4 py-10 animate-slide-up text-center">
         <div className="flex justify-center mb-3 animate-float">
-          <VakMascot level={result.score >= 80 ? 5 : result.score >= 60 ? 4 : 3} size={80} />
+          <VakMascot level={result.score >= 80 ? 5 : result.score >= 60 ? 4 : 3} size={80}
+            mood={result.score >= 80 ? 'celebrating' : result.score >= 60 ? 'encouraging' : 'neutral'} />
         </div>
 
         <div className="text-6xl font-black mb-1" style={{ color: scoreColor(result.score) }}>

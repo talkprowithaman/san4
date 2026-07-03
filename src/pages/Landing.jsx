@@ -213,11 +213,11 @@ export default function Landing() {
 
             {/* CTA row */}
             <div className="sa flex flex-wrap gap-3 mb-8 hero-btns" data-delay="600">
-              <Link to="/auth?mode=signup&next=/assessment"
+              <Link to="/assessment"
                 onMouseEnter={() => playTick('hover')}
                 className="btn-aura text-sm font-bold text-white px-7 py-4 rounded-full transition-all hover:opacity-90 active:scale-95"
                 style={{ background:'linear-gradient(135deg,#7B5EA7,#9B7EC8)' }}>
-                🎯 Get your free English score →
+                🎯 Get your San4 Score, free →
               </Link>
               <Link to="/auth?mode=signup"
                 className="text-sm font-semibold px-7 py-4 rounded-full transition-all hover:opacity-80"
@@ -279,6 +279,81 @@ export default function Landing() {
 
       {/* ══ FILLER WORDS — the problem we catch ════════════════════════════ */}
       <FillerWords />
+
+      {/* ══ THE SAN4 SCORE — the anchor: a CIBIL-style score for speaking ══ */}
+      <section className="py-24 px-6 lg:px-10" style={{ background: 'linear-gradient(180deg,#06091C,#050810)' }}>
+        <div className="max-w-5xl mx-auto grid md:grid-cols-2 gap-12 items-center">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-widest mb-3" style={{ color: '#7B5EA7' }}>
+              THE SAN4 SCORE
+            </p>
+            <h2 className="text-3xl md:text-4xl font-black text-white leading-tight mb-4">
+              One number for how you communicate.
+            </h2>
+            <p className="text-base leading-relaxed mb-4" style={{ color: '#94A3B8' }}>
+              CIBIL scores your credit. IELTS scores your English. Nothing scores the skill
+              that actually decides your interviews, appraisals, and promotions: how you
+              <strong className="text-white"> communicate</strong>.
+            </p>
+            <p className="text-base leading-relaxed mb-6" style={{ color: '#94A3B8' }}>
+              The San4 Score measures your clarity, confidence, structure, and delivery,
+              in any language you speak. It updates with every practice session. Put it on
+              your LinkedIn. Put it on your CV. Watch it climb.
+            </p>
+            <ul className="space-y-2 mb-8">
+              {[
+                'Language-independent: judged on how you communicate, not your grammar',
+                'A living score: every daily rep and session moves it',
+                'Built to share: one tap to LinkedIn, WhatsApp, or your CV',
+              ].map(t => (
+                <li key={t} className="flex gap-2 text-sm" style={{ color: '#94A3B8' }}>
+                  <span style={{ color: '#00C49A' }}>✓</span> {t}
+                </li>
+              ))}
+            </ul>
+            <Link to="/assessment"
+              className="inline-block text-sm font-bold text-white px-7 py-4 rounded-full transition-all hover:opacity-90"
+              style={{ background: 'linear-gradient(135deg,#7B5EA7,#9B7EC8)' }}>
+              Get your San4 Score in 2 minutes →
+            </Link>
+          </div>
+
+          {/* Mock score card */}
+          <div className="flex justify-center">
+            <div className="w-full max-w-xs rounded-3xl p-8 text-center"
+              style={{ background: 'linear-gradient(160deg,#10192E,#0B1220)', border: '1px solid rgba(123,94,167,0.4)', boxShadow: '0 0 60px rgba(123,94,167,0.15)' }}>
+              <div className="flex items-center justify-center gap-2 mb-6">
+                <img src="/san4-icon.png" alt="" width={28} height={28} className="rounded-lg" />
+                <span className="font-black text-white" style={{ fontFamily: 'Outfit, sans-serif' }}>
+                  SAN<span style={{ color: '#7B5EA7' }}>4</span> SCORE
+                </span>
+              </div>
+              <div className="font-black" style={{ fontSize: '5rem', lineHeight: 1, color: '#00C49A' }}>74</div>
+              <div className="text-white font-bold mb-1">Confident</div>
+              <div className="text-xs mb-6" style={{ color: '#6B8CAE' }}>Communicates clearly under pressure</div>
+              <div className="space-y-2 text-left">
+                {[
+                  ['Clarity', 78, '#00C49A'],
+                  ['Confidence', 71, '#7B5EA7'],
+                  ['Structure', 69, '#F59E0B'],
+                  ['Delivery', 77, '#4FACFE'],
+                ].map(([label, v, c]) => (
+                  <div key={label}>
+                    <div className="flex justify-between text-xs mb-1">
+                      <span style={{ color: '#94A3B8' }}>{label}</span>
+                      <span className="font-bold" style={{ color: c }}>{v}</span>
+                    </div>
+                    <div className="h-1.5 rounded-full" style={{ background: 'rgba(255,255,255,0.07)' }}>
+                      <div className="h-full rounded-full" style={{ width: `${v}%`, background: c }} />
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div className="mt-6 text-xs" style={{ color: '#6B8CAE' }}>🔥 12-day streak · ↑ 9 this month</div>
+            </div>
+          </div>
+        </div>
+      </section>
 
       {/* ══ PRODUCT SHOWCASE — see the app before signing up ═══════════════ */}
       <ProductShowcase />
@@ -487,14 +562,12 @@ export default function Landing() {
               © 2025 San4 Inc. All rights reserved. Made in India 🇮🇳
             </p>
             <div className="flex items-center gap-5">
-              {['Privacy Policy','Terms'].map(t=>(
-                <a key={t} href="#" className="text-xs transition-colors"
-                  style={{ color:'rgba(107,140,174,0.45)' }}
-                  onMouseEnter={e=>e.currentTarget.style.color='rgba(255,255,255,0.6)'}
-                  onMouseLeave={e=>e.currentTarget.style.color='rgba(107,140,174,0.45)'}>
-                  {t}
-                </a>
-              ))}
+              <Link to="/privacy" className="text-xs transition-colors"
+                style={{ color:'rgba(107,140,174,0.45)' }}
+                onMouseEnter={e=>e.currentTarget.style.color='rgba(255,255,255,0.6)'}
+                onMouseLeave={e=>e.currentTarget.style.color='rgba(107,140,174,0.45)'}>
+                Privacy Policy
+              </Link>
             </div>
           </div>
         </div>
