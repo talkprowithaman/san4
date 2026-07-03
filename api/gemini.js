@@ -42,6 +42,27 @@ async function verifyUser(req) {
   }
 }
 
+// ── Guest lane — the public San4 Score test ──────────────────────────────────
+// /assessment is deliberately public (value before signup), so logged-out
+// visitors must be able to score. Guests get a small per-IP budget instead of
+// a hard 401. Best-effort in-memory limiter (resets when the serverless
+// instance recycles — good enough to stop casual relay abuse, not a fortress).
+const GUEST_LIMIT_PER_HOUR = 12
+const guestHits = new Map() // ip → { count, windowStart }
+
+function guestAllowed(req) {
+  const ip = (req.headers['x-forwarded-for'] || '').split(',')[0].trim() || 'unknown'
+  const now = Date.now()
+  const entry = guestHits.get(ip)
+  if (!entry || now - entry.windowStart > 3600_000) {
+    guestHits.set(ip, { count: 1, windowStart: now })
+    return true
+  }
+  entry.count++
+  if (guestHits.size > 5000) guestHits.clear() // crude memory cap
+  return entry.count <= GUEST_LIMIT_PER_HOUR
+}
+
 export default async function handler(req, res) {
   // CORS — the Android app calls from origin https://localhost (cross-origin
   // to the Vercel domain). The Supabase JWT is the real access gate.
@@ -54,7 +75,13 @@ export default async function handler(req, res) {
   if (!genAI)                  return res.status(500).json({ error: 'GEMINI_API_KEY not configured' })
 
   const auth = await verifyUser(req)
-  if (!auth.ok) return res.status(401).json({ error: 'Unauthorized' })
+  if (!auth.ok) {
+    // No valid session: allow a rate-limited guest lane (public score test)
+    // instead of a hard 401 that broke guest scoring entirely.
+    if (!guestAllowed(req)) {
+      return res.status(429).json({ error: 'Guest limit reached. Create a free account to continue.' })
+    }
+  }
 
   try {
     const { model, contents, systemInstruction, generationConfig } = req.body || {}

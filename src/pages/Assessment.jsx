@@ -125,7 +125,15 @@ export default function Assessment() {
     clearInterval(timerRef.current)
   }, [])
 
-  async function startRecording() {
+  // ── Two-step capture: step 1 = read-aloud, step 2 = spontaneous answer ────
+  // Each step is its OWN recording with its own start/stop button, so the
+  // model can weigh reading vs spontaneous speech properly, and users get a
+  // breather between the two.
+  const MIN_STEP_SECONDS = 8
+  const step1ClipRef = useRef(null)
+  const [recOn, setRecOn] = useState(false)
+
+  async function beginCapture() {
     setError(null)
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
@@ -138,45 +146,68 @@ export default function Assessment() {
       rec.start(1000)
       mediaRecRef.current = rec
       setSeconds(0)
-      setPhase('recording')
+      setRecOn(true)
       timerRef.current = setInterval(() => setSeconds(s => s + 1), 1000)
     } catch {
       setError('We need microphone access to score your speaking. Click the lock icon in your address bar, allow the mic, then try again.')
     }
   }
 
-  async function finishRecording() {
+  async function endCapture() {
     clearInterval(timerRef.current)
-    setPhase('analyzing')
-
-    // Stop + collect audio
-    let payload = null
+    setRecOn(false)
     await new Promise(resolve => {
       const rec = mediaRecRef.current
       if (!rec || rec.state === 'inactive') { resolve(); return }
       rec.onstop = resolve; rec.stop()
     })
     audioStreamRef.current?.getTracks().forEach(t => t.stop())
-    if (audioChunksRef.current.length > 0) {
-      const blob = new Blob(audioChunksRef.current, { type: audioMimeRef.current })
-      const buf  = await blob.arrayBuffer()
-      payload = { base64: arrayBufferToBase64(buf), mimeType: audioMimeRef.current.split(';')[0] }
-    }
+    if (audioChunksRef.current.length === 0) return null
+    const blob = new Blob(audioChunksRef.current, { type: audioMimeRef.current })
+    const buf  = await blob.arrayBuffer()
+    audioChunksRef.current = []
+    return { base64: arrayBufferToBase64(buf), mimeType: audioMimeRef.current.split(';')[0] }
+  }
 
-    if (!payload) {
-      setError('We could not capture any audio. Please try again.')
-      setPhase('intro')
+  async function handleStepButton(step) {
+    if (!recOn) { beginCapture(); return }
+
+    if (seconds < MIN_STEP_SECONDS) {
+      // Too short: keep recording, nudge instead of discarding their take
+      setError(step === 1
+        ? 'Keep going, read the full passage aloud.'
+        : 'Give it a fuller answer. A few sentences at least.')
       return
     }
 
+    const payload = await endCapture()
+    if (!payload) {
+      setError('We could not capture any audio. Please try again.')
+      return
+    }
+
+    if (step === 1) {
+      step1ClipRef.current = payload
+      setError(null)
+      setSeconds(0)
+      setPhase('step2')
+      return
+    }
+
+    runAnalysis([step1ClipRef.current, payload])
+  }
+
+  async function runAnalysis(clips) {
+    setPhase('analyzing')
+
     const result = await analyzeCEFRAssessment(
-      payload.base64, payload.mimeType,
-      'read a short passage aloud and then describe a recent project in their own words'
+      clips,
+      'describe a recent project or task they worked on and what they found most challenging'
     )
 
     if (!result) {
-      setError('Scoring failed. Please try again in a moment.')
-      setPhase('intro')
+      setError('Scoring failed. Please try again in a moment. Your Step 1 recording is saved, so just redo your answer.')
+      setPhase('step2')
       return
     }
 
@@ -227,7 +258,7 @@ export default function Assessment() {
           <p className="text-sm mb-6" style={{ color: '#6B8CAE' }}>
             Read a short passage aloud, then answer one question. You get two numbers: your <strong className="text-white">San4 Score</strong> (how you communicate, the number worth putting on your CV) and your English level (CEFR). Vak assesses your
             <strong className="text-white"> pronunciation, grammar, vocabulary and fluency</strong> and
-            gives you a CEFR level (A1–C2) — the global standard.
+            gives you a CEFR level (A1–C2), the global standard.
           </p>
 
           {error && (
@@ -245,44 +276,96 @@ export default function Assessment() {
             <p className="text-sm leading-relaxed" style={{ color: '#E2E8F0' }}>{QUESTION}</p>
           </div>
 
-          <button onClick={startRecording} className="btn-primary w-full py-4 text-base">
-            🎙️ Start the assessment →
+          <button onClick={() => { setError(null); setPhase('step1') }} className="btn-primary w-full py-4 text-base">
+            🎙️ Start Step 1 →
           </button>
           <p className="text-xs mt-3" style={{ color: '#6B8CAE' }}>
-            Takes ~2 minutes. Your audio is analysed once and not stored after scoring.
+            Two short recordings, ~2 minutes total. Your audio is analysed once and not stored after scoring.
           </p>
         </main>
       </div>
     )
   }
 
-  // ── RECORDING ──────────────────────────────────────────────────────────────
-  if (phase === 'recording') {
+  // ── STEP PAGES — each step is its own recording with its own button ────────
+  const stepPage = phase === 'step1' ? 1 : phase === 'step2' ? 2 : null
+  if (stepPage) {
+    const isOne = stepPage === 1
+    const accent = isOne ? '#8B5CF6' : '#00C49A'
     return (
       <div className="min-h-screen flex flex-col" style={{ background: '#060E1A' }}>
         {user ? <Navbar /> : <GuestHeader />}
         <main className="flex-1 max-w-lg mx-auto w-full px-4 py-6 flex flex-col">
+
+          {/* Step header */}
           <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-2 px-3 py-1.5 rounded-full"
-              style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)' }}>
-              <span className="w-2.5 h-2.5 rounded-full animate-pulse" style={{ background: '#F87171' }} />
-              <span className="text-sm font-bold" style={{ color: '#F87171' }}>Recording {fmt(seconds)}</span>
+            <div className="flex items-center gap-2">
+              {[1, 2].map(n => (
+                <span key={n} className="text-xs font-bold px-3 py-1.5 rounded-full"
+                  style={{
+                    background: n === stepPage ? `${accent}22` : 'rgba(255,255,255,0.05)',
+                    color:      n === stepPage ? accent : n < stepPage ? '#00C49A' : '#6B8CAE',
+                    border:     `1px solid ${n === stepPage ? `${accent}55` : 'rgba(255,255,255,0.1)'}`,
+                  }}>
+                  {n < stepPage ? '✓' : ''} Step {n}
+                </span>
+              ))}
             </div>
-            <div className="animate-float"><VakMascot level={3} size={52} /></div>
+            {recOn ? (
+              <div className="flex items-center gap-2 px-3 py-1.5 rounded-full"
+                style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)' }}>
+                <span className="w-2.5 h-2.5 rounded-full animate-pulse" style={{ background: '#F87171' }} />
+                <span className="text-sm font-bold" style={{ color: '#F87171' }}>{fmt(seconds)}</span>
+              </div>
+            ) : (
+              <div className="animate-float"><VakMascot level={3} size={44} /></div>
+            )}
           </div>
 
+          {/* Task card */}
           <div className="flex-1 overflow-y-auto rounded-2xl p-5 mb-4"
             style={{ background: 'linear-gradient(160deg,#10192E,#0B1220)', border: '1px solid rgba(255,255,255,0.08)' }}>
-            <div className="text-xs font-bold uppercase tracking-widest mb-2" style={{ color: '#8B5CF6' }}>Read this aloud</div>
-            <p className="text-base leading-relaxed mb-5" style={{ color: '#FFFFFF' }}>{PASSAGE}</p>
-            <div className="text-xs font-bold uppercase tracking-widest mb-2" style={{ color: '#00C49A' }}>Then answer in your own words</div>
-            <p className="text-base leading-relaxed" style={{ color: '#FFFFFF' }}>{QUESTION}</p>
+            {isOne ? (
+              <>
+                <div className="text-xs font-bold uppercase tracking-widest mb-2" style={{ color: accent }}>
+                  Step 1 of 2 · Read this aloud
+                </div>
+                <p className="text-base leading-relaxed" style={{ color: '#FFFFFF' }}>{PASSAGE}</p>
+                <p className="text-xs mt-4" style={{ color: '#6B8CAE' }}>
+                  Tap the button, read the passage at your natural pace, then tap again when you finish.
+                </p>
+              </>
+            ) : (
+              <>
+                <div className="text-xs font-bold uppercase tracking-widest mb-2" style={{ color: accent }}>
+                  Step 2 of 2 · Now, in your own words
+                </div>
+                <p className="text-base leading-relaxed" style={{ color: '#FFFFFF' }}>{QUESTION}</p>
+                <p className="text-xs mt-4" style={{ color: '#6B8CAE' }}>
+                  No script this time. Tap, speak for 30 to 60 seconds, tap when you are done.
+                </p>
+              </>
+            )}
           </div>
 
-          <button onClick={finishRecording} className="btn-primary w-full py-4 text-base"
-            style={{ opacity: seconds < 10 ? 0.6 : 1 }} disabled={seconds < 10}>
-            {seconds < 10 ? `Keep speaking… (${10 - seconds}s)` : '✓ Done, score me →'}
+          {error && (
+            <div className="rounded-2xl px-4 py-3 mb-4 text-sm"
+              style={{ background: 'rgba(239,68,68,0.1)', color: '#FCA5A5', border: '1px solid rgba(239,68,68,0.3)' }}>
+              {error}
+            </div>
+          )}
+
+          <button onClick={() => handleStepButton(stepPage)} className="btn-primary w-full py-4 text-base"
+            style={!recOn ? { background: `linear-gradient(135deg, ${accent}, #9B7EC8)` } : undefined}>
+            {recOn
+              ? (isOne ? '✓ Finished reading → ' : '✓ Done, score me →')
+              : (isOne ? '🎙️ Start reading' : '🎙️ Start speaking')}
           </button>
+          {recOn && seconds < MIN_STEP_SECONDS && (
+            <p className="text-xs text-center mt-2" style={{ color: '#6B8CAE' }}>
+              Recording… keep going for at least {MIN_STEP_SECONDS} seconds
+            </p>
+          )}
         </main>
       </div>
     )
@@ -294,8 +377,8 @@ export default function Assessment() {
       <div className="min-h-screen flex flex-col items-center justify-center gap-6" style={{ background: '#060E1A' }}>
         <div className="animate-float"><VakMascot level={4} size={100} /></div>
         <div className="text-center">
-          <div className="text-white font-bold text-xl mb-2">Scoring your English…</div>
-          <div style={{ color: '#6B8CAE' }}>Assessing pronunciation, grammar, vocabulary and fluency</div>
+          <div className="text-white font-bold text-xl mb-2">Scoring how you communicate…</div>
+          <div style={{ color: '#6B8CAE' }}>Two numbers coming up: your San4 Score and your English level</div>
         </div>
         <div className="flex gap-2">
           {[0,1,2].map(i => (

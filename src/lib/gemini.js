@@ -551,12 +551,16 @@ function safeJsonParse(text, fallback = null) {
 // question, Gemini returns a CEFR band (A1–C2) and 0-100 sub-scores. We already
 // compute the same dimensions in session analysis — this packages them as the
 // onboarding hook.
-export async function analyzeCEFRAssessment(audioBase64, mimeType = 'audio/webm', promptText = '') {
-  const prompt = `You are a certified language assessor evaluating a spoken English sample using the CEFR (Common European Framework of Reference) scale: A1, A2, B1, B2, C1, C2.
+// clips: [{ base64, mimeType }, { base64, mimeType }] — recording 1 is the
+// read-aloud passage, recording 2 is the spontaneous answer.
+export async function analyzeCEFRAssessment(clips, promptText = '') {
+  const prompt = `You are a certified language assessor evaluating spoken English samples using the CEFR (Common European Framework of Reference) scale: A1, A2, B1, B2, C1, C2.
 
-The speaker was asked to: ${promptText || 'read a short passage aloud and then answer a spontaneous question about their work.'}
+TWO recordings are attached:
+RECORDING 1: the speaker reading a fixed passage aloud (tests pronunciation, pacing, and reading fluency).
+RECORDING 2: the speaker answering spontaneously${promptText ? `: ${promptText}` : ' about a recent project and its challenges'} (tests real-world spontaneous speech: vocabulary, grammar in the wild, structure, confidence).
 
-Listen to the recording. First transcribe what the human said. Then make TWO separate assessments:
+Weigh RECORDING 2 more heavily for grammar, vocabulary, structure, and confidence. Weigh RECORDING 1 more heavily for pronunciation and pacing. Transcribe what the human said in both, then make TWO separate assessments:
 
 ASSESSMENT 1, LANGUAGE (CEFR): assess their spoken English across four dimensions and assign an overall CEFR level. Be fair but honest — most Indian professionals land in the B1–B2 range. Reserve C1/C2 for genuinely advanced, near-native fluency.
 
@@ -590,16 +594,36 @@ Return JSON only (no markdown, no code fences):
   "next_step": "One concrete next practice recommendation"
 }`
 
-  try {
-    const text = await geminiGenerate(AUDIO_MODEL, [
-      { inlineData: { mimeType, data: audioBase64 } },
-      { text: prompt },
-    ])
-    return safeJsonParse(text, null)
-  } catch (err) {
-    console.warn('analyzeCEFRAssessment failed:', err.message)
-    return null
+  const list = Array.isArray(clips) ? clips.filter(c => c?.base64) : []
+  const parts = [
+    { text: prompt },
+    { text: 'RECORDING 1 (read-aloud passage):' },
+    { inlineData: { mimeType: list[0]?.mimeType || 'audio/webm', data: list[0]?.base64 } },
+  ]
+  if (list[1]) {
+    parts.push(
+      { text: 'RECORDING 2 (spontaneous answer):' },
+      { inlineData: { mimeType: list[1].mimeType || 'audio/webm', data: list[1].base64 } },
+    )
   }
+
+  // Same hardening as the daily rep analyser: strict JSON mode, tolerant
+  // extraction, one retry. flash-lite is fast and proven with audio; the old
+  // 'gemini-flash-latest' alias resolves to a slow thinking model.
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      const text = await geminiGenerate(MODEL, parts, {
+        generationConfig: { responseMimeType: 'application/json' },
+      })
+      const parsed = extractJson(text)
+      if (parsed && parsed.cefr_level) return parsed
+      console.warn('analyzeCEFRAssessment: unparseable response, attempt', attempt + 1)
+    } catch (err) {
+      console.warn('analyzeCEFRAssessment failed, attempt', attempt + 1, err.message)
+    }
+    await new Promise(r => setTimeout(r, 800))
+  }
+  return null
 }
 
 // ── Call Analyzer — real meeting recording feedback (Vak Elite) ───────────────
