@@ -479,8 +479,21 @@ export default function Assessment() {
             </div>
           )}
 
-          {/* Transcript */}
-          {report.transcript && (
+          {/* Transcripts — one box per recording */}
+          {report.transcript_reading && (
+            <div className="card mb-3" style={{ background: 'rgba(139,92,246,0.05)', border: '1px solid rgba(139,92,246,0.2)' }}>
+              <h3 className="text-white font-bold text-sm mb-2">📖 Step 1 · The passage, as Vak heard you read it</h3>
+              <p className="text-sm italic leading-relaxed" style={{ color: '#94A3B8' }}>"{report.transcript_reading}"</p>
+            </div>
+          )}
+          {report.transcript_answer && (
+            <div className="card mb-5" style={{ background: 'rgba(0,196,154,0.05)', border: '1px solid rgba(0,196,154,0.2)' }}>
+              <h3 className="text-white font-bold text-sm mb-2">🗣️ Step 2 · Your answer, as Vak heard it</h3>
+              <p className="text-sm italic leading-relaxed" style={{ color: '#94A3B8' }}>"{report.transcript_answer}"</p>
+            </div>
+          )}
+          {/* Old saved reports (single combined transcript) */}
+          {!report.transcript_reading && !report.transcript_answer && report.transcript && (
             <div className="card mb-5" style={{ background: 'rgba(139,92,246,0.05)', border: '1px solid rgba(139,92,246,0.2)' }}>
               <h3 className="text-white font-bold text-sm mb-2">📝 What Vak heard</h3>
               <p className="text-sm italic leading-relaxed" style={{ color: '#94A3B8' }}>"{report.transcript}"</p>

@@ -575,7 +575,8 @@ Write every user-facing string like a real person talking. Never use em dashes o
 
 Return JSON only (no markdown, no code fences):
 {
-  "transcript": "exact transcription of what the speaker said",
+  "transcript_reading": "exact transcription of RECORDING 1, the read-aloud passage as they actually said it",
+  "transcript_answer": "exact transcription of RECORDING 2, their spontaneous answer, faithfully including fillers",
   "cefr_level": "one of A1, A2, B1, B2, C1, C2",
   "cefr_label": "short human label, e.g. 'Upper Intermediate'",
   "overall_score": <integer 0-100>,
