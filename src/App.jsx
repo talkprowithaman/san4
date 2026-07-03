@@ -23,6 +23,7 @@ import Assessment     from './pages/Assessment'
 import CallAnalyzer   from './pages/CallAnalyzer'
 import Reminders      from './pages/Reminders'
 import HowItWorks     from './pages/HowItWorks'
+import PrivacyPolicy  from './pages/PrivacyPolicy'
 import ReminderScheduler from './components/ReminderScheduler'
 
 // In the native Android/iOS shell there is no SPA server fallback, so deep
@@ -51,6 +52,10 @@ export default function App() {
         <Route path="/auth/callback" element={<AuthCallback />} />
         <Route path="/pricing"       element={<Pricing />} />
         <Route path="/how-it-works"  element={<HowItWorks />} />
+        <Route path="/privacy"       element={<PrivacyPolicy />} />
+        {/* Public San4 Score test: value BEFORE signup (Duolingo onboarding
+            principle). Guests get their score, then a save-it CTA. */}
+        <Route path="/assessment"    element={<Assessment />} />
 
         {/* Protected */}
         <Route path="/today"     element={<ProtectedRoute><Today /></ProtectedRoute>} />
@@ -65,7 +70,6 @@ export default function App() {
         <Route path="/micro-drill"     element={<ProtectedRoute><MicroDrill /></ProtectedRoute>} />
         <Route path="/progress"        element={<ProtectedRoute><Progress /></ProtectedRoute>} />
         <Route path="/body-language"   element={<ProtectedRoute><BodyLanguage /></ProtectedRoute>} />
-        <Route path="/assessment"      element={<ProtectedRoute><Assessment /></ProtectedRoute>} />
         <Route path="/call-analyzer"   element={<ProtectedRoute><CallAnalyzer /></ProtectedRoute>} />
         <Route path="/reminders"       element={<ProtectedRoute><Reminders /></ProtectedRoute>} />
 

@@ -9,6 +9,7 @@ import Navbar               from '../components/Navbar'
 import VakMascot            from '../components/VakMascot'
 import DailyMissions        from '../components/DailyMissions'
 import SituationOfTheDay    from '../components/SituationOfTheDay'
+import { computeSan4Score, scoreBand } from '../lib/san4Score'
 
 export default function Dashboard() {
   const { user, profile }       = useAuth()
@@ -148,8 +149,11 @@ export default function Dashboard() {
         </div>
 
         {/* Stats row */}
-        <div className="grid grid-cols-3 gap-3 mb-5 reveal reveal-d1">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5 reveal reveal-d1">
           {[
+            { icon: '🎯', label: 'San4 Score',
+              value: computeSan4Score(sessions, user?.id) ?? '?',
+              color: computeSan4Score(sessions, user?.id) != null ? scoreBand(computeSan4Score(sessions, user?.id)).color : '#6B8CAE' },
             { icon: '🔥', label: 'Streak',   value: streak > 0 ? `${streak}d` : '0',  color: '#7B5EA7' },
             { icon: '⭐', label: 'Total XP', value: totalXP,          color: '#F59E0B' },
             { icon: '🎭', label: 'Sessions', value: sessions.length,  color: '#00C49A' },

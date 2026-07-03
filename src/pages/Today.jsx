@@ -5,6 +5,8 @@ import { useProgress } from '../hooks/useProgress'
 import { getTodaysReps, getRepCompletions, REPS_PER_DAY } from '../lib/dailyReps'
 import { getFreezes } from '../lib/streakFreeze'
 import { generateShareCard, shareCard } from '../lib/shareCard'
+import { computeSan4Score, scoreBand } from '../lib/san4Score'
+import { supabase } from '../lib/supabase'
 import Navbar    from '../components/Navbar'
 import VakMascot from '../components/VakMascot'
 
@@ -15,10 +17,24 @@ export default function Today() {
   const navigate = useNavigate()
 
   const [completions, setCompletions] = useState([])
+  const [san4Score, setSan4Score] = useState(null)
   const reps = getTodaysReps()
 
   useEffect(() => {
     setCompletions(getRepCompletions(user?.id))
+  }, [user])
+
+  // The living San4 Score: assessment communication axis blended with the
+  // user's last 10 scored activities.
+  useEffect(() => {
+    if (!user) return
+    supabase
+      .from('practice_sessions')
+      .select('overall_score')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false })
+      .limit(10)
+      .then(({ data }) => setSan4Score(computeSan4Score(data || [], user.id)))
   }, [user])
 
   const firstName = profile?.name?.split(' ')[0] || 'there'
@@ -83,6 +99,42 @@ export default function Today() {
             </p>
           </div>
         </div>
+
+        {/* San4 Score: the number that goes on your CV */}
+        <Link to={san4Score != null ? '/progress' : '/assessment'}
+          className="block rounded-3xl p-5 mb-5 transition-all hover:opacity-95"
+          style={{
+            background: 'linear-gradient(160deg,#10192E,#0B1220)',
+            border: `1px solid ${san4Score != null ? `${scoreBand(san4Score).color}55` : 'rgba(255,255,255,0.08)'}`,
+          }}>
+          {san4Score != null ? (
+            <div className="flex items-center gap-4">
+              <div className="text-4xl font-black" style={{ color: scoreBand(san4Score).color }}>
+                {san4Score}
+              </div>
+              <div className="flex-1">
+                <div className="text-white font-bold text-sm">
+                  San4 Score · {scoreBand(san4Score).name}
+                </div>
+                <p className="text-xs mt-0.5" style={{ color: '#6B8CAE' }}>
+                  {scoreBand(san4Score).blurb} Every rep moves this number.
+                </p>
+              </div>
+              <span className="text-xs font-bold" style={{ color: '#7B5EA7' }}>View →</span>
+            </div>
+          ) : (
+            <div className="flex items-center gap-4">
+              <div className="text-3xl">🎯</div>
+              <div className="flex-1">
+                <div className="text-white font-bold text-sm">Get your San4 Score</div>
+                <p className="text-xs mt-0.5" style={{ color: '#6B8CAE' }}>
+                  One number for how you communicate. 2 minutes, free.
+                </p>
+              </div>
+              <span className="text-xs font-bold" style={{ color: '#7B5EA7' }}>Start →</span>
+            </div>
+          )}
+        </Link>
 
         {/* Daily goal */}
         <div className="flex items-center justify-between mb-3">

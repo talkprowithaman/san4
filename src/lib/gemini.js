@@ -556,7 +556,16 @@ export async function analyzeCEFRAssessment(audioBase64, mimeType = 'audio/webm'
 
 The speaker was asked to: ${promptText || 'read a short passage aloud and then answer a spontaneous question about their work.'}
 
-Listen to the recording. First transcribe what the human said. Then assess their spoken English across four dimensions and assign an overall CEFR level. Be fair but honest — most Indian professionals land in the B1–B2 range. Reserve C1/C2 for genuinely advanced, near-native fluency.
+Listen to the recording. First transcribe what the human said. Then make TWO separate assessments:
+
+ASSESSMENT 1, LANGUAGE (CEFR): assess their spoken English across four dimensions and assign an overall CEFR level. Be fair but honest — most Indian professionals land in the B1–B2 range. Reserve C1/C2 for genuinely advanced, near-native fluency.
+
+ASSESSMENT 2, COMMUNICATION (the San4 Score axis): completely SEPARATE from their English. Judge HOW they communicate, exactly as you would if they were speaking in their mother tongue. Do not let grammar, vocabulary, or accent affect these numbers at all:
+- clarity: is the point easy to follow? One idea at a time or a tangle?
+- confidence: assured and steady, or hedging, trailing off, apologising?
+- structure: do they lead with the point and support it, or ramble to it?
+- delivery: pace, pauses, vocal energy, filler discipline (English AND Hindi fillers).
+A person with broken English can score 90 on communication. A fluent speaker can score 40. That contrast is the entire point.
 
 Write every user-facing string like a real person talking. Never use em dashes or long dashes; use commas or periods instead.
 
@@ -570,10 +579,15 @@ Return JSON only (no markdown, no code fences):
   "grammar": <integer 0-100>,
   "vocabulary": <integer 0-100>,
   "fluency": <integer 0-100>,
+  "communication_score": <integer 0-100, the San4 Score: language-independent communication skill>,
+  "clarity": <integer 0-100>,
+  "confidence": <integer 0-100>,
+  "structure": <integer 0-100>,
+  "delivery": <integer 0-100>,
   "band_description": "2-sentence description of what this CEFR level means for real-world communication",
   "strengths": ["one specific strength citing what they said", "another"],
   "improvements": ["one specific, actionable improvement", "another"],
-  "next_step": "One concrete next practice recommendation to move up a band"
+  "next_step": "One concrete next practice recommendation"
 }`
 
   try {

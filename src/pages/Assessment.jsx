@@ -5,6 +5,7 @@ import { useProgress } from '../hooks/useProgress'
 import { supabase }   from '../lib/supabase'
 import { analyzeCEFRAssessment } from '../lib/gemini'
 import { generateShareCard, shareCard } from '../lib/shareCard'
+import { saveCommScore, scoreBand } from '../lib/san4Score'
 import Navbar    from '../components/Navbar'
 import VakMascot from '../components/VakMascot'
 
@@ -59,6 +60,32 @@ const RETAKE_DAYS = 30
 const cefrKey = (user) => `san4_cefr_${user?.id || 'guest'}`
 function fmtDate(ts) {
   return new Date(ts).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })
+}
+
+// Minimal header for logged-out visitors taking the public score test.
+function GuestHeader() {
+  return (
+    <nav className="sticky top-0 z-50 flex items-center justify-between px-5 h-14"
+      style={{ background: 'rgba(5,8,16,0.85)', backdropFilter: 'blur(20px)', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+      <Link to="/" className="flex items-center gap-2">
+        <img src="/san4-icon.png" alt="San4" width={26} height={26} className="rounded-lg" />
+        <span className="text-lg font-black text-white tracking-tight" style={{ fontFamily: 'Outfit, sans-serif' }}>
+          SAN<span style={{ color: '#7B5EA7' }}>4</span>
+        </span>
+      </Link>
+      <Link to="/auth" className="text-sm font-medium" style={{ color: '#6B8CAE' }}>Sign in</Link>
+    </nav>
+  )
+}
+
+// The category-defining line: language and communication are different skills.
+function framingLine(comm, langOverall) {
+  if (!Number.isFinite(comm) || !Number.isFinite(langOverall)) return null
+  if (comm + 5 < langOverall)
+    return "Your English isn't the problem. Your communication is. That's exactly what San4 trains."
+  if (comm > langOverall + 5)
+    return 'Your communication instincts are stronger than your English. Polish the language and you are unstoppable.'
+  return 'Your English and your communication are level. Time to raise both.'
 }
 
 export default function Assessment() {
@@ -176,6 +203,11 @@ export default function Assessment() {
     } catch { /* ignore */ }
     setLockedUntil(Date.now() + RETAKE_DAYS * 86400000)
 
+    // Seed the living San4 Score with the assessment's communication axis
+    if (Number.isFinite(result.communication_score)) {
+      saveCommScore(user?.id, result.communication_score)
+    }
+
     setReport(result)
     setPhase('report')
   }
@@ -184,16 +216,16 @@ export default function Assessment() {
   if (phase === 'intro') {
     return (
       <div className="min-h-screen" style={{ background: '#060E1A' }}>
-        <Navbar />
+        {user ? <Navbar /> : <GuestHeader />}
         <main className="max-w-lg mx-auto px-4 py-8 text-center">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full mb-4 text-sm font-semibold"
             style={{ background: 'rgba(139,92,246,0.12)', color: '#A78BFA', border: '1px solid rgba(139,92,246,0.25)' }}>
             🎯 Free 2-minute assessment
           </div>
           <div className="flex justify-center mb-3 animate-float"><VakMascot level={3} size={90} /></div>
-          <h1 className="text-2xl font-black text-white mb-2">Get your English speaking score</h1>
+          <h1 className="text-2xl font-black text-white mb-2">Get your San4 Score</h1>
           <p className="text-sm mb-6" style={{ color: '#6B8CAE' }}>
-            Read a short passage aloud, then answer one question. Vak scores your
+            Read a short passage aloud, then answer one question. You get two numbers: your <strong className="text-white">San4 Score</strong> (how you communicate, the number worth putting on your CV) and your English level (CEFR). Vak assesses your
             <strong className="text-white"> pronunciation, grammar, vocabulary and fluency</strong> and
             gives you a CEFR level (A1–C2) — the global standard.
           </p>
@@ -228,7 +260,7 @@ export default function Assessment() {
   if (phase === 'recording') {
     return (
       <div className="min-h-screen flex flex-col" style={{ background: '#060E1A' }}>
-        <Navbar />
+        {user ? <Navbar /> : <GuestHeader />}
         <main className="flex-1 max-w-lg mx-auto w-full px-4 py-6 flex flex-col">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2 px-3 py-1.5 rounded-full"
@@ -279,20 +311,56 @@ export default function Assessment() {
   if (phase === 'report' && report) {
     const band  = report.cefr_level
     const bColor = CEFR_COLOR[band] || '#8B5CF6'
+    const comm  = Number.isFinite(report.communication_score) ? report.communication_score : null
+    const commBand = comm != null ? scoreBand(comm) : null
+    const framing = framingLine(comm, report.overall_score)
     return (
       <div className="min-h-screen" style={{ background: '#060E1A' }}>
-        <Navbar />
+        {user ? <Navbar /> : <GuestHeader />}
         <main className="max-w-lg mx-auto px-4 py-8 animate-slide-up">
 
-          {/* Big CEFR badge */}
-          <div className="rounded-3xl p-6 mb-5 text-center"
-            style={{ background: `linear-gradient(160deg, ${bColor}22, #0B1220)`, border: `1px solid ${bColor}55`, boxShadow: `0 0 50px ${bColor}22` }}>
-            <div className="text-xs font-bold uppercase tracking-widest mb-3" style={{ color: '#6B8CAE' }}>Your CEFR Level</div>
-            <div className="font-black mb-1" style={{ fontSize: '4.5rem', lineHeight: 1, color: bColor }}>{band}</div>
-            <div className="text-lg font-bold text-white">{report.cefr_label}</div>
+          {/* ── The San4 Score: the anchor ─────────────────────────────────── */}
+          {comm != null && (
+            <div className="rounded-3xl p-6 mb-4 text-center"
+              style={{ background: `linear-gradient(160deg, ${commBand.color}22, #0B1220)`, border: `1px solid ${commBand.color}55`, boxShadow: `0 0 50px ${commBand.color}22` }}>
+              <div className="text-xs font-bold uppercase tracking-widest mb-3" style={{ color: '#6B8CAE' }}>Your San4 Score</div>
+              <div className="font-black mb-1" style={{ fontSize: '4.5rem', lineHeight: 1, color: commBand.color }}>{comm}</div>
+              <div className="text-lg font-bold text-white">{commBand.name}</div>
+              <p className="text-xs mt-1" style={{ color: '#6B8CAE' }}>{commBand.blurb}</p>
+              {framing && (
+                <p className="text-sm font-semibold leading-relaxed mt-4 px-2" style={{ color: '#E2E8F0' }}>
+                  {framing}
+                </p>
+              )}
+              <p className="text-xs mt-3" style={{ color: '#6B8CAE' }}>
+                One number for how you communicate. Every rep and session moves it.
+              </p>
+            </div>
+          )}
 
-            {/* CEFR scale strip */}
-            <div className="flex justify-center gap-1 mt-4">
+          {/* Communication breakdown */}
+          {comm != null && (
+            <div className="card mb-4">
+              <h3 className="text-white font-bold text-sm mb-4">How you communicate</h3>
+              <Bar icon="💡" label="Clarity"    value={report.clarity} />
+              <Bar icon="🦁" label="Confidence" value={report.confidence} />
+              <Bar icon="🧱" label="Structure"  value={report.structure} />
+              <Bar icon="🎙️" label="Delivery"   value={report.delivery} />
+            </div>
+          )}
+
+          {/* ── English level (CEFR): the familiar yardstick ────────────────── */}
+          <div className="rounded-3xl p-5 mb-4 text-center"
+            style={{ background: `linear-gradient(160deg, ${bColor}18, #0B1220)`, border: `1px solid ${bColor}44` }}>
+            <div className="text-xs font-bold uppercase tracking-widest mb-2" style={{ color: '#6B8CAE' }}>Your English Level</div>
+            <div className="flex items-center justify-center gap-3">
+              <div className="font-black" style={{ fontSize: '3rem', lineHeight: 1, color: bColor }}>{band}</div>
+              <div className="text-left">
+                <div className="text-white font-bold">{report.cefr_label}</div>
+                <div className="text-xs" style={{ color: '#6B8CAE' }}>CEFR, the global standard</div>
+              </div>
+            </div>
+            <div className="flex justify-center gap-1 mt-3">
               {CEFR_ORDER.map(l => (
                 <div key={l} className="px-2.5 py-1 rounded-lg text-xs font-bold transition-all"
                   style={{
@@ -302,17 +370,31 @@ export default function Assessment() {
                   }}>{l}</div>
               ))}
             </div>
-            <p className="text-sm leading-relaxed mt-4" style={{ color: '#94A3B8' }}>{report.band_description}</p>
+            <p className="text-sm leading-relaxed mt-3" style={{ color: '#94A3B8' }}>{report.band_description}</p>
           </div>
 
-          {/* Sub-scores */}
+          {/* Language breakdown */}
           <div className="card mb-5">
-            <h3 className="text-white font-bold text-sm mb-4">Your breakdown</h3>
+            <h3 className="text-white font-bold text-sm mb-4">Your English breakdown</h3>
             <Bar icon="🗣️" label="Pronunciation" value={report.pronunciation} />
             <Bar icon="📝" label="Grammar"       value={report.grammar} />
             <Bar icon="📚" label="Vocabulary"    value={report.vocabulary} />
             <Bar icon="🌊" label="Fluency"       value={report.fluency} />
           </div>
+
+          {/* Guest: save the score by signing up */}
+          {!user && (
+            <div className="card mb-5 text-center"
+              style={{ background: 'linear-gradient(135deg, rgba(123,94,167,0.15), rgba(0,196,154,0.08))', border: '1px solid rgba(123,94,167,0.4)' }}>
+              <p className="text-white font-bold mb-1">Don't lose this score</p>
+              <p className="text-sm mb-4" style={{ color: '#94A3B8' }}>
+                Create a free account to save it, train with Vak daily, and watch your San4 Score climb.
+              </p>
+              <Link to="/auth?mode=signup" className="btn-primary inline-block px-8 py-3">
+                Save my score, it's free →
+              </Link>
+            </div>
+          )}
 
           {/* Transcript */}
           {report.transcript && (
@@ -347,8 +429,8 @@ export default function Assessment() {
             style={{ background: `linear-gradient(135deg, ${bColor}18, rgba(139,92,246,0.06))`, border: `1px solid ${bColor}40` }}>
             <h3 className="font-bold text-sm mb-1" style={{ color: bColor }}>🎯 Your path to the next band</h3>
             <p className="text-sm mb-4" style={{ color: '#E2E8F0' }}>{report.next_step}</p>
-            <Link to="/practice" className="btn-primary w-full text-center block py-3">
-              Start climbing — practise free →
+            <Link to={user ? '/practice' : '/auth?mode=signup'} className="btn-primary w-full text-center block py-3">
+              Start climbing. Practise free →
             </Link>
           </div>
 
@@ -379,14 +461,18 @@ export default function Assessment() {
                   <button
                     onClick={async () => {
                       const blob = await generateShareCard({
-                        big: band,
-                        bigColor: bColor,
-                        label: 'My English level',
-                        sub: report.cefr_label,
+                        big: comm != null ? String(comm) : band,
+                        bigColor: comm != null ? commBand.color : bColor,
+                        label: comm != null ? 'My San4 Score' : 'My English level',
+                        sub: comm != null
+                          ? `${commBand.name} communicator · English ${band} (${report.cefr_label})`
+                          : report.cefr_label,
                         streak: progress?.streak_count ?? 0,
                         name: profile?.name || '',
                       })
-                      shareCard(blob, `I'm ${band} (${report.cefr_label}) on the San4 English assessment 🦢 Find your level free: san4.vercel.app`)
+                      shareCard(blob, comm != null
+                        ? `My San4 Score is ${comm} (${commBand.name}) 🎤 One number for how you communicate. Get yours free: san4.vercel.app`
+                        : `I'm ${band} (${report.cefr_label}) on the San4 English assessment 🦢 Find your level free: san4.vercel.app`)
                     }}
                     className="flex-1 py-3 rounded-2xl font-bold text-sm text-white transition-all hover:opacity-90"
                     style={{ background: 'linear-gradient(135deg,#7B5EA7,#9B7EC8)' }}>
