@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { useLocation, useNavigate, useParams } from 'react-router-dom'
+import { useLocation, useNavigate, useParams, Link } from 'react-router-dom'
 import { useAuth }     from '../hooks/useAuth'
 import { useProgress } from '../hooks/useProgress'
 import { supabase }    from '../lib/supabase'
@@ -58,7 +58,7 @@ function wpmLabel(wpm) {
 export default function PracticeSession() {
   const { scenarioId }  = useParams()
   const { state }       = useLocation()
-  const { user }        = useAuth()
+  const { user, profile, recordVoiceConsent } = useAuth()
   const navigate        = useNavigate()
   const { awardXP }     = useProgress()
   const { isPro }       = useSubscription()
@@ -85,6 +85,12 @@ export default function PracticeSession() {
   const [ttsOn,       setTtsOn]       = useState(true)
   const [vakSpeaking, setVakSpeaking] = useState(false)
   const [micBlocked,  setMicBlocked]  = useState(false) // mic permission denied
+
+  // ── Voice-recording consent (DPDP) ────────────────────────────────────────
+  // profile.voice_consent_at is set once, permanently, the first time a user
+  // agrees. After that we don't ask again — only the checkbox gates first use.
+  const alreadyGaveVoiceConsent = !!profile?.voice_consent_at
+  const [voiceConsentChecked, setVoiceConsentChecked] = useState(false)
 
   // ── ESL mode state ────────────────────────────────────────────────────────
   const [eslMode, setEslMode] = useState(() => {
@@ -716,7 +722,37 @@ export default function PracticeSession() {
           ))}
         </div>
 
-        <button onClick={() => { primeAudio(); setSetupDone(true) }} className="btn-play w-full">
+        {/* Voice-recording consent (DPDP) — only shown until given once */}
+        {!alreadyGaveVoiceConsent && (
+          <label className="w-full mb-4 flex items-start gap-2.5 text-xs leading-relaxed cursor-pointer select-none px-4 py-3 rounded-2xl"
+            style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', color: '#6B8CAE' }}>
+            <input
+              type="checkbox"
+              checked={voiceConsentChecked}
+              onChange={e => setVoiceConsentChecked(e.target.checked)}
+              className="mt-0.5 shrink-0"
+              style={{ accentColor: '#7B5EA7' }}
+              required
+            />
+            <span>
+              I consent to San4 recording my voice during this session and sending it to our
+              AI processor (Google Gemini) to transcribe and score my speech. See the{' '}
+              <Link to="/privacy" target="_blank" className="font-semibold hover:text-white transition-colors"
+                style={{ color: '#7B5EA7' }}>Privacy Policy</Link>.
+            </span>
+          </label>
+        )}
+
+        <button
+          onClick={async () => {
+            primeAudio()
+            if (!alreadyGaveVoiceConsent && user) await recordVoiceConsent(user.id)
+            setSetupDone(true)
+          }}
+          disabled={!alreadyGaveVoiceConsent && !voiceConsentChecked}
+          className="btn-play w-full"
+          style={!alreadyGaveVoiceConsent && !voiceConsentChecked ? { opacity: 0.5, cursor: 'not-allowed' } : undefined}
+        >
           <span className="text-xl">🎮</span>
           <span>Start Session</span>
           <span style={{ opacity: 0.7, fontSize: '0.85rem' }}>→</span>
@@ -766,7 +802,7 @@ export default function PracticeSession() {
     <div className="min-h-screen flex items-center justify-center" style={{ background: '#050810' }}>
       <div className="text-center animate-fade-in">
         <div className="flex justify-center mb-4 animate-float">
-          <VakMascot level={3} size={100} />
+          <VakMascot level={3} size={100} mood="thinking" />
         </div>
         <h2 className="text-white font-bold text-xl mb-2">Vak is reviewing your session…</h2>
         <p className="text-sm" style={{ color: '#6B8CAE' }}>Checking filler words, pacing, confidence. Building your report.</p>
@@ -1044,7 +1080,8 @@ export default function PracticeSession() {
                 }}
               />
               <div className={vakSpeaking ? 'animate-float' : listening ? '' : 'animate-float'}>
-                <VakMascot level={3} size={110} />
+                <VakMascot level={3} size={110}
+                  mood={vakSpeaking ? 'encouraging' : listening ? 'listening' : aiThinking ? 'thinking' : 'neutral'} />
               </div>
             </div>
 
