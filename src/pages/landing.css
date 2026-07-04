@@ -407,11 +407,24 @@ html.lenis, html.lenis body { height: auto; }
 .amb-orb-1 { animation: orbDrift1 20s ease-in-out infinite; }
 .amb-orb-2 { animation: orbDrift2 26s ease-in-out infinite; }
 
+/* ── Overflow guards ─────────────────────────────────────────────────────── */
+/* Grid/flex children default to min-width:auto and refuse to shrink below their
+   content. The draggable scenario marquee is intentionally very wide (max-content),
+   so without this it stretches the hero column past the viewport and the text +
+   buttons get clipped by the section's overflow:hidden. min-width:0 lets the column
+   shrink to the viewport and clip the marquee instead. */
+html, body { overflow-x: hidden; }
+.hero-left-col { min-width: 0; max-width: 100%; }
+.ticker-wrap  { width: 100%; max-width: 100%; }
+
 /* ── Responsive ──────────────────────────────────────────────────────────── */
 @media (max-width: 768px) {
   .hero-right-col, .ai-phone-col, .deco-phone, .deco-card { display: none !important; }
 }
 @media (max-width: 480px) {
-  .hero-btns  { flex-direction: column !important; }
+  .hero-btns  { flex-direction: column !important; align-items: stretch !important; }
+  .hero-btns a { text-align: center; }
   .cta-btns   { flex-direction: column !important; align-items: center !important; }
+  /* Ease the headline down so long words ("Every Voice.") never clip */
+  .hero-left-col h1 { font-size: clamp(38px, 11vw, 56px) !important; }
 }

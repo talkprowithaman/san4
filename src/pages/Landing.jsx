@@ -191,7 +191,7 @@ export default function Landing() {
         <div className="max-w-7xl mx-auto px-6 lg:px-10 w-full grid lg:grid-cols-2 gap-12 items-center py-24 relative z-10">
 
           {/* ── Left column ─────────────────────────────────────────────── */}
-          <div>
+          <div className="hero-left-col">
             {/* Headline */}
             <h1 className="font-black leading-[1.05] tracking-tight mb-6"
               style={{ fontSize:'clamp(52px,7vw,88px)' }}>
