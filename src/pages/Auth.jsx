@@ -175,8 +175,8 @@ export default function Auth() {
                 <span>
                   I agree to the{' '}
                   <Link to="/privacy" target="_blank" className="font-semibold hover:text-white transition-colors"
-                    style={{ color: '#7B5EA7' }}>Privacy Policy</Link>
-                  {' '}— I understand San4 records and processes my voice and practice sessions with AI to give me feedback.
+                    style={{ color: '#7B5EA7' }}>Privacy Policy</Link>.
+                  {' '}I understand San4 records and processes my voice and practice sessions with AI to give me feedback.
                 </span>
               </label>
             )}
