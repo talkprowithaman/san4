@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate, useSearchParams, Link } from 'react-router-dom'
 import { useAuth, useAuthStore } from '../hooks/useAuth'
 import VakMascot from '../components/VakMascot'
+import { PRIVACY_POLICY_VERSION } from '../lib/consent'
 
 export default function Auth() {
   const [params]  = useSearchParams()
@@ -9,6 +10,7 @@ export default function Auth() {
   const [form, setForm] = useState({ name: '', email: '', password: '' })
   const [error, setError]   = useState('')
   const [loading, setLoading] = useState(false)
+  const [consented, setConsented] = useState(false)
 
   const { signIn, signUp } = useAuth()
   const { user } = useAuthStore()
@@ -25,9 +27,16 @@ export default function Auth() {
 
   async function submit(e) {
     e.preventDefault()
+    if (mode === 'signup' && !consented) {
+      setError('Please agree to the Privacy Policy to create an account.')
+      return
+    }
     setLoading(true); setError('')
     const { error: err } = mode === 'signup'
-      ? await signUp(form.email, form.password, form.name)
+      ? await signUp(form.email, form.password, form.name, {
+          consentedAt: new Date().toISOString(),
+          version: PRIVACY_POLICY_VERSION,
+        })
       : await signIn(form.email, form.password)
     if (err) { setError(err.message); setLoading(false) }
     else if (mode === 'signup') { setLoading(false); setMode('check-email') }
@@ -152,6 +161,26 @@ export default function Auth() {
                 minLength={8} required />
             </div>
 
+            {mode === 'signup' && (
+              <label className="flex items-start gap-2.5 text-xs leading-relaxed cursor-pointer select-none"
+                style={{ color: '#6B8CAE' }}>
+                <input
+                  type="checkbox"
+                  checked={consented}
+                  onChange={e => { setConsented(e.target.checked); setError('') }}
+                  className="mt-0.5 shrink-0"
+                  style={{ accentColor: '#7B5EA7' }}
+                  required
+                />
+                <span>
+                  I agree to the{' '}
+                  <Link to="/privacy" target="_blank" className="font-semibold hover:text-white transition-colors"
+                    style={{ color: '#7B5EA7' }}>Privacy Policy</Link>.
+                  {' '}I understand San4 records and processes my voice and practice sessions with AI to give me feedback.
+                </span>
+              </label>
+            )}
+
             {error && (
               <div
                 className="text-sm px-4 py-3 rounded-2xl"
@@ -167,8 +196,9 @@ export default function Auth() {
 
             <button
               type="submit"
-              disabled={loading}
+              disabled={loading || (mode === 'signup' && !consented)}
               className="btn-play mt-1"
+              style={mode === 'signup' && !consented ? { opacity: 0.5, cursor: 'not-allowed' } : undefined}
             >
               {loading
                 ? '…'

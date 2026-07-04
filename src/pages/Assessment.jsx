@@ -99,6 +99,10 @@ export default function Assessment() {
   const [report,  setReport]  = useState(null)
   const [error,   setError]   = useState(null)
   const [lockedUntil, setLockedUntil] = useState(null) // retake gate timestamp
+  // Guests have no account to store consent against, so we gate the public
+  // score test on an explicit tick (DPDP: affirmative consent, not a notice).
+  // Signed-in users already consented at signup, so this only shows for guests.
+  const [guestConsent, setGuestConsent] = useState(false)
 
   // ── Restore a previously saved score so the level persists across visits ──
   useEffect(() => {
@@ -276,7 +280,36 @@ export default function Assessment() {
             <p className="text-sm leading-relaxed" style={{ color: '#E2E8F0' }}>{QUESTION}</p>
           </div>
 
-          <button onClick={() => { setError(null); setPhase('step1') }} className="btn-primary w-full py-4 text-base">
+          {/* Guest consent (DPDP) — signed-in users already consented at signup */}
+          {!user && (
+            <label className="w-full mb-4 flex items-start gap-2.5 text-xs leading-relaxed cursor-pointer select-none px-4 py-3 rounded-2xl text-left"
+              style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', color: '#6B8CAE' }}>
+              <input
+                type="checkbox"
+                checked={guestConsent}
+                onChange={e => { setGuestConsent(e.target.checked); setError('') }}
+                className="mt-0.5 shrink-0"
+                style={{ accentColor: '#7B5EA7' }}
+                required
+              />
+              <span>
+                I consent to San4 recording my voice for this test and sending it to our
+                AI processor (Google Gemini) to score my speech. See the{' '}
+                <Link to="/privacy" target="_blank" className="font-semibold hover:text-white transition-colors"
+                  style={{ color: '#7B5EA7' }}>Privacy Policy</Link>.
+              </span>
+            </label>
+          )}
+
+          <button
+            onClick={() => {
+              if (!user && !guestConsent) { setError('Please tick the consent box to start.'); return }
+              setError(null); setPhase('step1')
+            }}
+            disabled={!user && !guestConsent}
+            className="btn-primary w-full py-4 text-base"
+            style={!user && !guestConsent ? { opacity: 0.5, cursor: 'not-allowed' } : undefined}
+          >
             🎙️ Start Step 1 →
           </button>
           <p className="text-xs mt-3" style={{ color: '#6B8CAE' }}>

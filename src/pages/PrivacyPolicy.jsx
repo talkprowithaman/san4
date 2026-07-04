@@ -5,7 +5,7 @@ import { PRIVACY_POLICY_EFFECTIVE_DATE } from '../lib/consent'
 // TODO(Aman): fill in once the operating entity is incorporated —
 // see business_status memory (trademark/Udyam currently under "San4 Media").
 // A grievance officer contact is mandatory under DPDP Act 2023, s.13 / Rule 10.
-const LEGAL_ENTITY_NAME   = '[San4 — legal entity name pending incorporation]'
+const LEGAL_ENTITY_NAME   = '[San4, legal entity name pending incorporation]'
 const GRIEVANCE_OFFICER   = '[Name pending]'
 const GRIEVANCE_EMAIL     = 'privacy@san4.ai'
 const REGISTERED_ADDRESS  = '[Registered address pending incorporation]'
@@ -25,7 +25,7 @@ const TOC = [
   ['who-we-are',      '1. Who we are'],
   ['what-we-collect', '2. What data we collect'],
   ['why-we-collect',  '3. Why we collect it (purpose limitation)'],
-  ['voice-data',      '4. Voice & AI processing — special note'],
+  ['voice-data',      '4. Voice & AI processing, a special note'],
   ['legal-basis',     '5. Your consent'],
   ['sharing',         '6. Who we share data with'],
   ['transfers',       '7. Cross-border data transfer'],
@@ -66,26 +66,26 @@ export default function PrivacyPolicy() {
           <p>
             San4 ("Sanchaar") is an AI communication coaching product operated by {LEGAL_ENTITY_NAME},
             based in India ({REGISTERED_ADDRESS}). Under the DPDP Act, we act as the <strong>Data
-            Fiduciary</strong> — we decide the purpose and means of processing your personal data.
+            Fiduciary</strong>. We decide the purpose and means of processing your personal data.
           </p>
         </Section>
 
         <Section id="what-we-collect" title="2. What data we collect">
           <p><strong>Account data:</strong> name, email address, password (hashed by our auth
-            provider, Supabase — we never see it in plain text), and profile details you add
+            provider, Supabase, and we never see it in plain text), and profile details you add
             (role, goal).</p>
           <p><strong>Voice & session data:</strong> audio recordings of your practice sessions,
             auto-generated transcripts, filler-word counts, pacing/confidence scores, meeting
             agendas and AI-generated talking points you create in Meeting Prep.</p>
           <p><strong>Payment data:</strong> your subscription plan and status. We do <em>not</em>
-            collect or store your card/UPI details — payments are handled entirely by Razorpay,
+            collect or store your card/UPI details. Payments are handled entirely by Razorpay,
             a licensed payment aggregator.</p>
           <p><strong>Technical data:</strong> device/browser type, IP address, and basic usage
             logs, collected for security and to keep the Service working reliably.</p>
         </Section>
 
         <Section id="why-we-collect" title="3. Why we collect it (purpose limitation)">
-          <p>We only process your data for the specific purposes below — nothing broader:</p>
+          <p>We only process your data for the specific purposes below, nothing broader:</p>
           <ul className="list-disc pl-5 space-y-1.5">
             <li>Running your practice sessions and generating AI feedback (confidence, pacing, filler words, action items)</li>
             <li>Building your progress history so trends over time are meaningful</li>
@@ -97,15 +97,15 @@ export default function PrivacyPolicy() {
             transcripts to train third-party AI models.</p>
         </Section>
 
-        <Section id="voice-data" title="4. Voice & AI processing — special note">
+        <Section id="voice-data" title="4. Voice & AI processing, a special note">
           <p>
             Because San4's core feature involves recording and analysing your voice, we treat
             audio and transcripts as sensitive data with extra care:
           </p>
           <ul className="list-disc pl-5 space-y-1.5">
             <li>Recording only happens during an active practice session that you started, and only after you've given voice-specific consent (see the checkbox before every session)</li>
-            <li>Audio is sent to our AI processor (currently Google Gemini, see §6) solely to transcribe your speech and generate your feedback report — it is not reviewed by San4 staff except to investigate a bug or a report you raise</li>
-            <li>You can request deletion of any session's audio/transcript at any time — see §10</li>
+            <li>Audio is sent to our AI processor (currently Google Gemini, see §6) solely to transcribe your speech and generate your feedback report. It is not reviewed by San4 staff except to investigate a bug or a report you raise</li>
+            <li>You can request deletion of any session's audio/transcript at any time (see §10)</li>
           </ul>
         </Section>
 
@@ -121,7 +121,7 @@ export default function PrivacyPolicy() {
           </ul>
           <p>
             We keep a timestamped record of both, tied to your account. You may withdraw
-            consent at any time (see §10) — this will not affect processing already carried
+            consent at any time (see §10). This will not affect processing already carried
             out before withdrawal, but will stop future recording and may limit which features
             you can use (e.g. voice practice requires voice consent).
           </p>
@@ -130,10 +130,10 @@ export default function PrivacyPolicy() {
         <Section id="sharing" title="6. Who we share data with">
           <p>We share data only with processors who help us run the Service, under contract, and only to the extent needed:</p>
           <ul className="list-disc pl-5 space-y-1.5">
-            <li><strong>Supabase</strong> — authentication and database hosting (account data, session history)</li>
-            <li><strong>Google (Gemini API)</strong> — AI processing of your practice conversations, voice transcription, and speech synthesis</li>
-            <li><strong>Razorpay</strong> — payment processing (India-licensed payment aggregator)</li>
-            <li><strong>Vercel</strong> — application hosting</li>
+            <li><strong>Supabase</strong>: authentication and database hosting (account data, session history)</li>
+            <li><strong>Google (Gemini API)</strong>: AI processing of your practice conversations, voice transcription, and speech synthesis</li>
+            <li><strong>Razorpay</strong>: payment processing (India-licensed payment aggregator)</li>
+            <li><strong>Vercel</strong>: application hosting</li>
           </ul>
           <p>We do not share your data with advertisers or data brokers. We may disclose data
             if legally required to (e.g. a valid order from an Indian court or authority).</p>
@@ -143,7 +143,7 @@ export default function PrivacyPolicy() {
           <p>
             Some processors above (notably Google) may process data on servers outside India.
             The DPDP Act permits this unless the destination country is specifically restricted
-            by the Central Government — as of this policy's effective date, no such restriction
+            by the Central Government. As of this policy's effective date, no such restriction
             applies to our processors. We select processors that maintain strong security and
             contractual data-protection commitments regardless of location.
           </p>
@@ -176,7 +176,7 @@ export default function PrivacyPolicy() {
             <li><strong>Erase</strong> your data (individual sessions or your entire account) once it's no longer needed for the purpose it was collected</li>
             <li><strong>Withdraw consent</strong> at any time, as easily as you gave it</li>
             <li><strong>Nominate</strong> another individual to exercise these rights on your behalf in the event of death or incapacity</li>
-            <li><strong>Grievance redressal</strong> — raise a complaint with us first (§14), and escalate to the Data Protection Board of India if unresolved</li>
+            <li><strong>Grievance redressal</strong>: raise a complaint with us first (§14), and escalate to the Data Protection Board of India if unresolved</li>
           </ul>
           <p>
             To exercise any of these, email <a href={`mailto:${GRIEVANCE_EMAIL}`} className="font-semibold hover:text-white transition-colors" style={{ color: '#7B5EA7' }}>{GRIEVANCE_EMAIL}</a> from
@@ -197,7 +197,7 @@ export default function PrivacyPolicy() {
             We currently use only strictly-necessary cookies/local storage (for login sessions
             and your in-app preferences like language). If we enable product analytics (e.g.
             Mixpanel or Google Analytics) in future, we will update this policy and this section
-            before doing so, and such tools will only collect anonymised usage patterns — never
+            before doing so, and such tools will only collect anonymised usage patterns, never
             your voice recordings or session content.
           </p>
         </Section>

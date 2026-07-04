@@ -44,15 +44,44 @@ export function useAuth() {
     setLoading(false)
   }
 
-  async function signUp(email, password, name) {
+  async function signUp(email, password, name, consent) {
     const { data, error } = await supabase.auth.signUp({
       email, password,
       options: {
-        data: { name },
+        // consent.version/consentedAt are written into profiles by the
+        // handle_new_user() trigger — see supabase/schema.sql. This keeps
+        // the DPDP consent record atomic with account creation.
+        data: {
+          name,
+          terms_consent_at: consent?.consentedAt,
+          terms_version: consent?.version,
+        },
         emailRedirectTo: `${window.location.origin}/auth/callback`,
       },
     })
     return { data, error }
+  }
+
+  // Records mic/voice-processing consent the first time a user starts a
+  // recorded practice session. Called from PracticeSession.jsx.
+  // Must never throw: a failed write should re-ask next time, not trap the
+  // user on the setup screen with a dead "Start Session" button. Also updates
+  // the local profile optimistically so we don't re-ask within this session.
+  async function recordVoiceConsent(userId) {
+    const at = new Date().toISOString()
+    const current = useAuthStore.getState().profile
+    setProfile({ ...(current || { id: userId }), voice_consent_at: at })
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ voice_consent_at: at })
+        .eq('id', userId)
+      if (error) throw error
+      return true
+    } catch (e) {
+      console.warn('recordVoiceConsent failed (will re-ask next login):', e.message)
+      return false
+    }
   }
 
   async function signIn(email, password) {
@@ -64,5 +93,5 @@ export function useAuth() {
     await supabase.auth.signOut()
   }
 
-  return { user, profile, loading, signUp, signIn, signOut }
+  return { user, profile, loading, signUp, signIn, signOut, recordVoiceConsent }
 }

@@ -17,8 +17,18 @@ CREATE TABLE IF NOT EXISTS profiles (
   role       TEXT DEFAULT 'professional',
   goal       TEXT,
   created_at TIMESTAMPTZ DEFAULT NOW(),
-  updated_at TIMESTAMPTZ DEFAULT NOW()
+  updated_at TIMESTAMPTZ DEFAULT NOW(),
+  -- DPDP Act 2023 consent trail — recorded at the moment of affirmative action,
+  -- not inferred. See /privacy and PrivacyPolicy.jsx "Consent Records" section.
+  terms_consent_at   TIMESTAMPTZ,      -- set at signup, when the ToS/Privacy checkbox is ticked
+  terms_version       TEXT,             -- which policy version was agreed to (see PRIVACY_POLICY_VERSION)
+  voice_consent_at   TIMESTAMPTZ       -- set the first time the user starts a mic-recorded session
 );
+
+-- Safe to re-run: adds the consent columns to a profiles table created before this migration.
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS terms_consent_at TIMESTAMPTZ;
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS terms_version    TEXT;
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS voice_consent_at TIMESTAMPTZ;
 
 ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
 
@@ -36,8 +46,16 @@ CREATE POLICY "Users can insert own profile" ON profiles FOR INSERT WITH CHECK (
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS TRIGGER LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
 BEGIN
-  INSERT INTO public.profiles (id, name)
-  VALUES (NEW.id, COALESCE(NEW.raw_user_meta_data->>'name', ''))
+  INSERT INTO public.profiles (id, name, terms_consent_at, terms_version)
+  VALUES (
+    NEW.id,
+    COALESCE(NEW.raw_user_meta_data->>'name', ''),
+    -- Consent timestamp/version travel in via signUp() options.data so the
+    -- audit trail is written atomically with account creation, no race with
+    -- a later client-side UPDATE.
+    (NEW.raw_user_meta_data->>'terms_consent_at')::TIMESTAMPTZ,
+    NEW.raw_user_meta_data->>'terms_version'
+  )
   ON CONFLICT (id) DO NOTHING;
   RETURN NEW;
 END;
