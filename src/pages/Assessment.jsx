@@ -194,7 +194,7 @@ export default function Assessment() {
       step1ClipRef.current = payload
       setError(null)
       setSeconds(0)
-      setPhase('step2')
+      setPhase('step2cue')
       return
     }
 
@@ -211,7 +211,7 @@ export default function Assessment() {
 
     if (!result) {
       setError('Scoring failed. Please try again in a moment. Your Step 1 recording is saved, so just redo your answer.')
-      setPhase('step2')
+      setPhase('step2cue')
       return
     }
 
@@ -304,7 +304,7 @@ export default function Assessment() {
           <button
             onClick={() => {
               if (!user && !guestConsent) { setError('Please tick the consent box to start.'); return }
-              setError(null); setPhase('step1')
+              setError(null); setPhase('step1cue')
             }}
             disabled={!user && !guestConsent}
             className="btn-primary w-full py-4 text-base"
@@ -320,86 +320,148 @@ export default function Assessment() {
     )
   }
 
-  // ── STEP PAGES — each step is its own recording with its own button ────────
-  const stepPage = phase === 'step1' ? 1 : phase === 'step2' ? 2 : null
-  if (stepPage) {
-    const isOne = stepPage === 1
+  // Shared step-progress chips
+  const StepChips = ({ activeStep }) => (
+    <div className="flex items-center gap-2">
+      {[1, 2].map(n => {
+        const active = n === activeStep
+        const done = n < activeStep
+        const c = n === 1 ? '#8B5CF6' : '#00C49A'
+        return (
+          <span key={n} className="text-xs font-bold px-3 py-1.5 rounded-full"
+            style={{
+              background: active ? `${c}22` : 'rgba(255,255,255,0.05)',
+              color:      active ? c : done ? '#00C49A' : '#6B8CAE',
+              border:     `1px solid ${active ? `${c}55` : 'rgba(255,255,255,0.1)'}`,
+            }}>
+            {done ? '✓ ' : ''}Step {n}
+          </span>
+        )
+      })}
+    </div>
+  )
+
+  // ── CUE PAGES — read the task, then tap "Let's go" to the mic ─────────────
+  const cueStep = phase === 'step1cue' ? 1 : phase === 'step2cue' ? 2 : null
+  if (cueStep) {
+    const isOne = cueStep === 1
     const accent = isOne ? '#8B5CF6' : '#00C49A'
     return (
       <div className="min-h-screen flex flex-col" style={{ background: '#060E1A' }}>
         {user ? <Navbar /> : <GuestHeader />}
         <main className="flex-1 max-w-lg mx-auto w-full px-4 py-6 flex flex-col">
+          <div className="mb-6"><StepChips activeStep={cueStep} /></div>
 
-          {/* Step header */}
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-2">
-              {[1, 2].map(n => (
-                <span key={n} className="text-xs font-bold px-3 py-1.5 rounded-full"
-                  style={{
-                    background: n === stepPage ? `${accent}22` : 'rgba(255,255,255,0.05)',
-                    color:      n === stepPage ? accent : n < stepPage ? '#00C49A' : '#6B8CAE',
-                    border:     `1px solid ${n === stepPage ? `${accent}55` : 'rgba(255,255,255,0.1)'}`,
-                  }}>
-                  {n < stepPage ? '✓' : ''} Step {n}
-                </span>
-              ))}
-            </div>
-            {recOn ? (
-              <div className="flex items-center gap-2 px-3 py-1.5 rounded-full"
-                style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)' }}>
-                <span className="w-2.5 h-2.5 rounded-full animate-pulse" style={{ background: '#F87171' }} />
-                <span className="text-sm font-bold" style={{ color: '#F87171' }}>{fmt(seconds)}</span>
+          {isOne ? (
+            /* Step 1 cue: read-aloud passage */
+            <div className="flex-1 flex flex-col justify-center">
+              <div className="text-xs font-bold uppercase tracking-widest mb-3" style={{ color: accent }}>
+                Step 1 of 2 · Read this aloud
               </div>
-            ) : (
-              <div className="animate-float"><VakMascot level={3} size={44} mood="listening" /></div>
-            )}
-          </div>
+              <div className="rounded-3xl p-6"
+                style={{ background: 'linear-gradient(160deg,#10192E,#0B1220)', border: `1px solid ${accent}44` }}>
+                <p className="text-lg leading-relaxed" style={{ color: '#FFFFFF' }}>{PASSAGE}</p>
+              </div>
+              <p className="text-sm mt-4 text-center" style={{ color: '#6B8CAE' }}>
+                On the next screen, tap the mic and read this out loud at your natural pace.
+              </p>
+            </div>
+          ) : (
+            /* Step 2 cue: THE question, the highlight of the screen */
+            <div className="flex-1 flex flex-col justify-center text-center">
+              <div className="text-xs font-bold uppercase tracking-widest mb-6" style={{ color: accent }}>
+                Step 2 of 2 · Your turn to speak
+              </div>
+              <div className="text-5xl mb-6">🎤</div>
+              <h1 className="text-2xl sm:text-3xl font-black text-white leading-snug mb-6 px-2"
+                style={{ fontFamily: 'Outfit, sans-serif' }}>
+                {QUESTION}
+              </h1>
+              <p className="text-sm" style={{ color: '#6B8CAE' }}>
+                No script this time. Just speak for 30 to 60 seconds, like you would to a colleague.
+              </p>
+            </div>
+          )}
 
-          {/* Task card */}
-          <div className="flex-1 overflow-y-auto rounded-2xl p-5 mb-4"
-            style={{ background: 'linear-gradient(160deg,#10192E,#0B1220)', border: '1px solid rgba(255,255,255,0.08)' }}>
-            {isOne ? (
-              <>
-                <div className="text-xs font-bold uppercase tracking-widest mb-2" style={{ color: accent }}>
-                  Step 1 of 2 · Read this aloud
-                </div>
-                <p className="text-base leading-relaxed" style={{ color: '#FFFFFF' }}>{PASSAGE}</p>
-                <p className="text-xs mt-4" style={{ color: '#6B8CAE' }}>
-                  Tap the button, read the passage at your natural pace, then tap again when you finish.
-                </p>
-              </>
-            ) : (
-              <>
-                <div className="text-xs font-bold uppercase tracking-widest mb-2" style={{ color: accent }}>
-                  Step 2 of 2 · Now, in your own words
-                </div>
-                <p className="text-base leading-relaxed" style={{ color: '#FFFFFF' }}>{QUESTION}</p>
-                <p className="text-xs mt-4" style={{ color: '#6B8CAE' }}>
-                  No script this time. Tap, speak for 30 to 60 seconds, tap when you are done.
-                </p>
-              </>
-            )}
-          </div>
+          <button
+            onClick={() => { setError(null); setSeconds(0); setPhase(isOne ? 'step1rec' : 'step2rec') }}
+            className="btn-primary w-full py-4 text-base mt-6"
+            style={{ background: `linear-gradient(135deg, ${accent}, #9B7EC8)` }}
+          >
+            Let's go →
+          </button>
+        </main>
+      </div>
+    )
+  }
+
+  // ── RECORD PAGES — the MIC is the hero, nothing else competes ─────────────
+  const recStep = phase === 'step1rec' ? 1 : phase === 'step2rec' ? 2 : null
+  if (recStep) {
+    const isOne = recStep === 1
+    return (
+      <div className="min-h-screen flex flex-col" style={{ background: '#050810' }}>
+        {/* Minimal top: just step + timer, no nav to avoid distraction */}
+        <div className="px-4 py-4 flex items-center justify-between">
+          <StepChips activeStep={recStep} />
+          {recOn && (
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-full"
+              style={{ background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.35)' }}>
+              <span className="w-2.5 h-2.5 rounded-full animate-pulse" style={{ background: '#F87171' }} />
+              <span className="text-sm font-bold tabular-nums" style={{ color: '#F87171' }}>{fmt(seconds)}</span>
+            </div>
+          )}
+        </div>
+
+        <main className="flex-1 flex flex-col items-center justify-center px-6 w-full max-w-lg mx-auto text-center">
+          {/* Step 1 needs the passage visible to read; keep it, but muted so the mic dominates */}
+          {isOne && (
+            <div className="w-full max-h-44 overflow-y-auto rounded-2xl px-4 py-3 mb-8"
+              style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
+              <p className="text-sm leading-relaxed" style={{ color: '#94A3B8' }}>{PASSAGE}</p>
+            </div>
+          )}
+          {!isOne && (
+            <p className="text-sm mb-10 px-4" style={{ color: '#6B8CAE' }}>{QUESTION}</p>
+          )}
+
+          {/* THE MIC — big, glowing, unmistakable */}
+          <button
+            onClick={() => handleStepButton(recStep)}
+            className="relative flex items-center justify-center rounded-full transition-all active:scale-95"
+            style={{
+              width: 128, height: 128,
+              background: recOn
+                ? 'linear-gradient(135deg, #F87171, #EF4444)'
+                : 'linear-gradient(135deg, #7B5EA7, #9B7EC8)',
+              boxShadow: recOn
+                ? '0 0 60px rgba(239,68,68,0.55)'
+                : '0 0 55px rgba(123,94,167,0.5)',
+            }}
+          >
+            {recOn && <span className="absolute inset-0 rounded-full animate-ping" style={{ background: 'rgba(239,68,68,0.3)' }} />}
+            <span className="relative" style={{ fontSize: 52 }}>{recOn ? '⏹' : '🎤'}</span>
+          </button>
+
+          <p className="text-base font-semibold text-white mt-6">
+            {recOn
+              ? (isOne ? 'Reading… tap when you finish' : 'Speaking… tap when you finish')
+              : (isOne ? 'Tap to start reading' : 'Tap to start speaking')}
+          </p>
+          {recOn && seconds < MIN_STEP_SECONDS && (
+            <p className="text-xs mt-2" style={{ color: '#6B8CAE' }}>
+              Keep going for at least {MIN_STEP_SECONDS} seconds
+            </p>
+          )}
 
           {error && (
-            <div className="rounded-2xl px-4 py-3 mb-4 text-sm"
+            <div className="rounded-2xl px-4 py-3 mt-6 text-sm w-full"
               style={{ background: 'rgba(239,68,68,0.1)', color: '#FCA5A5', border: '1px solid rgba(239,68,68,0.3)' }}>
               {error}
             </div>
           )}
-
-          <button onClick={() => handleStepButton(stepPage)} className="btn-primary w-full py-4 text-base"
-            style={!recOn ? { background: `linear-gradient(135deg, ${accent}, #9B7EC8)` } : undefined}>
-            {recOn
-              ? (isOne ? '✓ Finished reading → ' : '✓ Done, score me →')
-              : (isOne ? '🎙️ Start reading' : '🎙️ Start speaking')}
-          </button>
-          {recOn && seconds < MIN_STEP_SECONDS && (
-            <p className="text-xs text-center mt-2" style={{ color: '#6B8CAE' }}>
-              Recording… keep going for at least {MIN_STEP_SECONDS} seconds
-            </p>
-          )}
         </main>
+        <div className="h-10" />
       </div>
     )
   }
