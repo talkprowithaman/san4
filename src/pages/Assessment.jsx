@@ -7,12 +7,13 @@ import { analyzeCEFRAssessment } from '../lib/gemini'
 import { generateShareCard, shareCard } from '../lib/shareCard'
 import { saveCommScore, scoreBand } from '../lib/san4Score'
 import { LANGUAGES, getLang, setLang, hasChosenLang, t } from '../lib/onboardingCopy'
+import { pickPassage } from '../lib/passages'
 import Navbar    from '../components/Navbar'
 import VakMascot from '../components/VakMascot'
 
 // ── The 2-minute task ─────────────────────────────────────────────────────────
-const PASSAGE = `Good communication is not about using big words. It is about being understood. When you speak clearly and with confidence, people trust you more. They listen, they remember, and they act on what you say. The best speakers are not the loudest in the room. They are the ones who say the right thing, at the right time, in the simplest possible way.`
-
+// Section A (read-aloud) rolls a fresh passage each attempt from a 100+ bank so
+// repeat takers can't memorise it — the pronunciation/pacing read stays honest.
 const QUESTION = `Now, in your own words: describe a recent project or task you worked on, and what you found most challenging about it.`
 
 // ── CEFR visual scale ─────────────────────────────────────────────────────────
@@ -99,6 +100,8 @@ export default function Assessment() {
   const [phase,   setPhase]   = useState(() => (hasChosenLang() ? 'intro' : 'language'))
   const [lang,    setLangState] = useState(getLang)
   const c = t(lang)
+  // Roll a read-aloud passage for this attempt; held steady through cue + record.
+  const [passage, setPassage] = useState(pickPassage)
   const [seconds, setSeconds] = useState(0)
   const [report,  setReport]  = useState(null)
   const [error,   setError]   = useState(null)
@@ -345,7 +348,7 @@ export default function Assessment() {
           <div className="rounded-2xl p-5 mb-4 text-left"
             style={{ background: 'linear-gradient(160deg,#10192E,#0B1220)', border: '1px solid rgba(255,255,255,0.08)' }}>
             <div className="text-xs font-bold uppercase tracking-widest mb-2" style={{ color: '#8B5CF6' }}>{c.step1Label}</div>
-            <p className="text-sm leading-relaxed mb-4" style={{ color: '#E2E8F0' }}>{PASSAGE}</p>
+            <p className="text-sm leading-relaxed mb-4" style={{ color: '#E2E8F0' }}>{passage}</p>
             <div className="text-xs font-bold uppercase tracking-widest mb-2" style={{ color: '#00C49A' }}>{c.step2Label}</div>
             <p className="text-sm leading-relaxed" style={{ color: '#E2E8F0' }}>{QUESTION}</p>
             {c.qgloss && <p className="text-xs leading-relaxed mt-2" style={{ color: '#8FA3BF' }}>{c.qgloss}</p>}
@@ -431,7 +434,7 @@ export default function Assessment() {
               </div>
               <div className="rounded-3xl p-6"
                 style={{ background: 'linear-gradient(160deg,#10192E,#0B1220)', border: `1px solid ${accent}44` }}>
-                <p className="text-lg leading-relaxed" style={{ color: '#FFFFFF' }}>{PASSAGE}</p>
+                <p className="text-lg leading-relaxed" style={{ color: '#FFFFFF' }}>{passage}</p>
               </div>
               <p className="text-sm mt-4 text-center" style={{ color: '#6B8CAE' }}>
                 {c.s1hint}
@@ -492,7 +495,7 @@ export default function Assessment() {
           {isOne && (
             <div className="w-full max-h-44 overflow-y-auto rounded-2xl px-4 py-3 mb-8"
               style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
-              <p className="text-sm leading-relaxed" style={{ color: '#94A3B8' }}>{PASSAGE}</p>
+              <p className="text-sm leading-relaxed" style={{ color: '#94A3B8' }}>{passage}</p>
             </div>
           )}
           {!isOne && (
@@ -646,7 +649,7 @@ export default function Assessment() {
                 Create a free account to save it, train with Vak daily, and watch your San4 Score climb.
               </p>
               <Link to="/auth?mode=signup" className="btn-primary inline-block px-8 py-3">
-                Save my score, it's free →
+                Save my score →
               </Link>
             </div>
           )}
@@ -720,7 +723,7 @@ export default function Assessment() {
                       🔒 Retake on {fmtDate(lockedUntil)}
                     </button>
                   ) : (
-                    <button onClick={() => { setReport(null); setError(null); setPhase('intro') }}
+                    <button onClick={() => { setReport(null); setError(null); setPassage(pickPassage()); setPhase('intro') }}
                       className="flex-1 py-3 rounded-2xl font-bold text-sm transition-all hover:opacity-90"
                       style={{ background: 'rgba(139,92,246,0.12)', border: '1px solid rgba(139,92,246,0.3)', color: '#A78BFA' }}>
                       🔁 Retake
