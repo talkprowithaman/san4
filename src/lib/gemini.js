@@ -131,6 +131,39 @@ function extractJson(text) {
 // Shared style rule for anything the user reads on screen.
 const HUMAN_STYLE = 'Write like a real person talking. Never use em dashes or long dashes in your output. Use commas, periods, or start a new sentence instead.'
 
+// Shared scoring rubric. Without hard anchors the model clusters everyone at
+// "average" (~70), which is exactly the "everyone gets 70" bug. This forces
+// use of the full range and precise, differentiated scores.
+const CALIBRATION = `SCORING CALIBRATION (read carefully, this matters):
+Use the FULL 0-100 range and score THIS specific person on what you actually heard. Do NOT default to 70. Do NOT cluster scores in the 65 to 75 band. Choose a precise number like 58, 63, 71, or 84, never a round default.
+Bands:
+- 90-100: exceptional and rare, would genuinely impress a senior leader. Almost no fillers, tight structure, commanding delivery.
+- 75-89: strong, clear and confident with only minor gaps.
+- 60-74: competent but with clear, nameable weaknesses.
+- 45-59: developing, gets the idea across but rambles, hedges, or leans on fillers.
+- 25-44: weak, hard to follow or very hesitant.
+- 0-24: barely attempted, off-topic, or unintelligible.
+Most genuine first attempts land between 48 and 72. Reserve 80+ for delivery you would honestly call impressive. If two people differ in quality, their scores must differ.`
+
+// Runs a scoring prompt in strict-JSON mode with tolerant extraction and one
+// retry. Returns the parsed object, or null on genuine failure (callers must
+// handle null and never fabricate a score).
+async function runScoredJson(model, parts) {
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      const text = await geminiGenerate(model, parts, {
+        generationConfig: { responseMimeType: 'application/json' },
+      })
+      const parsed = extractJson(text)
+      if (parsed) return parsed
+    } catch (e) {
+      console.warn('scored-json attempt', attempt + 1, 'failed:', e.message)
+    }
+    await new Promise(r => setTimeout(r, 600))
+  }
+  return null
+}
+
 // ── Daily Rep — instant feedback on one 60-second spoken answer ──────────────
 // The atomic loop: must be FAST (flash-lite, one call) and tiny (one score,
 // one win, one fix). Returns null after retries fail. Callers show a retry
@@ -151,6 +184,8 @@ LISTEN carefully to their spoken attempt (audio attached) and judge the FULL del
 Indian English and Hinglish are completely fine. Never penalise accent or code-switching.
 
 ${HUMAN_STYLE}
+
+${CALIBRATION}
 
 Return JSON only:
 {
@@ -362,6 +397,8 @@ ${voiceMeta ? `- Speaking pace: ${voiceMeta.avgWpm} WPM (flag if < 100 or > 200)
 
 Write every user-facing string like a real person talking. Never use em dashes or long dashes; use commas or periods instead.
 
+${CALIBRATION}
+
 Return JSON only (no markdown, no code fences):
 {
   "overall_score": <integer 0-100>,
@@ -376,21 +413,9 @@ Return JSON only (no markdown, no code fences):
   "pacing_note": "One sentence on their speaking pace and what to do about it"` : ''}
 }`
 
-  const text = await geminiGenerate(MODEL, prompt)
-
-  try {
-    const clean = text.replace(/^```json\s*/i, '').replace(/\s*```$/i, '')
-    return JSON.parse(clean)
-  } catch {
-    return {
-      overall_score: 70, confidence_score: 70, pacing_score: 70,
-      filler_word_count: 0, top_filler_words: [],
-      strengths: ['Completed the session'],
-      improvements: ['Keep practicing daily'],
-      action_item: 'Practice this scenario again tomorrow.',
-      summary: 'Session completed. Regular practice builds real confidence.',
-    }
-  }
+  // Hardened: strict JSON + retry, null on failure (endSession shows an honest
+  // "couldn't score" screen instead of a fabricated 70).
+  return runScoredJson(MODEL, prompt)
 }
 
 // ── Quick drill + daily challenge analysis ────────────────────────────────────
@@ -415,7 +440,11 @@ THE USER'S RESPONSE (from speech recognition):
 
 Time taken: ${timeTaken}s
 
-Be specific, direct, and concise. Return JSON only (no markdown):
+Be specific, direct, and concise.
+
+${CALIBRATION}
+
+Return JSON only (no markdown):
 {
   "score": <integer 0-100>,
   "led_with_point": <boolean, only relevant for BLUF — did they start with the conclusion?>,
@@ -426,19 +455,7 @@ Be specific, direct, and concise. Return JSON only (no markdown):
   "encouragement": "One warm, specific sentence of encouragement"
 }`
 
-  const text = await geminiGenerate(MODEL, fullPrompt)
-
-  try {
-    const clean = text.replace(/^```json\s*/i, '').replace(/\s*```$/i, '')
-    return JSON.parse(clean)
-  } catch {
-    return {
-      score: 70, led_with_point: null, clarity: 70, confidence: 70,
-      best_moment: null,
-      one_fix: 'Try to be more specific with examples in your next response.',
-      encouragement: 'Great effort completing the drill — consistency is what builds the skill.',
-    }
-  }
+  return runScoredJson(MODEL, fullPrompt)
 }
 
 // ── Script reading / teleprompter analysis ────────────────────────────────────
@@ -473,6 +490,8 @@ Analyse the user's spoken delivery against the original script. Consider:
 
 Write every user-facing string like a real person talking. Never use em dashes or long dashes; use commas or periods instead.
 
+${CALIBRATION}
+
 Return JSON only (no markdown, no code fences):
 {
   "overall_score": <integer 0-100>,
@@ -490,14 +509,12 @@ Return JSON only (no markdown, no code fences):
   "pacing_note": "One sentence on their speaking pace and what to adjust"
 }`
 
-  const text = await geminiGenerate(MODEL, prompt)
-
-  try {
-    const clean = text.replace(/^```json\s*/i, '').replace(/\s*```$/i, '')
-    return JSON.parse(clean)
-  } catch {
+  const parsed = await runScoredJson(MODEL, prompt)
+  if (parsed) return parsed
+  // Rare hard failure: honest-ish fallback (not a flat fabricated pass).
+  {
     return {
-      overall_score: 70, accuracy_score: 70, fluency_score: 70, pacing_score: 70,
+      overall_score: 55, accuracy_score: 55, fluency_score: 55, pacing_score: 55,
       filler_word_count: voiceMeta?.fillerCount ?? 0,
       top_filler_words: [],
       missed_phrases: [],
@@ -573,6 +590,8 @@ A person with broken English can score 90 on communication. A fluent speaker can
 
 Write every user-facing string like a real person talking. Never use em dashes or long dashes; use commas or periods instead.
 
+${CALIBRATION}
+
 Return JSON only (no markdown, no code fences):
 {
   "transcript_reading": "exact transcription of RECORDING 1, the read-aloud passage as they actually said it",
@@ -639,6 +658,8 @@ Multiple people may be speaking. Focus your coaching on the user's OWN contribut
 
 Write every user-facing string like a real person talking. Never use em dashes or long dashes; use commas or periods instead.
 
+${CALIBRATION}
+
 Return JSON only (no markdown, no code fences):
 {
   "summary": "2-sentence honest assessment of how the user came across in this meeting",
@@ -679,6 +700,8 @@ First, transcribe exactly what the human speaker said.
 Then analyse their spoken communication quality.
 
 Write every user-facing string like a real person talking. Never use em dashes or long dashes; use commas or periods instead.
+
+${CALIBRATION}
 
 Return JSON only (no markdown, no code fences):
 {
@@ -728,6 +751,8 @@ Compare what they actually said against the script. Evaluate:
 5. LONG PAUSES — nervous gaps (>2s) vs deliberate dramatic pauses
 
 Write every user-facing string like a real person talking. Never use em dashes or long dashes; use commas or periods instead.
+
+${CALIBRATION}
 
 Return JSON only (no markdown, no code fences):
 {
@@ -840,6 +865,8 @@ Assess each dimension:
 5. OVERALL PRESENCE — do they command attention? Is there energy and intentionality?
 
 Write every user-facing string like a real person talking. Never use em dashes or long dashes; use commas or periods instead.
+
+${CALIBRATION}
 
 Return JSON only (no markdown, no code fences):
 {

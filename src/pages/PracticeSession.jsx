@@ -568,6 +568,13 @@ export default function PracticeSession() {
         analysis = await analyzeSession(scenario.title, msgList, voiceMeta, { eslMode })
       }
 
+      // Both paths failed: surface it honestly, no fabricated score, no XP.
+      if (!analysis || typeof analysis.overall_score !== 'number') {
+        setFailed(true)
+        setAnalyzing(false)
+        return
+      }
+
       if (user) {
         await supabase.from('practice_sessions').insert({
           user_id:           user.id,
@@ -1043,6 +1050,46 @@ export default function PracticeSession() {
           </button>
         </div>
       </div>
+
+      {/* ── FOCUSED RECORDING OVERLAY ────────────────────────────────────────
+          When the user is speaking, the mic takes over the whole screen so
+          nothing else competes for attention. Covers all other UI. */}
+      {voiceMode && listening && (
+        <div className="fixed inset-0 z-40 flex flex-col items-center justify-center px-6"
+          style={{ background: '#050810' }}>
+          {/* Tiny reminder of what Vak asked, muted so it doesn't distract */}
+          {lastAiMsg && (
+            <p className="absolute top-6 left-0 right-0 px-8 text-center text-xs" style={{ color: 'rgba(107,140,174,0.7)' }}>
+              {lastAiMsg.content}
+            </p>
+          )}
+
+          {/* THE MIC — dead centre, glowing, the only thing that matters */}
+          <button
+            onClick={stopAndSend}
+            className="relative flex items-center justify-center rounded-full transition-all active:scale-95"
+            style={{
+              width: 132, height: 132,
+              background: 'linear-gradient(135deg, #7B5EA7, #FF4500)',
+              boxShadow: '0 0 70px rgba(123,94,167,0.6)',
+            }}
+          >
+            <span className="absolute inset-0 rounded-full animate-ping" style={{ background: 'rgba(123,94,167,0.3)' }} />
+            <span className="relative" style={{ fontSize: 54 }}>⏹</span>
+          </button>
+
+          <p className="text-base font-semibold text-white mt-7">Listening… tap to send</p>
+          <p className="text-xs mt-1" style={{ color: '#6B8CAE' }}>Or just pause for 2 seconds</p>
+
+          {/* Their words, live */}
+          <div className="w-full max-w-md mt-8 rounded-2xl px-4 py-3 min-h-[64px] max-h-40 overflow-y-auto"
+            style={{ background: liveText ? 'rgba(123,94,167,0.08)' : 'rgba(255,255,255,0.03)', border: `1px solid ${liveText ? 'rgba(123,94,167,0.3)' : 'rgba(255,255,255,0.06)'}` }}>
+            {liveText
+              ? <p className="text-white text-sm italic leading-relaxed text-center">{liveText}</p>
+              : <p className="text-sm italic text-center" style={{ color: 'rgba(107,140,174,0.6)' }}>Speak now, your words appear here</p>}
+          </div>
+        </div>
+      )}
 
       {voiceMode ? (
         /* ── VOICE MODE ─────────────────────────────────────────────────────── */
