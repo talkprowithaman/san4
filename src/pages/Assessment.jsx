@@ -6,6 +6,7 @@ import { supabase }   from '../lib/supabase'
 import { analyzeCEFRAssessment } from '../lib/gemini'
 import { generateShareCard, shareCard } from '../lib/shareCard'
 import { saveCommScore, scoreBand } from '../lib/san4Score'
+import { LANGUAGES, getLang, setLang, hasChosenLang, t } from '../lib/onboardingCopy'
 import Navbar    from '../components/Navbar'
 import VakMascot from '../components/VakMascot'
 
@@ -93,8 +94,11 @@ export default function Assessment() {
   const { progress } = useProgress()
   const navigate = useNavigate()
 
-  // phases: intro | recording | analyzing | report
-  const [phase,   setPhase]   = useState('intro')
+  // phases: language | intro | step1cue | step1rec | step2cue | step2rec | analyzing | report
+  // First-timers meet the mother-tongue picker; returning users skip straight to intro.
+  const [phase,   setPhase]   = useState(() => (hasChosenLang() ? 'intro' : 'language'))
+  const [lang,    setLangState] = useState(getLang)
+  const c = t(lang)
   const [seconds, setSeconds] = useState(0)
   const [report,  setReport]  = useState(null)
   const [error,   setError]   = useState(null)
@@ -247,23 +251,89 @@ export default function Assessment() {
     setPhase('report')
   }
 
+  // ── LANGUAGE — the mother-tongue welcome, the first thing a nervous user sees ─
+  // We greet them in every script so they instantly spot their own, then guide
+  // the whole assessment in that language. They still speak & get scored in English.
+  function chooseLanguage(code) {
+    setLang(code)
+    setLangState(code)
+    if (user) {
+      // Best-effort persist to profile; column may not exist yet (localStorage is source of truth)
+      supabase.from('profiles').update({ preferred_language: code }).eq('id', user.id).then(() => {}, () => {})
+    }
+    setPhase('intro')
+  }
+  if (phase === 'language') {
+    return (
+      <div className="min-h-screen flex flex-col" style={{ background: '#060E1A' }}>
+        {user ? <Navbar /> : <GuestHeader />}
+        <main className="flex-1 max-w-lg mx-auto w-full px-4 py-8 flex flex-col">
+          <div className="flex justify-center mb-4 animate-float"><VakMascot level={3} size={78} mood="encouraging" /></div>
+          <h1 className="text-2xl font-black text-white text-center mb-2" style={{ fontFamily: 'Outfit, sans-serif' }}>
+            {c.chooseTitle}
+          </h1>
+          <p className="text-sm text-center mb-6" style={{ color: '#6B8CAE' }}>{c.chooseSub}</p>
+
+          <div className="grid grid-cols-2 gap-2.5">
+            {LANGUAGES.map(l => {
+              const active = l.code === lang
+              return (
+                <button
+                  key={l.code}
+                  onClick={() => { setLang(l.code); setLangState(l.code) }}
+                  className="flex items-center gap-3 px-4 py-3.5 rounded-2xl text-left transition-all active:scale-[0.98]"
+                  style={{
+                    background: active ? 'rgba(139,92,246,0.16)' : 'rgba(255,255,255,0.04)',
+                    border: `1px solid ${active ? 'rgba(139,92,246,0.55)' : 'rgba(255,255,255,0.08)'}`,
+                  }}
+                >
+                  <span style={{ fontSize: 22 }}>{l.flag}</span>
+                  <span className="flex flex-col leading-tight">
+                    <span className="text-base font-bold text-white">{l.nativeName}</span>
+                    <span className="text-xs" style={{ color: '#6B8CAE' }}>{l.label}</span>
+                  </span>
+                </button>
+              )
+            })}
+          </div>
+
+          <button onClick={() => chooseLanguage(lang)} className="btn-primary w-full py-4 text-base mt-6">
+            {c.continue}
+          </button>
+        </main>
+      </div>
+    )
+  }
+
   // ── INTRO ──────────────────────────────────────────────────────────────────
   if (phase === 'intro') {
     return (
       <div className="min-h-screen" style={{ background: '#060E1A' }}>
         {user ? <Navbar /> : <GuestHeader />}
         <main className="max-w-lg mx-auto px-4 py-8 text-center">
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full mb-4 text-sm font-semibold"
-            style={{ background: 'rgba(139,92,246,0.12)', color: '#A78BFA', border: '1px solid rgba(139,92,246,0.25)' }}>
-            🎯 Free 2-minute assessment
+          <div className="flex items-center justify-center gap-2 mb-4">
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-semibold"
+              style={{ background: 'rgba(139,92,246,0.12)', color: '#A78BFA', border: '1px solid rgba(139,92,246,0.25)' }}>
+              {c.badge}
+            </div>
+            {/* Mother-tongue switcher — tap to change the language guiding you */}
+            <button onClick={() => setPhase('language')}
+              className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-sm font-semibold"
+              style={{ background: 'rgba(255,255,255,0.05)', color: '#6B8CAE', border: '1px solid rgba(255,255,255,0.1)' }}>
+              🌐 {LANGUAGES.find(l => l.code === lang)?.nativeName || 'English'} ▾
+            </button>
           </div>
           <div className="flex justify-center mb-3 animate-float"><VakMascot level={3} size={90} /></div>
-          <h1 className="text-2xl font-black text-white mb-2">Get your San4 Score</h1>
-          <p className="text-sm mb-6" style={{ color: '#6B8CAE' }}>
-            Read a short passage aloud, then answer one question. You get two numbers: your <strong className="text-white">San4 Score</strong> (how you communicate, the number worth putting on your CV) and your English level (CEFR). Vak assesses your
-            <strong className="text-white"> pronunciation, grammar, vocabulary and fluency</strong> and
-            gives you a CEFR level (A1–C2), the global standard.
-          </p>
+          <h1 className="text-2xl font-black text-white mb-2">{c.title}</h1>
+          {lang === 'en-US' ? (
+            <p className="text-sm mb-6" style={{ color: '#6B8CAE' }}>
+              Read a short passage aloud, then answer one question. You get two numbers: your <strong className="text-white">San4 Score</strong> (how you communicate, the number worth putting on your CV) and your English level (CEFR). Vak assesses your
+              <strong className="text-white"> pronunciation, grammar, vocabulary and fluency</strong> and
+              gives you a CEFR level (A1–C2), the global standard.
+            </p>
+          ) : (
+            <p className="text-sm mb-6" style={{ color: '#6B8CAE' }}>{c.intro}</p>
+          )}
 
           {error && (
             <div className="rounded-2xl px-4 py-3 mb-5 text-sm text-left"
@@ -274,10 +344,11 @@ export default function Assessment() {
 
           <div className="rounded-2xl p-5 mb-4 text-left"
             style={{ background: 'linear-gradient(160deg,#10192E,#0B1220)', border: '1px solid rgba(255,255,255,0.08)' }}>
-            <div className="text-xs font-bold uppercase tracking-widest mb-2" style={{ color: '#8B5CF6' }}>Step 1 · Read aloud</div>
+            <div className="text-xs font-bold uppercase tracking-widest mb-2" style={{ color: '#8B5CF6' }}>{c.step1Label}</div>
             <p className="text-sm leading-relaxed mb-4" style={{ color: '#E2E8F0' }}>{PASSAGE}</p>
-            <div className="text-xs font-bold uppercase tracking-widest mb-2" style={{ color: '#00C49A' }}>Step 2 · Then answer</div>
+            <div className="text-xs font-bold uppercase tracking-widest mb-2" style={{ color: '#00C49A' }}>{c.step2Label}</div>
             <p className="text-sm leading-relaxed" style={{ color: '#E2E8F0' }}>{QUESTION}</p>
+            {c.qgloss && <p className="text-xs leading-relaxed mt-2" style={{ color: '#8FA3BF' }}>{c.qgloss}</p>}
           </div>
 
           {/* Guest consent (DPDP) — signed-in users already consented at signup */}
@@ -310,10 +381,10 @@ export default function Assessment() {
             className="btn-primary w-full py-4 text-base"
             style={!user && !guestConsent ? { opacity: 0.5, cursor: 'not-allowed' } : undefined}
           >
-            🎙️ Start Step 1 →
+            {c.start}
           </button>
           <p className="text-xs mt-3" style={{ color: '#6B8CAE' }}>
-            Two short recordings, ~2 minutes total. Your audio is analysed once and not stored after scoring.
+            {c.footer}
           </p>
         </main>
       </div>
@@ -356,29 +427,32 @@ export default function Assessment() {
             /* Step 1 cue: read-aloud passage */
             <div className="flex-1 flex flex-col justify-center">
               <div className="text-xs font-bold uppercase tracking-widest mb-3" style={{ color: accent }}>
-                Step 1 of 2 · Read this aloud
+                {c.s1kicker}
               </div>
               <div className="rounded-3xl p-6"
                 style={{ background: 'linear-gradient(160deg,#10192E,#0B1220)', border: `1px solid ${accent}44` }}>
                 <p className="text-lg leading-relaxed" style={{ color: '#FFFFFF' }}>{PASSAGE}</p>
               </div>
               <p className="text-sm mt-4 text-center" style={{ color: '#6B8CAE' }}>
-                On the next screen, tap the mic and read this out loud at your natural pace.
+                {c.s1hint}
               </p>
             </div>
           ) : (
             /* Step 2 cue: THE question, the highlight of the screen */
             <div className="flex-1 flex flex-col justify-center text-center">
               <div className="text-xs font-bold uppercase tracking-widest mb-6" style={{ color: accent }}>
-                Step 2 of 2 · Your turn to speak
+                {c.s2kicker}
               </div>
               <div className="text-5xl mb-6">🎤</div>
-              <h1 className="text-2xl sm:text-3xl font-black text-white leading-snug mb-6 px-2"
+              <h1 className="text-2xl sm:text-3xl font-black text-white leading-snug mb-4 px-2"
                 style={{ fontFamily: 'Outfit, sans-serif' }}>
                 {QUESTION}
               </h1>
+              {c.qgloss && (
+                <p className="text-sm leading-relaxed mb-4 px-2" style={{ color: '#8FA3BF' }}>{c.qgloss}</p>
+              )}
               <p className="text-sm" style={{ color: '#6B8CAE' }}>
-                No script this time. Just speak for 30 to 60 seconds, like you would to a colleague.
+                {c.s2hint}
               </p>
             </div>
           )}
@@ -388,7 +462,7 @@ export default function Assessment() {
             className="btn-primary w-full py-4 text-base mt-6"
             style={{ background: `linear-gradient(135deg, ${accent}, #9B7EC8)` }}
           >
-            Let's go →
+            {c.letsGo}
           </button>
         </main>
       </div>
@@ -422,7 +496,10 @@ export default function Assessment() {
             </div>
           )}
           {!isOne && (
-            <p className="text-sm mb-10 px-4" style={{ color: '#6B8CAE' }}>{QUESTION}</p>
+            <div className="mb-10 px-4">
+              <p className="text-sm" style={{ color: '#6B8CAE' }}>{QUESTION}</p>
+              {c.qgloss && <p className="text-xs mt-1.5" style={{ color: '#54697F' }}>{c.qgloss}</p>}
+            </div>
           )}
 
           {/* THE MIC — big, glowing, unmistakable */}
@@ -472,8 +549,8 @@ export default function Assessment() {
       <div className="min-h-screen flex flex-col items-center justify-center gap-6" style={{ background: '#060E1A' }}>
         <div className="animate-float"><VakMascot level={4} size={100} mood="thinking" /></div>
         <div className="text-center">
-          <div className="text-white font-bold text-xl mb-2">Scoring how you communicate…</div>
-          <div style={{ color: '#6B8CAE' }}>Two numbers coming up: your San4 Score and your English level</div>
+          <div className="text-white font-bold text-xl mb-2">{c.scoring}</div>
+          <div style={{ color: '#6B8CAE' }}>{c.scoringSub}</div>
         </div>
         <div className="flex gap-2">
           {[0,1,2].map(i => (
