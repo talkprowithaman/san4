@@ -169,7 +169,7 @@ const STEPS = [
     body: 'Rehearse interviews, negotiations, and hard conversations against a coach who pushes back. Face a British exec, an American founder, or an Indian HR lead. The pressure is real, the room is safe.',
     Content: SessionContent },
   { kicker: 'Ten free levels, earned not given', title: 'Watch yourself climb.',
-    body: 'Every session earns XP and unlocks the next level. Clear each one by scoring above the bar. Ten levels are free if you earn them, and the mountain does not lie about your progress.',
+    body: 'Every session earns XP and unlocks the next level. Clear each one by scoring above the bar, and the mountain does not lie about your progress.',
     Content: ProgressionContent },
   { kicker: 'Honest feedback, every time',       title: 'Walk away knowing one thing to fix.',
     body: 'Every session ends with a clear report: your scores, what worked, and the single highest-impact thing to change next time. No wall of text, just one fix that matters.',

@@ -53,7 +53,7 @@ const STATS = [
 
 // ── Context cards (expandable) ─────────────────────────────────────────────────
 const CTX = [
-  { icon:'💡', title:'Built for Bharat', short:'Tuned to how India speaks.',
+  { icon:'💡', title:'Built for India', short:'Tuned to how India speaks.',
     more:'Accent-neutral AI trained on Indian English, Hindi-English code-switching, and regional speech. It understands you, not a textbook American voice.' },
   { icon:'🎯', title:'Scenario library', short:'14 real situations, not drills.',
     more:'HR rounds, group discussions, client pitches, salary negotiations. Each one plays out like the real thing, with a counterpart who pushes back.' },
@@ -217,12 +217,12 @@ export default function Landing() {
                 onMouseEnter={() => playTick('hover')}
                 className="btn-aura text-sm font-bold text-white px-7 py-4 rounded-full transition-all hover:opacity-90 active:scale-95"
                 style={{ background:'linear-gradient(135deg,#7B5EA7,#9B7EC8)' }}>
-                🎯 Get your San4 Score, free →
+                🎯 Get your San4 Score →
               </Link>
               <Link to="/auth?mode=signup"
                 className="text-sm font-semibold px-7 py-4 rounded-full transition-all hover:opacity-80"
                 style={{ color:'rgba(255,255,255,0.7)', border:'1px solid rgba(255,255,255,0.2)' }}>
-                Start practising free
+                Start practising
               </Link>
             </div>
 
@@ -446,7 +446,7 @@ export default function Landing() {
             <Link to="/auth?mode=signup"
               className="btn-aura text-base font-bold text-white px-10 py-5 rounded-full transition-all hover:opacity-90 active:scale-95"
               style={{ background:'linear-gradient(135deg,#7B5EA7,#9B7EC8)' }}>
-              Start practising free →
+              Start practising →
             </Link>
             <Link to="/how-it-works"
               className="text-base font-semibold px-10 py-5 rounded-full transition-all hover:opacity-80"
