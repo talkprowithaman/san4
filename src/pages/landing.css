@@ -56,36 +56,6 @@ html { scroll-behavior: smooth; }
   100% { transform: translate(3px, -2px); }
 }
 
-/* ── Pointer aura + ripple cursor (RippleCursor.jsx) ──────────────────────── */
-.vk-cursor-layer {
-  position: fixed;
-  inset: 0;
-  z-index: 70;
-  pointer-events: none;
-  overflow: hidden;
-}
-.vk-cursor-aura {
-  position: absolute;
-  top: 0; left: 0;
-  width: 320px; height: 320px;
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(139,92,246,0.10) 0%, rgba(0,196,154,0.05) 40%, transparent 70%);
-  will-change: transform;
-}
-.vk-ripple {
-  position: absolute;
-  width: 14px; height: 14px;
-  margin: -7px 0 0 -7px;
-  border-radius: 50%;
-  border: 1px solid rgba(167,139,250,0.5);
-  pointer-events: none;
-  animation: vkRipple 0.9s ease-out forwards;
-}
-@keyframes vkRipple {
-  0%   { transform: scale(0.4); opacity: 0.7; }
-  100% { transform: scale(5);   opacity: 0; }
-}
-
 /* ── Lenis smooth scroll base styles ──────────────────────────────────────── */
 html.lenis, html.lenis body { height: auto; }
 .lenis.lenis-smooth { scroll-behavior: auto !important; }
@@ -185,7 +155,6 @@ html.lenis, html.lenis body { height: auto; }
 @media (prefers-reduced-motion: reduce) {
   .grad-flow { animation: none; }
   .film-grain { animation: none; }
-  .vk-cursor-layer { display: none; }
   .intro-reveal { display: none; }
   .intro-eq span { animation: none; transform: scaleY(0.6); }
   .filler-chip { animation: none; }

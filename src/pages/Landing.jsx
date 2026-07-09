@@ -3,7 +3,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import VakMascot       from '../components/VakMascot'
-import RippleCursor    from '../components/RippleCursor'
 import HeroWaveform    from '../components/HeroWaveform'
 import IntroReveal     from '../components/IntroReveal'
 import DraggableMarquee from '../components/DraggableMarquee'
@@ -125,8 +124,7 @@ export default function Landing() {
       {/* Opt-in UI sound toggle (off by default) */}
       <SoundToggle />
 
-      {/* Cinematic overlays: pointer aura + ripples, and film grain */}
-      <RippleCursor />
+      {/* Cinematic overlay: film grain */}
       <div className="film-grain" aria-hidden="true" />
 
       {/* ══ NAVBAR ════════════════════════════════════════════════════════ */}
