@@ -262,7 +262,7 @@ export default function ProductShowcase() {
         <div>
           {STEPS.map((s, i) => (
             <div key={i} data-idx={i} ref={el => (stepRefs.current[i] = el)}
-              className="flex flex-col justify-center" style={{ minHeight: '105vh' }}>
+              className="flex flex-col justify-center" style={{ minHeight: '60vh' }}>
               <p className="text-xs font-bold uppercase tracking-widest mb-3 transition-colors"
                 style={{ color: i === active ? '#A78BFA' : 'rgba(167,139,250,0.4)' }}>{s.kicker}</p>
               <h3 className="font-black mb-4 transition-colors" style={{ fontSize: 'clamp(26px,3.2vw,40px)', lineHeight: 1.15, color: i === active ? '#fff' : 'rgba(255,255,255,0.35)' }}>{s.title}</h3>
