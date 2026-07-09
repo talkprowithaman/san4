@@ -16,6 +16,27 @@ import { useSmoothScroll } from '../hooks/useSmoothScroll'
 import { useParallax }     from '../hooks/useParallax'
 import './landing.css'
 
+// ── IndiaAI mark ──────────────────────────────────────────────────────────────
+// Self-contained recreation of the IndiaAI look (scattered dots + orange "ai"),
+// so it works under the strict preview CSP with no external image. Links out to
+// indiaai.gov.in from the footer badge.
+function IndiaAIMark() {
+  const O = '#F26722'
+  return (
+    <svg width="46" height="26" viewBox="0 0 92 52" role="img" aria-label="IndiaAI"
+      style={{ flexShrink: 0 }}>
+      <circle cx="10" cy="15" r="3"   fill={O} />
+      <circle cx="21" cy="7"  r="2"   fill={O} />
+      <circle cx="6"  cy="31" r="2.4" fill={O} />
+      <circle cx="25" cy="35" r="2"   fill={O} />
+      <circle cx="15" cy="44" r="1.6" fill={O} />
+      <circle cx="31" cy="19" r="2.6" fill="none" stroke={O} strokeWidth="1.6" />
+      <text x="40" y="40" fontFamily="Outfit, Poppins, sans-serif" fontWeight="800"
+        fontSize="34" fill={O}>ai</text>
+    </svg>
+  )
+}
+
 // ── Count-up stat ─────────────────────────────────────────────────────────────
 function CountUp({ to, suffix = '' }) {
   const ref = useRef(null)
@@ -551,6 +572,27 @@ export default function Landing() {
                 </a>
               ))}
             </div>
+          </div>
+        </div>
+
+        {/* IndiaAI Mission — San4 proudly supports the national AI mission */}
+        <div className="max-w-6xl mx-auto px-6 lg:px-10 pb-6">
+          <div className="pt-6" style={{ borderTop:'1px solid rgba(255,255,255,0.06)' }}>
+            <a href="https://indiaai.gov.in" target="_blank" rel="noopener noreferrer"
+              className="group inline-flex items-center gap-3 px-4 py-2.5 rounded-2xl transition-all"
+              style={{ background:'rgba(242,103,34,0.06)', border:'1px solid rgba(242,103,34,0.2)' }}
+              onMouseEnter={e=>{ e.currentTarget.style.background='rgba(242,103,34,0.1)'; e.currentTarget.style.borderColor='rgba(242,103,34,0.4)' }}
+              onMouseLeave={e=>{ e.currentTarget.style.background='rgba(242,103,34,0.06)'; e.currentTarget.style.borderColor='rgba(242,103,34,0.2)' }}>
+              <IndiaAIMark />
+              <span className="flex flex-col leading-tight">
+                <span className="text-[10px] font-semibold uppercase tracking-widest" style={{ color:'rgba(242,103,34,0.75)' }}>
+                  Proudly supporting
+                </span>
+                <span className="text-sm font-bold" style={{ color:'#F0F4F8' }}>
+                  the IndiaAI Mission
+                </span>
+              </span>
+            </a>
           </div>
         </div>
 
