@@ -227,11 +227,17 @@ export default function ProductShowcase() {
 
   return (
     <section className="py-24 px-6 lg:px-10" style={{ background: '#050810' }}>
-      <div className="max-w-3xl mx-auto text-center mb-14">
-        <p className="sa text-xs font-bold uppercase tracking-widest mb-4" style={{ color: '#6B8CAE' }}>Inside San4</p>
-        <h2 className="sa font-black text-white" data-delay="100" style={{ fontSize: 'clamp(28px,4.5vw,48px)', lineHeight: 1.1 }}>
-          See it before you sign up.
-        </h2>
+      {/* Heading — on desktop it pins to the top as a full-width band so it stays
+          part of the frame (with the phone + dots) while only the step text + phone
+          screen change. Full-width bg lets scrolling content pass behind it cleanly. */}
+      <div className="mb-14 lg:mb-0 lg:sticky lg:top-16 lg:z-30 lg:pt-2 lg:pb-6"
+        style={{ background: '#050810' }}>
+        <div className="max-w-3xl mx-auto text-center">
+          <p className="sa text-xs font-bold uppercase tracking-widest mb-4" style={{ color: '#6B8CAE' }}>Inside San4</p>
+          <h2 className="sa font-black text-white" data-delay="100" style={{ fontSize: 'clamp(28px,4.5vw,48px)', lineHeight: 1.1 }}>
+            See it before you sign up.
+          </h2>
+        </div>
       </div>
 
       {/* ── Mobile: tap-driven single phone ──────────────────────────────── */}
@@ -262,7 +268,7 @@ export default function ProductShowcase() {
         <div>
           {STEPS.map((s, i) => (
             <div key={i} data-idx={i} ref={el => (stepRefs.current[i] = el)}
-              className="flex flex-col justify-center" style={{ minHeight: '105vh' }}>
+              className="flex flex-col justify-center" style={{ minHeight: '60vh' }}>
               <p className="text-xs font-bold uppercase tracking-widest mb-3 transition-colors"
                 style={{ color: i === active ? '#A78BFA' : 'rgba(167,139,250,0.4)' }}>{s.kicker}</p>
               <h3 className="font-black mb-4 transition-colors" style={{ fontSize: 'clamp(26px,3.2vw,40px)', lineHeight: 1.15, color: i === active ? '#fff' : 'rgba(255,255,255,0.35)' }}>{s.title}</h3>
@@ -271,9 +277,9 @@ export default function ProductShowcase() {
           ))}
         </div>
 
-        {/* Sticky phone */}
+        {/* Sticky phone — floored at 190px so it never rides up under the pinned heading */}
         <div>
-          <div className="sticky flex justify-center" style={{ top: 'calc(50vh - 260px)' }}>
+          <div className="sticky flex justify-center" style={{ top: 'max(190px, calc(50vh - 260px))' }}>
             <Phone><div key={active} className="screen-swap h-full">{<ActiveContent />}</div></Phone>
           </div>
         </div>
