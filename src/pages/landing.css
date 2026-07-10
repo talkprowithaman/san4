@@ -381,8 +381,12 @@ html.lenis, html.lenis body { height: auto; }
    content. The draggable scenario marquee is intentionally very wide (max-content),
    so without this it stretches the hero column past the viewport and the text +
    buttons get clipped by the section's overflow:hidden. min-width:0 lets the column
-   shrink to the viewport and clip the marquee instead. */
-html, body { overflow-x: hidden; }
+   shrink to the viewport and clip the marquee instead.
+   NOTE: do NOT put overflow-x on html/body. `hidden` makes them a scroll container
+   (breaks `position: sticky` — the "Inside San4" phone + dots stop pinning) and
+   `clip` makes them a containing block for the fixed navbar (it stops staying put
+   on scroll). The wide marquee is already clipped by `.ticker-wrap { overflow:hidden }`
+   plus the column guards below, so no page-level overflow rule is needed. */
 .hero-left-col { min-width: 0; max-width: 100%; }
 .ticker-wrap  { width: 100%; max-width: 100%; }
 
