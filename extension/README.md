@@ -31,6 +31,22 @@ web app (`src/lib/communicationVideos.js`).
 - ✅ "Watch this to improve" using the shared video map.
 - ✅ Style-isolated UI (Shadow DOM) so Meet's CSS can't interfere.
 
+## Whose voice does it coach?
+
+**Only yours.** It records your microphone (`getUserMedia`) — not the Meet
+call's audio of other participants. The other-side "tab audio" capture exists in
+the code but is **not called** in the recording flow.
+
+The only way another person could leak in is acoustically: their voice out of
+your **speakers** reaching your mic. Two guards handle that:
+1. `echoCancellation` + `noiseSuppression` on the mic actively cancel the
+   speaker output (the other participants) and background noise.
+2. The Gemini prompt enforces a **single-speaker rule** — coach only the primary
+   (loudest, closest, continuous) voice; ignore faint background voices and
+   never attribute another person's words to the user.
+
+**Headphones** make it airtight (the others' audio never reaches the mic).
+
 ## Scaffolded / TODO (next commits)
 
 - ⛏️ **Other side of the call** — `background.js` + `offscreen.js` already capture

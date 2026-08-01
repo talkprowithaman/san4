@@ -32,7 +32,14 @@ function reportSchema() {
 // handles Hindi/Hinglish, unlike the Web Speech API which also fights Meet for
 // the mic). Mirrors the web app's analyzeMeetingRecording.
 export async function analyzeAudio(audioBase64, mimeType = 'audio/webm', { context = '', authToken = null } = {}) {
-  const prompt = `You are an executive communication coach. The attached audio is ONE person (the user) speaking during a real work call. Transcribe what they said, then coach HOW they communicated, not the meeting outcome. Be honest and calibrated: reserve 85+ for genuinely excellent delivery, most professionals land 55-75. Never fabricate numbers.
+  const prompt = `You are an executive communication coach. The attached audio was recorded from ONE person's microphone during a real work call. That microphone owner (the user, the primary voice: the loudest, closest, most continuous speaker) is the ONLY person you coach.
+
+CRITICAL — single-speaker rule:
+- Coach and transcribe ONLY the primary microphone owner.
+- Other participants may leak in faintly through speakers (quieter, distant, echoey). IGNORE them completely. Do NOT transcribe, quote, count, or score any secondary/background voice. Never attribute another person's words to the user.
+- If the audio contains almost no clear primary-speaker speech (e.g. the user stayed silent and you mostly hear faint others), return an empty transcript and do not invent content.
+
+Transcribe what the primary speaker said, then coach HOW they communicated, not the meeting outcome. Be honest and calibrated: reserve 85+ for genuinely excellent delivery, most professionals land 55-75. Never fabricate numbers.
 
 ${context ? `Context: "${context}"\n` : ''}Write every user-facing string like a real person talking. No em dashes.
 

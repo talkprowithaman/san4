@@ -46,7 +46,16 @@ function pickMime() {
 
 async function startRecording() {
   try {
-    stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+    // Constrain to the USER's voice only. echoCancellation removes the other
+    // participants leaking in through the speakers (the only way non-user voices
+    // could reach the mic); noiseSuppression/autoGainControl clean the rest.
+    stream = await navigator.mediaDevices.getUserMedia({
+      audio: {
+        echoCancellation: true,
+        noiseSuppression: true,
+        autoGainControl: true,
+      },
+    })
   } catch (err) {
     const msg = err?.name === 'NotAllowedError'
       ? 'Chrome blocked the mic. Click the 🎙️/lock icon in the address bar, allow the microphone, then try again.'
@@ -172,6 +181,7 @@ function renderPrompt() {
         <button id="dismiss" class="btn ghost">Not now</button>
       </div>
       <p class="fine">You'll get a rating, filler count, fixes, and videos to improve.</p>
+      <p class="fine">🎧 Tip: headphones keep it to only your voice.</p>
       <div id="flash" class="flash"></div>
     </div>`
   shadow.getElementById('start').onclick = startRecording
