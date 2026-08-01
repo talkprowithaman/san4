@@ -672,6 +672,8 @@ Return JSON only (no markdown, no code fences):
   "key_moments": ["A specific moment where the user did well or poorly, quoting/paraphrasing what was said"],
   "strengths": ["specific strength with example", "another"],
   "improvements": ["specific, actionable improvement with example", "another"],
+  "fixes": [{"issue": "the weak line or habit, quoting what they said", "better": "the same point rewritten the way a polished communicator would say it"}],
+  "weaknesses": ["<pick 1-3, most important first, ONLY from this exact list: fillers, pace, structure, clarity, conciseness, confidence, charisma, english, networking, assertiveness, presence>"],
   "action_items": ["One concrete behaviour to change in the next meeting", "another"],
   "what_to_say_differently": "One specific sentence the user said, rewritten the way a polished communicator would have said it"
 }`

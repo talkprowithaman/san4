@@ -4,6 +4,7 @@ import { useAuth }         from '../hooks/useAuth'
 import { useSubscription } from '../hooks/useSubscription'
 import { supabase }        from '../lib/supabase'
 import { analyzeMeetingRecording } from '../lib/gemini'
+import { recommendedVideos }       from '../lib/communicationVideos'
 import Navbar    from '../components/Navbar'
 import VakMascot from '../components/VakMascot'
 
@@ -289,12 +290,59 @@ export default function CallAnalyzer() {
             </div>
           </div>
 
-          {report.what_to_say_differently && (
+          {/* Per-point rewrites: the weak line, then the improved version */}
+          {report.fixes?.length > 0 ? (
+            <div className="card mb-4" style={{ background: 'rgba(139,92,246,0.06)', borderColor: 'rgba(139,92,246,0.2)' }}>
+              <h3 className="font-semibold text-sm mb-3" style={{ color: '#A78BFA' }}>✍️ Say it this way instead</h3>
+              <div className="space-y-3">
+                {report.fixes.map((f, i) => (
+                  <div key={i} className="rounded-xl p-3" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
+                    <p className="text-xs mb-1.5 line-through" style={{ color: '#8B95A8' }}>"{f.issue}"</p>
+                    <p className="text-sm" style={{ color: '#E2E8F0' }}><span style={{ color: '#00C49A' }}>→ </span>"{f.better}"</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : report.what_to_say_differently && (
             <div className="card mb-4" style={{ background: 'rgba(139,92,246,0.06)', borderColor: 'rgba(139,92,246,0.2)' }}>
               <h3 className="font-semibold text-sm mb-1" style={{ color: '#A78BFA' }}>✍️ Say it this way instead</h3>
               <p className="text-sm italic" style={{ color: '#E2E8F0' }}>"{report.what_to_say_differently}"</p>
             </div>
           )}
+
+          {/* Watch this to improve — Aman's own videos first, YouTube search fallback */}
+          {report.weaknesses?.length > 0 && (() => {
+            const vids = recommendedVideos(report.weaknesses, 3)
+            if (!vids.length) return null
+            return (
+              <div className="card mb-4" style={{ background: 'rgba(255,107,53,0.05)', border: '1px solid rgba(255,107,53,0.22)' }}>
+                <h3 className="font-semibold text-sm mb-1" style={{ color: '#FF6B35' }}>📺 Watch this to improve</h3>
+                <p className="text-xs mb-3" style={{ color: '#6B8CAE' }}>Short lessons picked for exactly what tripped you up.</p>
+                <div className="space-y-2">
+                  {vids.map((v, i) => (
+                    <a key={i} href={v.url} target="_blank" rel="noopener noreferrer"
+                      className="flex items-center gap-3 rounded-xl p-2.5 transition-all hover:opacity-90"
+                      style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}>
+                      {v.thumbnail ? (
+                        <img src={v.thumbnail} alt="" width={72} height={40}
+                          className="rounded-md object-cover shrink-0" style={{ width: 72, height: 40 }} loading="lazy" />
+                      ) : (
+                        <div className="rounded-md shrink-0 flex items-center justify-center text-lg"
+                          style={{ width: 72, height: 40, background: 'rgba(255,107,53,0.12)' }}>🔎</div>
+                      )}
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm text-white leading-snug truncate">{v.title}</p>
+                        <p className="text-xs" style={{ color: v.source === 'owned' ? '#A78BFA' : '#6B8CAE' }}>
+                          {v.source === 'owned' ? '▶ ' + v.channel : 'Search on YouTube'}
+                        </p>
+                      </div>
+                      <span className="shrink-0 text-xs" style={{ color: '#6B8CAE' }}>↗</span>
+                    </a>
+                  ))}
+                </div>
+              </div>
+            )
+          })()}
 
           {report.action_items?.length > 0 && (
             <div className="card mb-6" style={{ background: 'rgba(0,196,154,0.07)', border: '1px solid rgba(0,196,154,0.25)' }}>
