@@ -10,9 +10,16 @@
 // MVP note: the user's side (mic -> Web Speech -> analysis -> report) is fully
 // wired. Other-side transcription (tab audio -> chunk -> Gemini STT) is
 // scaffolded below and marked TODO so it can land as the next commit.
-import { analyzeTranscript } from './lib/analyze.js'
+import { analyzeTranscript, analyzeAudio } from './lib/analyze.js'
 
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
+  if (msg?.type === 'ANALYZE_AUDIO') {
+    analyzeAudio(msg.audioBase64, msg.mimeType, { context: msg.context, authToken: msg.authToken })
+      .then(report => sendResponse({ ok: true, report }))
+      .catch(err => sendResponse({ ok: false, error: err.message }))
+    return true // async
+  }
+
   if (msg?.type === 'ANALYZE') {
     analyzeTranscript(msg.transcript, { context: msg.context, authToken: msg.authToken })
       .then(report => sendResponse({ ok: true, report }))

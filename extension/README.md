@@ -21,9 +21,13 @@ web app (`src/lib/communicationVideos.js`).
 ## What works today (MVP)
 
 - ✅ Detects an active Meet call and shows the consent pop-up.
-- ✅ Live transcript of **your** side via the Web Speech API (mic).
-- ✅ Analysis via the San4 proxy → score, fillers, strengths, improvements,
-  per-line fixes, `weaknesses[]`.
+- ✅ Records **your** mic with `getUserMedia` + `MediaRecorder`, with a live
+  **level meter** so you can see it's capturing.
+- ✅ On "Stop & coach", the audio goes to **Gemini** (via the San4 proxy) which
+  **transcribes and coaches in one call** → score, fillers, strengths,
+  improvements, per-line fixes, `weaknesses[]`. (We do NOT use the Web Speech
+  API — it's unreliable, weak at Hindi, and fights Meet for the mic, which is
+  what made capture fail.)
 - ✅ "Watch this to improve" using the shared video map.
 - ✅ Style-isolated UI (Shadow DOM) so Meet's CSS can't interfere.
 
@@ -38,8 +42,9 @@ web app (`src/lib/communicationVideos.js`).
   instead of the rate-limited guest lane.
 - ⛏️ **Deep link** — "Open in San4" should post the report to a San4 route that
   persists it, not just open Call Analyzer.
-- ⛏️ **Hindi/Hinglish** — Web Speech is unreliable for Hindi; route audio through
-  Gemini STT (as the app does) for accuracy.
+- ✅ **Hindi/Hinglish** — handled: audio is transcribed by Gemini, not Web Speech.
+- ⛏️ **Live transcript** — Gemini transcription is post-hoc (on Stop). For live
+  captions, transcribe short rolling chunks during the call.
 - ⛏️ **Realtime nudges** — surface "that's 5 'um's" / "slow down" live (premium).
 
 ## File map

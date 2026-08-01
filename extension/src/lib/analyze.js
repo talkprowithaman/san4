@@ -4,12 +4,65 @@
 //
 // Keeping the weakness vocabulary identical to src/lib/gemini.js means the
 // extension's recommendations (communicationVideos.js) map cleanly.
-import { GEMINI_PROXY, TEXT_MODEL } from './config.js'
+import { GEMINI_PROXY, TEXT_MODEL, AUDIO_MODEL } from './config.js'
 
 const WEAKNESS_VOCAB = [
   'fillers', 'pace', 'structure', 'clarity', 'conciseness',
   'confidence', 'charisma', 'english', 'networking', 'assertiveness', 'presence',
 ]
+
+function reportSchema() {
+  return `{
+  "transcript": "<faithfully, exactly what the user said, including fillers; empty string if no intelligible speech>",
+  "summary": "2-sentence honest read on how they came across",
+  "overall_score": <integer 0-100>,
+  "clarity_score": <integer 0-100>,
+  "confidence_score": <integer 0-100>,
+  "filler_word_count": <integer>,
+  "top_filler_words": ["fillers you actually heard, English or Hindi"],
+  "strengths": ["specific positive with example", "another"],
+  "improvements": ["specific, actionable improvement", "another"],
+  "fixes": [{"issue": "a weak line, quoting them", "better": "the same point rewritten well"}],
+  "weaknesses": ["1-3, most important first, ONLY from: ${WEAKNESS_VOCAB.join(', ')}"],
+  "action_items": ["one concrete behaviour for the next call"]
+}`
+}
+
+// Raw mic audio -> transcript + coaching in ONE Gemini call (reliable, and
+// handles Hindi/Hinglish, unlike the Web Speech API which also fights Meet for
+// the mic). Mirrors the web app's analyzeMeetingRecording.
+export async function analyzeAudio(audioBase64, mimeType = 'audio/webm', { context = '', authToken = null } = {}) {
+  const prompt = `You are an executive communication coach. The attached audio is ONE person (the user) speaking during a real work call. Transcribe what they said, then coach HOW they communicated, not the meeting outcome. Be honest and calibrated: reserve 85+ for genuinely excellent delivery, most professionals land 55-75. Never fabricate numbers.
+
+${context ? `Context: "${context}"\n` : ''}Write every user-facing string like a real person talking. No em dashes.
+
+Return JSON only (no markdown, no code fences):
+${reportSchema()}`
+
+  const headers = { 'Content-Type': 'application/json' }
+  if (authToken) headers['Authorization'] = `Bearer ${authToken}`
+
+  const res = await fetch(GEMINI_PROXY, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify({
+      model: AUDIO_MODEL,
+      contents: [{ role: 'user', parts: [
+        { inlineData: { mimeType, data: audioBase64 } },
+        { text: prompt },
+      ] }],
+      generationConfig: { responseMimeType: 'application/json' },
+    }),
+  })
+
+  if (res.status === 429) throw new Error('rate_limited')
+  if (!res.ok) throw new Error(`proxy_${res.status}`)
+  const data = await res.json()
+  const parsed = extractJson(data.text)
+  if (!parsed || typeof parsed.overall_score !== 'number') throw new Error('bad_analysis')
+  if (!String(parsed.transcript || '').trim()) throw new Error('no_speech')
+  return parsed
+}
 
 function buildPrompt(transcript, context) {
   return `You are an executive communication coach. Below is a transcript of what ONE person (the user) said during a real work call. Coach how they communicated, not the meeting outcome. Be honest, specific, and calibrated: reserve 85+ for genuinely excellent delivery, most professionals land 55-75.

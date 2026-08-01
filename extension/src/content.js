@@ -1,23 +1,20 @@
 // San4 Live Coach — in-call UI (injected on meet.google.com).
 //
-// Flow: detect an active Meet call -> show a "Coach this call?" prompt ->
-// on accept, transcribe the user's mic live (Web Speech API) -> "Stop & coach"
-// -> analysis (via background -> /api/gemini) -> report with score, fillers,
-// fixes, and "Watch this to improve" videos -> open in San4.
+// Capture strategy: record the user's mic with getUserMedia + MediaRecorder,
+// then send the audio to Gemini (via background -> /api/gemini) which transcribes
+// AND coaches in one call. We deliberately do NOT use the Web Speech API: it is
+// unreliable, poor at Hindi, and fights Google Meet for the microphone (which is
+// why capture was failing). A live mic-level meter shows the mic is working.
 //
 // Styles live in a Shadow DOM so Meet's CSS can't touch us and ours can't touch
-// Meet. The mic (user's side) is what we coach; other-side capture is scaffolded
-// in background/offscreen.
+// Meet. Only the user's mic is analysed.
 
-const MIN_COACH_SECONDS = 20
-let host, shadow, state = 'idle' // idle | prompt | listening | analyzing | report
-let recognition = null
-let transcript = ''
-let interim = ''
-let startedAt = 0
-let timerId = null
+const MIN_SECONDS = 12
+let host, shadow, state = 'idle' // idle | prompt | recording | analyzing | report
+let stream = null, recorder = null, chunks = []
+let audioCtx = null, analyser = null, levelRAF = null
+let startedAt = 0, timerId = null
 
-// Only show up on an actual call URL: meet.google.com/abc-defg-hij
 function onCallPage() {
   return /^\/[a-z]{3}-[a-z]{4}-[a-z]{3}/i.test(location.pathname)
 }
@@ -28,125 +25,166 @@ function mount() {
   host.id = 'san4-live-coach-host'
   host.style.cssText = 'position:fixed;z-index:2147483647;right:16px;bottom:16px;'
   shadow = host.attachShadow({ mode: 'open' })
-  const style = document.createElement('style')
-  style.textContent = CSS
+  const style = document.createElement('style'); style.textContent = CSS
   shadow.appendChild(style)
-  const root = document.createElement('div')
-  root.id = 'root'
+  const root = document.createElement('div'); root.id = 'root'
   shadow.appendChild(root)
   document.documentElement.appendChild(host)
-  state = 'prompt'
-  render()
+  state = 'prompt'; render()
 }
 
 function unmount() {
-  stopListening()
-  host?.remove()
-  host = null; shadow = null; state = 'idle'; transcript = ''; interim = ''
+  teardownCapture()
+  host?.remove(); host = null; shadow = null; state = 'idle'
 }
 
-// ── Speech recognition (user's mic) ──────────────────────────────────────────
-function startListening() {
-  const SR = window.SpeechRecognition || window.webkitSpeechRecognition
-  if (!SR) { alert('San4: your browser does not support live transcription. Try Chrome.'); return }
-  transcript = ''; interim = ''
-  recognition = new SR()
-  recognition.continuous = true
-  recognition.interimResults = true
-  recognition.lang = 'en-IN'
-  recognition.onresult = e => {
-    interim = ''
-    for (let i = e.resultIndex; i < e.results.length; i++) {
-      const r = e.results[i]
-      if (r.isFinal) transcript += r[0].transcript + ' '
-      else interim += r[0].transcript
-    }
-    if (state === 'listening') render()
+// ── Capture (mic) ────────────────────────────────────────────────────────────
+function pickMime() {
+  return ['audio/webm;codecs=opus', 'audio/webm', 'audio/ogg;codecs=opus', 'audio/mp4']
+    .find(t => window.MediaRecorder && MediaRecorder.isTypeSupported(t)) || 'audio/webm'
+}
+
+async function startRecording() {
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+  } catch (err) {
+    const msg = err?.name === 'NotAllowedError'
+      ? 'Chrome blocked the mic. Click the 🎙️/lock icon in the address bar, allow the microphone, then try again.'
+      : err?.name === 'NotFoundError'
+      ? 'No microphone found. Plug one in or check your input device.'
+      : `Could not open the mic (${err?.name || 'error'}).`
+    state = 'prompt'; render(); flash(msg)
+    return
   }
-  // Web Speech self-terminates; revive it while we're still listening.
-  recognition.onend = () => { if (state === 'listening') { try { recognition.start() } catch {} } }
-  recognition.onerror = () => {}
-  try { recognition.start() } catch {}
+
+  const mime = pickMime()
+  chunks = []
+  recorder = new MediaRecorder(stream, { mimeType: mime, audioBitsPerSecond: 48000 })
+  recorder.ondataavailable = e => { if (e.data && e.data.size) chunks.push(e.data) }
+  recorder.start(1000)
+  recorder._mime = mime
+
+  // Live level meter — proves the mic is actually capturing.
+  try {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)()
+    analyser = audioCtx.createAnalyser(); analyser.fftSize = 256
+    audioCtx.createMediaStreamSource(stream).connect(analyser)
+    pumpLevel()
+  } catch {}
 
   startedAt = Date.now()
-  timerId = setInterval(() => { if (state === 'listening') render() }, 1000)
-  state = 'listening'
-
-  // Scaffold: also capture the other side (tab audio) for future STT.
-  chrome.runtime.sendMessage({ type: 'START_TAB_CAPTURE', tabId: null }, () => {})
-  render()
+  timerId = setInterval(() => { if (state === 'recording') updateTime() }, 500)
+  state = 'recording'; render()
 }
 
-function stopListening() {
+function pumpLevel() {
+  const buf = new Uint8Array(analyser.frequencyBinCount)
+  const tick = () => {
+    if (!analyser || state !== 'recording') return
+    analyser.getByteTimeDomainData(buf)
+    let peak = 0
+    for (let i = 0; i < buf.length; i++) peak = Math.max(peak, Math.abs(buf[i] - 128))
+    const pct = Math.min(100, Math.round((peak / 128) * 220))
+    const bar = shadow?.getElementById('level')
+    if (bar) bar.style.width = pct + '%'
+    levelRAF = requestAnimationFrame(tick)
+  }
+  tick()
+}
+
+function teardownCapture() {
   clearInterval(timerId); timerId = null
-  if (recognition) { try { recognition.onend = null; recognition.stop() } catch {} recognition = null }
-  chrome.runtime.sendMessage({ type: 'STOP_TAB_CAPTURE' }, () => {})
+  cancelAnimationFrame(levelRAF); levelRAF = null
+  try { recorder && recorder.state !== 'inactive' && recorder.stop() } catch {}
+  stream?.getTracks().forEach(t => t.stop())
+  try { audioCtx?.close() } catch {}
+  stream = null; analyser = null; audioCtx = null
 }
 
 function elapsed() { return Math.floor((Date.now() - startedAt) / 1000) }
 function fmt(s) { return `${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}` }
+function updateTime() { const t = shadow?.getElementById('time'); if (t) t.textContent = fmt(elapsed()) }
 
-// ── Analyze ──────────────────────────────────────────────────────────────────
+// ── Stop & coach ─────────────────────────────────────────────────────────────
 async function coach() {
-  const full = (transcript + ' ' + interim).trim()
-  if (elapsed() < MIN_COACH_SECONDS || full.length < 40) {
-    flash('Speak a bit more first, then tap Stop & coach.')
-    return
-  }
-  stopListening()
-  state = 'analyzing'; render()
+  if (elapsed() < MIN_SECONDS) { flash(`Speak for at least ${MIN_SECONDS}s, then Stop & coach.`); return }
 
-  chrome.runtime.sendMessage({ type: 'ANALYZE', transcript: full, context: 'Google Meet call' }, async resp => {
+  // Flush the recorder and gather the audio.
+  const blob = await new Promise(resolve => {
+    const mime = recorder?._mime || 'audio/webm'
+    recorder.onstop = () => resolve(new Blob(chunks, { type: mime }))
+    try { recorder.stop() } catch { resolve(new Blob(chunks, { type: mime })) }
+  })
+  teardownCapture()
+
+  if (!blob || blob.size < 2000) { state = 'prompt'; render(); flash('We did not capture any audio. Check your mic and try again.'); return }
+
+  state = 'analyzing'; render()
+  const audioBase64 = await blobToBase64(blob)
+  const mimeType = (blob.type || 'audio/webm').split(';')[0]
+
+  chrome.runtime.sendMessage({ type: 'ANALYZE_AUDIO', audioBase64, mimeType, context: 'Google Meet call' }, async resp => {
+    if (chrome.runtime.lastError) { state = 'report'; renderError('Extension lost connection. Reload the Meet tab and try again.'); return }
     if (!resp?.ok) {
+      const e = resp?.error
       state = 'report'
-      renderError(resp?.error === 'rate_limited'
-        ? 'Free coaching limit reached for now. Sign in to San4 to keep going.'
-        : 'Could not score this one. Please try again.')
+      renderError(
+        e === 'no_speech'    ? 'We recorded audio but heard no clear speech. Make sure you are unmuted and speaking, then try again.'
+      : e === 'rate_limited' ? 'Free coaching limit reached for now. Sign in to San4 to keep going.'
+      : 'Could not score this one. Please try again.')
       return
     }
     window.__san4_report = resp.report
-    state = 'report'
-    await renderReport(resp.report)
+    state = 'report'; await renderReport(resp.report)
+  })
+}
+
+function blobToBase64(blob) {
+  return new Promise((resolve, reject) => {
+    const r = new FileReader()
+    r.onloadend = () => resolve(String(r.result).split(',')[1] || '')
+    r.onerror = reject
+    r.readAsDataURL(blob)
   })
 }
 
 // ── Rendering ────────────────────────────────────────────────────────────────
 function root() { return shadow.getElementById('root') }
 function flash(text) {
-  const el = shadow.getElementById('flash')
-  if (el) { el.textContent = text; el.style.opacity = '1'; setTimeout(() => el.style.opacity = '0', 2600) }
+  const el = shadow?.getElementById('flash')
+  if (el) { el.textContent = text; el.style.opacity = '1'; setTimeout(() => el.style.opacity = '0', 3600) }
 }
 
 function render() {
   if (!shadow) return
-  if (state === 'prompt')     return renderPrompt()
-  if (state === 'listening')  return renderListening()
-  if (state === 'analyzing')  return renderAnalyzing()
+  if (state === 'prompt')    return renderPrompt()
+  if (state === 'recording') return renderRecording()
+  if (state === 'analyzing') return renderAnalyzing()
 }
 
 function renderPrompt() {
   root().innerHTML = `
-    <div class="card prompt">
+    <div class="card">
       <div class="head"><span class="logo">🦢</span><b>San4 Live Coach</b><button id="x" class="x">✕</button></div>
-      <p class="sub">Want me to listen to how <b>you</b> speak on this call and coach you after? Only your mic is analysed.</p>
+      <p class="sub">Want me to listen to how <b>you</b> speak on this call and coach you after? Only your mic is recorded.</p>
       <div class="row">
         <button id="start" class="btn primary">🎙️ Coach this call</button>
         <button id="dismiss" class="btn ghost">Not now</button>
       </div>
-      <p class="fine">You'll get a rating, filler-word count, fixes, and videos to improve.</p>
+      <p class="fine">You'll get a rating, filler count, fixes, and videos to improve.</p>
       <div id="flash" class="flash"></div>
     </div>`
-  shadow.getElementById('start').onclick = startListening
+  shadow.getElementById('start').onclick = startRecording
   shadow.getElementById('dismiss').onclick = () => host.style.display = 'none'
   shadow.getElementById('x').onclick = () => host.style.display = 'none'
 }
 
-function renderListening() {
-  const words = (transcript + interim).trim()
+function renderRecording() {
   root().innerHTML = `
     <div class="card">
-      <div class="head"><span class="dot"></span><b>Listening…</b><span class="time">${fmt(elapsed())}</span></div>
-      <div class="transcript">${words ? escapeHtml(words.slice(-320)) : '<span class="muted">Start speaking…</span>'}<span class="interim">${escapeHtml(interim)}</span></div>
+      <div class="head"><span class="dot"></span><b>Recording your voice</b><span id="time" class="time">0:00</span></div>
+      <div class="meter"><div id="level" class="meter-fill"></div></div>
+      <p class="hint">Speak normally. The bar moves when we hear you.</p>
       <button id="stop" class="btn primary wide">⏹ Stop &amp; coach</button>
       <div id="flash" class="flash"></div>
     </div>`
@@ -157,7 +195,7 @@ function renderAnalyzing() {
   root().innerHTML = `
     <div class="card center">
       <div class="spinner"></div>
-      <b>Scoring how you communicated…</b>
+      <b>Transcribing &amp; scoring…</b>
       <p class="sub">Clarity, confidence, fillers and fixes</p>
     </div>`
 }
@@ -180,7 +218,6 @@ async function renderReport(r) {
   const fixes = (r.fixes || []).slice(0, 2).map(f =>
     `<div class="fix"><s>${escapeHtml(f.issue)}</s><span>→ ${escapeHtml(f.better)}</span></div>`).join('')
 
-  // Reuse the app's weakness -> video map (shared module).
   let vids = []
   try {
     const mod = await import(chrome.runtime.getURL('src/lib/communicationVideos.js'))
@@ -217,13 +254,12 @@ function escapeHtml(s) {
   return String(s ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]))
 }
 
-// ── SPA nav: Meet swaps URLs without reloads ─────────────────────────────────
+// ── Meet is an SPA; watch for call navigation ────────────────────────────────
 let lastPath = location.pathname
 setInterval(() => {
   if (location.pathname !== lastPath) {
     lastPath = location.pathname
-    if (onCallPage()) mount()
-    else unmount()
+    if (onCallPage()) mount(); else unmount()
   }
 }, 1500)
 setTimeout(mount, 2500)
@@ -239,19 +275,18 @@ const CSS = `
   .logo { font-size:18px; }
   .x { background:none; border:none; color:#6B8CAE; cursor:pointer; font-size:14px; }
   .sub { font-size:13px; color:#94A3B8; line-height:1.5; margin:0 0 12px; }
+  .hint { font-size:11px; color:#6B8CAE; margin:8px 0 0; }
   .fine { font-size:11px; color:#6B8CAE; margin:10px 0 0; }
   .row { display:flex; gap:8px; }
   .btn { border:none; border-radius:100px; padding:10px 14px; font-weight:700; font-size:13px; cursor:pointer; }
-  .btn.wide { width:100%; margin-top:10px; }
+  .btn.wide { width:100%; margin-top:12px; }
   .btn.primary { background:linear-gradient(135deg,#7B5EA7,#4FACFE); color:#fff; flex:1; }
   .btn.ghost { background:rgba(255,255,255,.06); color:#cbd5e1; border:1px solid rgba(255,255,255,.12); }
   .dot { width:10px; height:10px; border-radius:50%; background:#F87171; animation:p 1s infinite; }
   @keyframes p { 50% { opacity:.35; } }
   .time { font-variant-numeric:tabular-nums; color:#94A3B8; font-size:13px; }
-  .transcript { background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.07);
-    border-radius:12px; padding:10px; font-size:13px; line-height:1.5; min-height:64px; max-height:140px; overflow:auto; }
-  .interim { color:#6B8CAE; }
-  .muted { color:#6B8CAE; }
+  .meter { height:10px; border-radius:6px; background:rgba(255,255,255,.06); overflow:hidden; }
+  .meter-fill { height:100%; width:0%; background:linear-gradient(90deg,#00C49A,#4FACFE); transition:width .08s linear; }
   .spinner { width:26px; height:26px; border:3px solid rgba(255,255,255,.15); border-top-color:#7B5EA7;
     border-radius:50%; animation:s .8s linear infinite; }
   @keyframes s { to { transform:rotate(360deg); } }
@@ -274,5 +309,5 @@ const CSS = `
   .vmeta { min-width:0; display:flex; flex-direction:column; }
   .vtitle { color:#fff; font-size:12px; line-height:1.3; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   .vchan { font-size:11px; color:#6B8CAE; } .vchan.owned { color:#A78BFA; }
-  .flash { color:#FCA5A5; font-size:11px; margin-top:8px; opacity:0; transition:opacity .3s; min-height:14px; }
+  .flash { color:#FCA5A5; font-size:11px; margin-top:8px; opacity:0; transition:opacity .3s; min-height:14px; line-height:1.4; }
 `
