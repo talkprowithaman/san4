@@ -24,6 +24,11 @@ import CallAnalyzer   from './pages/CallAnalyzer'
 import Reminders      from './pages/Reminders'
 import HowItWorks     from './pages/HowItWorks'
 import PrivacyPolicy  from './pages/PrivacyPolicy'
+import VakExtension   from './pages/VakExtension'
+import San4Score      from './pages/San4Score'
+import WhyItMatters   from './pages/WhyItMatters'
+import Terms          from './pages/Terms'
+import ResponsibleAI  from './pages/ResponsibleAI'
 import ReminderScheduler from './components/ReminderScheduler'
 import { useAuth } from './hooks/useAuth'
 
@@ -60,6 +65,11 @@ export default function App() {
         <Route path="/pricing"       element={<Pricing />} />
         <Route path="/how-it-works"  element={<HowItWorks />} />
         <Route path="/privacy"       element={<PrivacyPolicy />} />
+        <Route path="/extension"     element={<VakExtension />} />
+        <Route path="/san4-score"    element={<San4Score />} />
+        <Route path="/why-it-matters" element={<WhyItMatters />} />
+        <Route path="/terms"         element={<Terms />} />
+        <Route path="/responsible-ai" element={<ResponsibleAI />} />
         {/* Public San4 Score test: value BEFORE signup (Duolingo onboarding
             principle). Guests get their score, then a save-it CTA. */}
         <Route path="/assessment"    element={<Assessment />} />
