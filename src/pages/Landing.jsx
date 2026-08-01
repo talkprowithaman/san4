@@ -62,6 +62,10 @@ const CTX = [
     more:'We never store your audio after analysis. Practise the awkward stuff freely, with no human listening and nothing to be embarrassed about.' },
 ]
 
+// San4 Live Coach — Chrome extension.
+// TODO: replace with the published Chrome Web Store listing URL once it's live.
+const CHROME_STORE_URL = 'https://chromewebstore.google.com/'
+
 // ── Expandable context card — click to read more, saves space ────────────────
 function ExpandCard({ item, open, onToggle }) {
   return (
@@ -355,6 +359,62 @@ export default function Landing() {
 
       {/* ══ PRODUCT SHOWCASE — see the app before signing up ═══════════════ */}
       <ProductShowcase />
+
+      {/* ══ LIVE COACH — the Chrome extension ══════════════════════════════ */}
+      <section className="py-24 px-6 lg:px-10 relative overflow-hidden"
+        style={{ background: 'linear-gradient(160deg,#0A0F26,#10061F)' }}>
+        {/* colourful ambient glows */}
+        <div className="absolute pointer-events-none" style={{ top:'-10%', left:'-5%', width:340, height:340, borderRadius:'50%', background:'radial-gradient(circle,rgba(0,196,154,0.22),transparent 70%)', filter:'blur(30px)' }} />
+        <div className="absolute pointer-events-none" style={{ bottom:'-15%', right:'-5%', width:380, height:380, borderRadius:'50%', background:'radial-gradient(circle,rgba(123,94,167,0.28),transparent 70%)', filter:'blur(30px)' }} />
+
+        <div className="sa max-w-5xl mx-auto relative">
+          <div className="rounded-3xl p-8 lg:p-12 grid lg:grid-cols-2 gap-10 items-center"
+            style={{ background:'linear-gradient(145deg,rgba(255,255,255,0.05),rgba(255,255,255,0.02))', border:'1px solid rgba(255,255,255,0.1)', backdropFilter:'blur(12px)' }}>
+
+            {/* Left: pitch + CTA */}
+            <div>
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full mb-4 text-xs font-bold"
+                style={{ background:'rgba(0,196,154,0.14)', color:'#34E0B0', border:'1px solid rgba(0,196,154,0.3)' }}>
+                🎧 NEW · Live Coach for Chrome
+              </div>
+              <h2 className="font-black text-white mb-3" style={{ fontSize:'clamp(28px,4vw,44px)', lineHeight:1.08 }}>
+                Coach your <span style={{ background:'linear-gradient(135deg,#00C49A,#4FACFE)', WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent' }}>real calls</span>, live.
+              </h2>
+              <p className="text-base mb-6" style={{ color:'rgba(255,255,255,0.6)', lineHeight:1.6 }}>
+                Add Vak to Chrome. On any Google Meet, Vak listens to how <b className="text-white">you</b> speak and coaches you the second you're done, your rating, filler words, fixes, and exactly what to watch next.
+              </p>
+              <a href={CHROME_STORE_URL} target="_blank" rel="noopener noreferrer"
+                onMouseEnter={() => playTick('hover')}
+                className="btn-aura inline-flex items-center gap-2 text-base font-bold text-white px-8 py-4 rounded-full transition-all hover:opacity-90 active:scale-95"
+                style={{ background:'linear-gradient(135deg,#7B5EA7,#00C49A)' }}>
+                <span style={{ fontSize:20 }}>➕</span> Add Vak now
+              </a>
+              <div className="flex flex-wrap gap-2 mt-5">
+                {['✅ Free','🎥 Google Meet','🔒 Only your voice','⚡ Instant report'].map(p => (
+                  <span key={p} className="text-xs font-semibold px-3 py-1.5 rounded-full"
+                    style={{ background:'rgba(255,255,255,0.05)', color:'rgba(255,255,255,0.65)', border:'1px solid rgba(255,255,255,0.1)' }}>{p}</span>
+                ))}
+              </div>
+              <p className="text-xs mt-3" style={{ color:'rgba(255,255,255,0.4)' }}>Zoom &amp; FaceTime coming to the desktop app.</p>
+            </div>
+
+            {/* Right: Vak with a floating live-coach card */}
+            <div className="relative flex justify-center">
+              <div className="animate-float"><VakMascot level={4} size={168} mood="listening" /></div>
+              <div className="absolute -bottom-2 -right-1 rounded-2xl px-4 py-3 shadow-2xl"
+                style={{ background:'#0B1220', border:'1px solid rgba(255,255,255,0.12)', minWidth:180 }}>
+                <div className="flex items-center gap-2 mb-1.5">
+                  <span className="w-2.5 h-2.5 rounded-full" style={{ background:'#F87171', animation:'pulse 1s infinite' }} />
+                  <span className="text-xs font-bold text-white">Listening…</span>
+                </div>
+                <div className="text-2xl font-black" style={{ color:'#00C49A' }}>84<span className="text-sm" style={{ color:'#6B8CAE' }}>/100</span></div>
+                <div className="text-xs mt-0.5" style={{ color:'#6B8CAE' }}>2 fillers · clear + confident</div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </section>
 
       {/* ══ SECTION 4 — WHY IT MATTERS ════════════════════════════════════ */}
       <section className="py-28 px-6 lg:px-10 relative overflow-hidden"

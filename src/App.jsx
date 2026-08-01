@@ -25,6 +25,7 @@ import Reminders      from './pages/Reminders'
 import HowItWorks     from './pages/HowItWorks'
 import PrivacyPolicy  from './pages/PrivacyPolicy'
 import ReminderScheduler from './components/ReminderScheduler'
+import { useAuth } from './hooks/useAuth'
 
 // In the native Android/iOS shell there is no SPA server fallback, so deep
 // links and hard refreshes on a path route would 404. HashRouter keeps all
@@ -32,6 +33,12 @@ import ReminderScheduler from './components/ReminderScheduler'
 const Router = Capacitor.isNativePlatform() ? HashRouter : BrowserRouter
 
 export default function App() {
+  // Initialise auth at the root so the session loads on EVERY route, including
+  // deep links straight to a protected page (e.g. /call-analyzer from the
+  // extension). Without this, ProtectedRoute gates the only component that
+  // initialises auth behind its own loading flag, deadlocking on the spinner.
+  useAuth()
+
   // Android hardware back button: go back through history, or exit at the root.
   useEffect(() => {
     if (!Capacitor.isNativePlatform()) return
