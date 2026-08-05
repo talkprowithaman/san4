@@ -29,6 +29,7 @@ import San4Score      from './pages/San4Score'
 import WhyItMatters   from './pages/WhyItMatters'
 import Terms          from './pages/Terms'
 import ResponsibleAI  from './pages/ResponsibleAI'
+import ResumeBuilder  from './pages/ResumeBuilder'
 import ReminderScheduler from './components/ReminderScheduler'
 import { useAuth } from './hooks/useAuth'
 
@@ -70,6 +71,7 @@ export default function App() {
         <Route path="/why-it-matters" element={<WhyItMatters />} />
         <Route path="/terms"         element={<Terms />} />
         <Route path="/responsible-ai" element={<ResponsibleAI />} />
+        <Route path="/resume-builder" element={<ResumeBuilder />} />
         {/* Public San4 Score test: value BEFORE signup (Duolingo onboarding
             principle). Guests get their score, then a save-it CTA. */}
         <Route path="/assessment"    element={<Assessment />} />

@@ -411,7 +411,7 @@ export default function Landing() {
           <div>
             <h4 className="text-white font-bold text-xs uppercase tracking-widest mb-5">Product</h4>
             <ul className="space-y-3">
-              {[['How it works','/how-it-works'],['Why it matters','/why-it-matters'],['San4 Score','/san4-score'],['Vak Extension','/extension'],['Pricing','/pricing']].map(([t, to])=>(
+              {[['How it works','/how-it-works'],['Why it matters','/why-it-matters'],['San4 Score','/san4-score'],['Vak Extension','/extension'],['Free ATS Resume Builder','/resume-builder'],['Pricing','/pricing']].map(([t, to])=>(
                 <li key={t}>
                   <Link to={to} className="text-sm transition-colors"
                     style={{ color:'#6B8CAE' }}

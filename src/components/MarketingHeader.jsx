@@ -5,6 +5,7 @@ import { Link } from 'react-router-dom'
 const LINKS = [
   ['Vak Extension', '/extension'],
   ['San4 Score',    '/san4-score'],
+  ['Resume Builder','/resume-builder'],
   ['How it works',  '/how-it-works'],
   ['Pricing',       '/pricing'],
 ]
