@@ -1012,3 +1012,34 @@ Return JSON only (no markdown, no code fences):
     return null
   }
 }
+
+// Condense a resume that overflows one page. Cuts words, never facts: no role,
+// employer, date, degree, certification or metric may be dropped or invented.
+// `overflowPct` tells the model how much it needs to lose (e.g. 18 = ~18% too long).
+export async function condenseResume(resume, overflowPct = 15) {
+  const prompt = `You are an expert resume editor. The resume below is about ${Math.max(5, Math.round(overflowPct))}% too long to fit on ONE page. Tighten it so it fits, WITHOUT losing substance.
+
+Hard rules:
+- Do NOT remove any job, employer, date, degree, or certification. Keep every role.
+- Do NOT invent anything, and never drop a real metric or number: numbers are the most valuable part.
+- Tighten by cutting filler words, shortening the summary, merging weak bullets, and trimming the least impactful bullet from roles that have many. Prefer cutting the OLDEST role's bullets before the most recent.
+- Keep every bullet to one line where possible. Keep strong action verbs.
+- Preserve the exact same JSON structure and all contact fields.
+
+RESUME JSON:
+${JSON.stringify(resume)}
+
+Return JSON only (no markdown, no code fences) with the same shape as the input resume object.`
+  try {
+    const text = await geminiGenerate(MODEL, [{ text: prompt }], {
+      generationConfig: { responseMimeType: 'application/json' },
+    })
+    const parsed = extractJson(text)
+    // Guard: a valid condense must keep the same number of roles.
+    if (!parsed?.name || (resume.experience?.length || 0) !== (parsed.experience?.length || 0)) return null
+    return parsed
+  } catch (err) {
+    console.warn('condenseResume failed:', err.message)
+    return null
+  }
+}

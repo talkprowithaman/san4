@@ -30,7 +30,6 @@ export default function ResumeDocument({ resume, san4 }) {
         {san4?.score != null && (
           <div className="rd-san4">
             San4 Communication Score: <b>{san4.score}/100</b>{san4.band ? ` (${san4.band})` : ''}
-            <span className="rd-san4-verify">  ·  verify at san4.vercel.app</span>
           </div>
         )}
       </header>
@@ -106,7 +105,6 @@ const RD_CSS = `
   .rd-title { font-size: 10.5pt; color: #333; margin-bottom: 4px; }
   .rd-contact { font-size: 9pt; color: #333; }
   .rd-san4 { margin-top: 6px; font-size: 9pt; color: #111; border-top: 1px solid #ddd; padding-top: 5px; display: inline-block; }
-  .rd-san4-verify { color: #666; }
   .rd-section { margin-top: 13px; }
   .rd-h2 {
     font-size: 10.5pt; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;
