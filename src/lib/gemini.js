@@ -939,3 +939,107 @@ Return JSON only (no markdown):
     }
   }
 }
+
+// ── ATS Resume Builder ───────────────────────────────────────────────────────
+// The resume JSON shape both functions produce/consume. Single-column and
+// ATS-safe by construction (no tables, no columns, standard section names).
+const RESUME_SCHEMA = `{
+  "name": "", "title": "professional headline, e.g. Product Operations Manager | CSPO",
+  "location": "", "email": "", "phone": "", "linkedin": "url or handle", "github": "url or handle", "portfolio": "url",
+  "summary": "3-4 line professional summary",
+  "experience": [{ "role": "", "company": "", "sub": "team/division, optional", "start": "Mon YYYY", "end": "Mon YYYY or Present", "bullets": ["achievement-led bullet, quantified where possible"] }],
+  "skills": [{ "category": "e.g. Product Management", "items": ["skill", "skill"] }],
+  "certifications": ["Name - Issuer, Year"],
+  "achievements": ["Achievement - Context, Year"],
+  "education": [{ "degree": "", "institution": "", "meta": "Years | CGPA/percentage" }]
+}`
+
+// Extract a structured resume from an uploaded file (PDF or image). Verbatim:
+// pull what is there, do not invent.
+export async function parseResumeFile(base64, mimeType = 'application/pdf') {
+  const prompt = `You are a resume parser. Read the attached resume and extract its content into JSON. Extract only what is actually present, do not invent or embellish. Keep bullet wording close to the original. If a field is missing, use an empty string or empty array.
+
+Return JSON only (no markdown, no code fences), matching this exact shape:
+${RESUME_SCHEMA}`
+  try {
+    const text = await geminiGenerate(MODEL, [
+      { inlineData: { mimeType, data: base64 } },
+      { text: prompt },
+    ], { generationConfig: { responseMimeType: 'application/json' } })
+    return extractJson(text)
+  } catch (err) {
+    console.warn('parseResumeFile failed:', err.message)
+    return null
+  }
+}
+
+// Build a polished, ATS-optimised, job-tailored resume from the user's inputs.
+// Returns the resume plus an honest ATS-readiness score and fix tips.
+// `profile` is the user's raw/structured inputs; `jobDescription` is optional.
+export async function generateResume({ profile, jobDescription = '' }) {
+  const prompt = `You are an expert resume writer and ATS (Applicant Tracking System) optimisation specialist for the Indian job market.
+
+Take the candidate's details below and produce a clean, ATS-friendly, single-column resume. Rules:
+- Never fabricate experience, employers, dates, degrees, or metrics. Only rephrase and structure what the candidate gave you. If they gave a number, keep it; do not invent numbers.
+- Start every experience bullet with a strong action verb. Make bullets achievement-led and concise (one line each ideally).
+- Weave in relevant keywords from the job description truthfully where the candidate's real experience supports them. Do not keyword-stuff.
+- Use standard section names and plain text (no tables, no columns, no graphics) so it parses in any ATS.
+- Keep it tight enough to fit ONE page when the candidate has under 5 years of total experience.
+
+CANDIDATE DETAILS (may be messy, structured, or free text):
+${typeof profile === 'string' ? profile : JSON.stringify(profile)}
+
+${jobDescription ? `TARGET JOB DESCRIPTION (tailor and score against this):\n${jobDescription}` : 'No job description provided: optimise generally and score ATS-readiness on format, clarity, and keyword strength.'}
+
+Return JSON only (no markdown, no code fences):
+{
+  "resume": ${RESUME_SCHEMA},
+  "total_years_experience": <number, your best estimate>,
+  "ats_score": <integer 0-100, honest match/readiness>,
+  "ats_summary": "1-2 sentences on how ATS-ready this is and the biggest lever to improve",
+  "ats_tips": ["specific, actionable tip", "another"],
+  "missing_keywords": ["important keyword from the JD not yet reflected, if any"]
+}`
+  try {
+    const text = await geminiGenerate(MODEL, [{ text: prompt }], {
+      generationConfig: { responseMimeType: 'application/json' },
+    })
+    const parsed = extractJson(text)
+    if (!parsed || !parsed.resume) return null
+    return parsed
+  } catch (err) {
+    console.warn('generateResume failed:', err.message)
+    return null
+  }
+}
+
+// Condense a resume that overflows one page. Cuts words, never facts: no role,
+// employer, date, degree, certification or metric may be dropped or invented.
+// `overflowPct` tells the model how much it needs to lose (e.g. 18 = ~18% too long).
+export async function condenseResume(resume, overflowPct = 15) {
+  const prompt = `You are an expert resume editor. The resume below is about ${Math.max(5, Math.round(overflowPct))}% too long to fit on ONE page. Tighten it so it fits, WITHOUT losing substance.
+
+Hard rules:
+- Do NOT remove any job, employer, date, degree, or certification. Keep every role.
+- Do NOT invent anything, and never drop a real metric or number: numbers are the most valuable part.
+- Tighten by cutting filler words, shortening the summary, merging weak bullets, and trimming the least impactful bullet from roles that have many. Prefer cutting the OLDEST role's bullets before the most recent.
+- Keep every bullet to one line where possible. Keep strong action verbs.
+- Preserve the exact same JSON structure and all contact fields.
+
+RESUME JSON:
+${JSON.stringify(resume)}
+
+Return JSON only (no markdown, no code fences) with the same shape as the input resume object.`
+  try {
+    const text = await geminiGenerate(MODEL, [{ text: prompt }], {
+      generationConfig: { responseMimeType: 'application/json' },
+    })
+    const parsed = extractJson(text)
+    // Guard: a valid condense must keep the same number of roles.
+    if (!parsed?.name || (resume.experience?.length || 0) !== (parsed.experience?.length || 0)) return null
+    return parsed
+  } catch (err) {
+    console.warn('condenseResume failed:', err.message)
+    return null
+  }
+}

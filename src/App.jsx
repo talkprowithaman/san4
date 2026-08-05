@@ -24,7 +24,14 @@ import CallAnalyzer   from './pages/CallAnalyzer'
 import Reminders      from './pages/Reminders'
 import HowItWorks     from './pages/HowItWorks'
 import PrivacyPolicy  from './pages/PrivacyPolicy'
+import VakExtension   from './pages/VakExtension'
+import San4Score      from './pages/San4Score'
+import WhyItMatters   from './pages/WhyItMatters'
+import Terms          from './pages/Terms'
+import ResponsibleAI  from './pages/ResponsibleAI'
+import ResumeBuilder  from './pages/ResumeBuilder'
 import ReminderScheduler from './components/ReminderScheduler'
+import { useAuth } from './hooks/useAuth'
 
 // In the native Android/iOS shell there is no SPA server fallback, so deep
 // links and hard refreshes on a path route would 404. HashRouter keeps all
@@ -32,6 +39,12 @@ import ReminderScheduler from './components/ReminderScheduler'
 const Router = Capacitor.isNativePlatform() ? HashRouter : BrowserRouter
 
 export default function App() {
+  // Initialise auth at the root so the session loads on EVERY route, including
+  // deep links straight to a protected page (e.g. /call-analyzer from the
+  // extension). Without this, ProtectedRoute gates the only component that
+  // initialises auth behind its own loading flag, deadlocking on the spinner.
+  useAuth()
+
   // Android hardware back button: go back through history, or exit at the root.
   useEffect(() => {
     if (!Capacitor.isNativePlatform()) return
@@ -53,6 +66,12 @@ export default function App() {
         <Route path="/pricing"       element={<Pricing />} />
         <Route path="/how-it-works"  element={<HowItWorks />} />
         <Route path="/privacy"       element={<PrivacyPolicy />} />
+        <Route path="/extension"     element={<VakExtension />} />
+        <Route path="/san4-score"    element={<San4Score />} />
+        <Route path="/why-it-matters" element={<WhyItMatters />} />
+        <Route path="/terms"         element={<Terms />} />
+        <Route path="/responsible-ai" element={<ResponsibleAI />} />
+        <Route path="/resume-builder" element={<ResumeBuilder />} />
         {/* Public San4 Score test: value BEFORE signup (Duolingo onboarding
             principle). Guests get their score, then a save-it CTA. */}
         <Route path="/assessment"    element={<Assessment />} />

@@ -17,12 +17,18 @@ export function useAuth() {
   const { user, profile, loading, setUser, setProfile, setLoading } = useAuthStore()
 
   useEffect(() => {
-    // Get current session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null)
-      if (session?.user) fetchProfile(session.user.id)
-      else setLoading(false)
-    })
+    // Absolute safety net: never let a stuck auth/profile call trap the app on
+    // the loading screen (this was the "call-analyzer keeps loading" bug).
+    const failsafe = setTimeout(() => setLoading(false), 6000)
+
+    // Get current session (persisted in localStorage -> auto-login on revisit).
+    supabase.auth.getSession()
+      .then(({ data: { session } }) => {
+        setUser(session?.user ?? null)
+        if (session?.user) fetchProfile(session.user.id)
+        else setLoading(false)
+      })
+      .catch(() => setLoading(false))
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
@@ -31,17 +37,24 @@ export function useAuth() {
       else { setProfile(null); setLoading(false) }
     })
 
-    return () => subscription.unsubscribe()
+    return () => { clearTimeout(failsafe); subscription.unsubscribe() }
   }, [])
 
+  // Never throws: a failed/slow profile read must still release the loading gate
+  // so the user reaches the page (or the login redirect) instead of hanging.
   async function fetchProfile(userId) {
-    const { data } = await supabase
-      .from('profiles')
-      .select('*, subscriptions(*)')
-      .eq('id', userId)
-      .single()
-    setProfile(data)
-    setLoading(false)
+    try {
+      const { data } = await supabase
+        .from('profiles')
+        .select('*, subscriptions(*)')
+        .eq('id', userId)
+        .single()
+      setProfile(data)
+    } catch (e) {
+      console.warn('fetchProfile failed:', e?.message)
+    } finally {
+      setLoading(false)
+    }
   }
 
   async function signUp(email, password, name, consent) {

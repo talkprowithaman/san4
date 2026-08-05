@@ -50,49 +50,8 @@ const STATS = [
   { to:0,  suf:'',  label:'AI coaches built specifically for India. Until now.' },
 ]
 
-// ── Context cards (expandable) ─────────────────────────────────────────────────
-const CTX = [
-  { icon:'💡', title:'Built for India', short:'Tuned to how India speaks.',
-    more:'Accent-neutral AI trained on Indian English, Hindi-English code-switching, and regional speech. It understands you, not a textbook American voice.' },
-  { icon:'🎯', title:'Scenario library', short:'14 real situations, not drills.',
-    more:'HR rounds, group discussions, client pitches, salary negotiations. Each one plays out like the real thing, with a counterpart who pushes back.' },
-  { icon:'📈', title:'Measurable growth', short:'See yourself get sharper.',
-    more:'Track filler words, confidence, pace, and structure across every session. Your progress becomes a number that climbs, not a vague feeling.' },
-  { icon:'🔒', title:'Private by design', short:'Your voice stays yours.',
-    more:'We never store your audio after analysis. Practise the awkward stuff freely, with no human listening and nothing to be embarrassed about.' },
-]
-
-// ── Expandable context card — click to read more, saves space ────────────────
-function ExpandCard({ item, open, onToggle }) {
-  return (
-    <button onClick={onToggle}
-      className="w-full text-left rounded-2xl p-5 transition-all"
-      style={{ background:'linear-gradient(145deg,#0F1929,#070C18)',
-        border:`1px solid ${open ? 'rgba(139,92,246,0.4)' : 'rgba(255,255,255,0.07)'}` }}>
-      <div className="flex items-start justify-between gap-2 mb-2.5">
-        <span className="text-2xl">{item.icon}</span>
-        <span className="w-6 h-6 rounded-full flex items-center justify-center text-sm font-bold transition-transform"
-          style={{ background:'rgba(139,92,246,0.15)', color:'#A78BFA',
-            transform: open ? 'rotate(45deg)' : 'rotate(0deg)' }}>+</span>
-      </div>
-      <h3 className="text-white font-bold text-sm mb-1">{item.title}</h3>
-      <p className="text-xs" style={{ color:'#8B95A8' }}>{item.short}</p>
-      <div style={{ maxHeight: open ? 320 : 0, overflow:'hidden', transition:'max-height 0.4s ease' }}>
-        <p className="text-xs leading-relaxed mt-3 pt-3"
-          style={{ color:'#6B8CAE', borderTop:'1px solid rgba(255,255,255,0.07)' }}>{item.more}</p>
-      </div>
-      {!open && (
-        <span className="text-xs font-semibold mt-2.5 inline-flex items-center gap-1" style={{ color:'#A78BFA' }}>
-          Read more <span style={{ fontSize:'0.9em' }}>↓</span>
-        </span>
-      )}
-    </button>
-  )
-}
-
 // ── Main component ────────────────────────────────────────────────────────────
 export default function Landing() {
-  const [openCtx, setOpenCtx] = useState(null)
 
   useSmoothScroll()  // Lenis momentum scroll (desktop only)
   useParallax()      // subtle scroll-depth on [data-parallax] elements
@@ -140,8 +99,8 @@ export default function Landing() {
           <span>SAN<span style={{ color:'#7B5EA7' }}>4</span></span>
         </span>
 
-        <div className="hidden md:flex items-center gap-8">
-          {[['How it works','/how-it-works'],['Pricing','/pricing']].map(([t, to]) => (
+        <div className="hidden md:flex items-center gap-6">
+          {[['San4 Score','/san4-score'],['How it works','/how-it-works'],['Pricing','/pricing']].map(([t, to]) => (
             <Link key={t} to={to} className="text-sm transition-colors"
               style={{ color:'rgba(255,255,255,0.45)' }}
               onMouseEnter={e=>e.currentTarget.style.color='white'}
@@ -149,6 +108,12 @@ export default function Landing() {
               {t}
             </Link>
           ))}
+          {/* Ribbon button for the Chrome extension */}
+          <Link to="/extension"
+            className="inline-flex items-center gap-1.5 text-sm font-bold px-3.5 py-1.5 rounded-full transition-all hover:opacity-90"
+            style={{ background:'rgba(0,196,154,0.14)', color:'#34E0B0', border:'1px solid rgba(0,196,154,0.35)' }}>
+            🎧 Vak Extension
+          </Link>
         </div>
 
         <div className="flex items-center gap-3">
@@ -278,78 +243,21 @@ export default function Landing() {
       {/* ══ FILLER WORDS — the problem we catch ════════════════════════════ */}
       <FillerWords />
 
-      {/* ══ THE SAN4 SCORE — the anchor: a CIBIL-style score for speaking ══ */}
-      <section className="py-24 px-6 lg:px-10" style={{ background: 'linear-gradient(180deg,#06091C,#050810)' }}>
-        <div className="max-w-5xl mx-auto grid md:grid-cols-2 gap-12 items-center">
-          <div>
-            <p className="text-xs font-bold uppercase tracking-widest mb-3" style={{ color: '#7B5EA7' }}>
-              THE SAN4 SCORE
-            </p>
-            <h2 className="text-3xl md:text-4xl font-black text-white leading-tight mb-4">
-              One number for how you communicate.
-            </h2>
-            <p className="text-base leading-relaxed mb-4" style={{ color: '#94A3B8' }}>
-              CIBIL scores your credit. IELTS scores your English. Nothing scores the skill
-              that actually decides your interviews, appraisals, and promotions: how you
-              <strong className="text-white"> communicate</strong>.
-            </p>
-            <p className="text-base leading-relaxed mb-6" style={{ color: '#94A3B8' }}>
-              The San4 Score measures your clarity, confidence, structure, and delivery,
-              in any language you speak. It updates with every practice session. Put it on
-              your LinkedIn. Put it on your CV. Watch it climb.
-            </p>
-            <ul className="space-y-2 mb-8">
-              {[
-                'Language-independent: judged on how you communicate, not your grammar',
-                'A living score: every daily rep and session moves it',
-                'Built to share: one tap to LinkedIn, WhatsApp, or your CV',
-              ].map(t => (
-                <li key={t} className="flex gap-2 text-sm" style={{ color: '#94A3B8' }}>
-                  <span style={{ color: '#00C49A' }}>✓</span> {t}
-                </li>
-              ))}
-            </ul>
-            <Link to="/assessment"
-              className="inline-block text-sm font-bold text-white px-7 py-4 rounded-full transition-all hover:opacity-90"
-              style={{ background: 'linear-gradient(135deg,#7B5EA7,#9B7EC8)' }}>
-              Get your San4 Score in 2 minutes →
-            </Link>
-          </div>
-
-          {/* Mock score card */}
-          <div className="flex justify-center">
-            <div className="w-full max-w-xs rounded-3xl p-8 text-center"
-              style={{ background: 'linear-gradient(160deg,#10192E,#0B1220)', border: '1px solid rgba(123,94,167,0.4)', boxShadow: '0 0 60px rgba(123,94,167,0.15)' }}>
-              <div className="flex items-center justify-center gap-2 mb-6">
-                <img src="/san4-icon.png" alt="" width={28} height={28} className="rounded-lg" />
-                <span className="font-black text-white" style={{ fontFamily: 'Outfit, sans-serif' }}>
-                  SAN<span style={{ color: '#7B5EA7' }}>4</span> SCORE
-                </span>
-              </div>
-              <div className="font-black" style={{ fontSize: '5rem', lineHeight: 1, color: '#00C49A' }}>74</div>
-              <div className="text-white font-bold mb-1">Confident</div>
-              <div className="text-xs mb-6" style={{ color: '#6B8CAE' }}>Communicates clearly under pressure</div>
-              <div className="space-y-2 text-left">
-                {[
-                  ['Clarity', 78, '#00C49A'],
-                  ['Confidence', 71, '#7B5EA7'],
-                  ['Structure', 69, '#F59E0B'],
-                  ['Delivery', 77, '#4FACFE'],
-                ].map(([label, v, c]) => (
-                  <div key={label}>
-                    <div className="flex justify-between text-xs mb-1">
-                      <span style={{ color: '#94A3B8' }}>{label}</span>
-                      <span className="font-bold" style={{ color: c }}>{v}</span>
-                    </div>
-                    <div className="h-1.5 rounded-full" style={{ background: 'rgba(255,255,255,0.07)' }}>
-                      <div className="h-full rounded-full" style={{ width: `${v}%`, background: c }} />
-                    </div>
-                  </div>
-                ))}
-              </div>
-              <div className="mt-6 text-xs" style={{ color: '#6B8CAE' }}>🔥 12-day streak · ↑ 9 this month</div>
-            </div>
-          </div>
+      {/* ══ THE SAN4 SCORE — compact band, full story lives on /san4-score ══ */}
+      <section className="py-16 px-6 lg:px-10" style={{ background: 'linear-gradient(180deg,#06091C,#050810)' }}>
+        <div className="sa max-w-3xl mx-auto text-center">
+          <p className="text-xs font-bold uppercase tracking-widest mb-3" style={{ color: '#7B5EA7' }}>The San4 Score</p>
+          <h2 className="text-2xl md:text-3xl font-black text-white leading-tight mb-3">
+            One number for how you communicate.
+          </h2>
+          <p className="text-base leading-relaxed mb-6 max-w-xl mx-auto" style={{ color: '#94A3B8' }}>
+            CIBIL scores your credit. IELTS scores your English. The San4 Score is the one for how you actually come across, and you can put it on your CV.
+          </p>
+          <Link to="/san4-score"
+            className="inline-block text-sm font-bold text-white px-7 py-4 rounded-full transition-all hover:opacity-90"
+            style={{ background: 'linear-gradient(135deg,#7B5EA7,#9B7EC8)' }}>
+            Get your San4 Score →
+          </Link>
         </div>
       </section>
 
@@ -378,7 +286,7 @@ export default function Landing() {
 
 
         {/* ── Stat counters ──────────────────────────────────────────────── */}
-        <div className="max-w-5xl mx-auto grid md:grid-cols-3 gap-12 text-center mb-16">
+        <div className="max-w-5xl mx-auto grid md:grid-cols-3 gap-12 text-center mb-12">
           {STATS.map(({ to, suf, label }, i) => (
             <div key={label} className="sa" data-delay={i * 120}>
               <div className="font-black grad-text mb-2"
@@ -390,13 +298,11 @@ export default function Landing() {
           ))}
         </div>
 
-        {/* ── Context cards (click to expand) ───────────────────────────── */}
-        <div className="max-w-5xl mx-auto grid sm:grid-cols-2 lg:grid-cols-4 gap-4 items-start">
-          {CTX.map((c, i) => (
-            <div key={c.title} className="sa-sc" data-delay={i * 80}>
-              <ExpandCard item={c} open={openCtx === i} onToggle={() => setOpenCtx(openCtx === i ? null : i)} />
-            </div>
-          ))}
+        <div className="sa text-center">
+          <Link to="/why-it-matters" className="inline-block text-sm font-semibold px-6 py-3 rounded-full transition-all hover:opacity-85"
+            style={{ color:'white', border:'1px solid rgba(255,255,255,0.2)' }}>
+            Why it matters →
+          </Link>
         </div>
       </section>
 
@@ -485,7 +391,7 @@ export default function Landing() {
 
       {/* ══ FOOTER ═════════════════════════════════════════════════════════ */}
       <footer style={{ background:'#08080e', borderTop:'1px solid rgba(255,255,255,0.07)' }}>
-        <div className="max-w-6xl mx-auto px-6 lg:px-10 py-16 grid md:grid-cols-[2fr_1fr_1fr] gap-12 lg:gap-16">
+        <div className="max-w-6xl mx-auto px-6 lg:px-10 py-16 grid md:grid-cols-[2fr_1fr_1fr_1fr] gap-10 lg:gap-14">
 
           {/* Col 1 — brand */}
           <div>
@@ -505,7 +411,7 @@ export default function Landing() {
           <div>
             <h4 className="text-white font-bold text-xs uppercase tracking-widest mb-5">Product</h4>
             <ul className="space-y-3">
-              {[['How it works','/how-it-works'],['Pricing','/pricing'],['Get your score','/assessment'],['Sign in','/auth']].map(([t, to])=>(
+              {[['How it works','/how-it-works'],['Why it matters','/why-it-matters'],['San4 Score','/san4-score'],['Vak Extension','/extension'],['Free ATS Resume Builder','/resume-builder'],['Pricing','/pricing']].map(([t, to])=>(
                 <li key={t}>
                   <Link to={to} className="text-sm transition-colors"
                     style={{ color:'#6B8CAE' }}
@@ -518,7 +424,27 @@ export default function Landing() {
             </ul>
           </div>
 
-          {/* Col 3 — Social */}
+          {/* Col 3 — Legal & AI */}
+          <div>
+            <h4 className="text-white font-bold text-xs uppercase tracking-widest mb-5">Legal</h4>
+            <ul className="space-y-3">
+              {[['Terms & Conditions','/terms'],['Privacy Policy','/privacy'],['Responsible AI','/responsible-ai']].map(([t, to])=>(
+                <li key={t}>
+                  <Link to={to} className="text-sm transition-colors"
+                    style={{ color:'#6B8CAE' }}
+                    onMouseEnter={e=>e.currentTarget.style.color='white'}
+                    onMouseLeave={e=>e.currentTarget.style.color='#6B8CAE'}>
+                    {t}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+            <p className="text-xs mt-4 leading-relaxed" style={{ color:'rgba(107,140,174,0.6)' }}>
+              Built under India's DPDP Act, IT Rules, and BNS.
+            </p>
+          </div>
+
+          {/* Col 4 — Social */}
           <div>
             <h4 className="text-white font-bold text-xs uppercase tracking-widest mb-5">Social</h4>
             <div className="flex flex-wrap gap-2">
