@@ -4,6 +4,7 @@ import { useAuth }     from '../hooks/useAuth'
 import { useProgress } from '../hooks/useProgress'
 import { supabase }    from '../lib/supabase'
 import { sendPracticeMessage, analyzeSession, analyzeSessionFromAudio, synthesizeSpeech, transcribeSpeech, LANGUAGES, OPENING_LINES } from '../lib/gemini'
+import { track, EV } from '../lib/analytics'
 import { playPcmBase64, stopPlayback, primeAudio } from '../lib/voicePlayer'
 import { PERSONAS, FREE_PERSONA_IDS, getPersona } from '../lib/personas'
 import { useSubscription } from '../hooks/useSubscription'
@@ -590,6 +591,8 @@ export default function PracticeSession() {
           action_item:       analysis.action_item,
         })
       }
+
+      track(EV.SESSION_COMPLETED, { scenario_id: scenarioId, score: analysis.overall_score })
 
       const rewardResult = await awardXP(analysis.overall_score)
       setReward(rewardResult)

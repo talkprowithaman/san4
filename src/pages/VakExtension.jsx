@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import MarketingHeader from '../components/MarketingHeader'
 import VakMascot from '../components/VakMascot'
+import { track, EV } from '../lib/analytics'
 
 // TODO: replace with the published Chrome Web Store listing URL once live.
 const CHROME_STORE_URL = 'https://chromewebstore.google.com/'
@@ -33,7 +34,7 @@ export default function VakExtension() {
             <p className="text-lg mb-7" style={{ color: 'rgba(255,255,255,0.6)', lineHeight: 1.6 }}>
               Add Vak to Chrome. On any Google Meet, Vak listens to how <b className="text-white">you</b> speak and coaches you the moment you're done, your rating, filler words, the lines to fix, and exactly what to watch next.
             </p>
-            <a href={CHROME_STORE_URL} target="_blank" rel="noopener noreferrer"
+            <a href={CHROME_STORE_URL} target="_blank" rel="noopener noreferrer" onClick={() => track(EV.EXTENSION_CTA, { source: 'extension_page' })}
               className="btn-aura inline-flex items-center gap-2 text-base font-bold text-white px-8 py-4 rounded-full transition-all hover:opacity-90 active:scale-95"
               style={{ background: 'linear-gradient(135deg,#7B5EA7,#00C49A)' }}>
               <span style={{ fontSize: 20 }}>➕</span> Add Vak now
@@ -93,7 +94,7 @@ export default function VakExtension() {
       <section className="px-6 lg:px-10 py-20 text-center">
         <h2 className="text-3xl font-black text-white mb-3">Ready when your next call is.</h2>
         <p className="text-base mb-7 max-w-md mx-auto" style={{ color: '#94A3B8' }}>Free, private, and instant. Add Vak and let your real calls start coaching you.</p>
-        <a href={CHROME_STORE_URL} target="_blank" rel="noopener noreferrer"
+        <a href={CHROME_STORE_URL} target="_blank" rel="noopener noreferrer" onClick={() => track(EV.EXTENSION_CTA, { source: 'extension_page' })}
           className="btn-aura inline-flex items-center gap-2 text-base font-bold text-white px-8 py-4 rounded-full"
           style={{ background: 'linear-gradient(135deg,#7B5EA7,#00C49A)' }}>
           <span style={{ fontSize: 20 }}>➕</span> Add Vak now

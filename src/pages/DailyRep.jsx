@@ -4,6 +4,7 @@ import { useAuth }     from '../hooks/useAuth'
 import { useProgress } from '../hooks/useProgress'
 import { supabase }    from '../lib/supabase'
 import { analyzeDailyRep, synthesizeSpeech } from '../lib/gemini'
+import { track, EV } from '../lib/analytics'
 import { playPcmBase64, stopPlayback, primeAudio } from '../lib/voicePlayer'
 import {
   getRep, getTodaysReps, getRepCompletions, saveRepCompletion, REPS_PER_DAY, REP_MAX_SECONDS,
@@ -210,6 +211,8 @@ export default function DailyRep() {
 
     // Persist: local completion + streak/XP + session history. Final rep of the
     // day gets a completion bonus.
+    track(EV.REP_COMPLETED, { score: analysis.score, filler_count: analysis.filler_count ?? 0 })
+
     const done = saveRepCompletion(user?.id, rep.id, analysis.score)
     const todays = getTodaysReps()
     const isDayComplete = todays.every(r => done.some(c => c.id === r.id))

@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import { getCommScore, scoreBand } from '../lib/san4Score'
 import { parseResumeFile, generateResume, condenseResume } from '../lib/gemini'
+import { track, EV } from '../lib/analytics'
 import MarketingHeader from '../components/MarketingHeader'
 import ResumeDocument from '../components/ResumeDocument'
 
@@ -147,6 +148,13 @@ export default function ResumeBuilder() {
     }
     const out = await generateResume({ profile, jobDescription: form.jobDescription })
     if (!out) { setError('Could not build the resume. Please try again in a moment.'); setPhase('form'); return }
+    track(EV.RESUME_GENERATED, {
+      ats_score: out.ats_score,
+      has_job_description: !!form.jobDescription,
+      years_experience: out.total_years_experience ?? null,
+      san4_score: san4?.score ?? null,
+    })
+
     setResult(out); setPhase('result')
     window.scrollTo(0, 0)
   }
@@ -268,7 +276,7 @@ export default function ResumeBuilder() {
               )}
 
               <div className="flex flex-col gap-2">
-                <button onClick={() => window.print()} className="btn-primary py-3">⬇ Download PDF</button>
+                <button onClick={() => { track(EV.RESUME_DOWNLOADED, { ats_score: result.ats_score, fits_one_page: fit?.fits ?? null }); window.print() }} className="btn-primary py-3">⬇ Download PDF</button>
                 <button onClick={() => setPhase('form')} className="text-sm py-2.5 rounded-full" style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)', color: '#cbd5e1' }}>← Edit details</button>
               </div>
             </aside>

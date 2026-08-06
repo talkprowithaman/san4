@@ -7,6 +7,7 @@ import { analyzeCEFRAssessment } from '../lib/gemini'
 import { generateShareCard, shareCard } from '../lib/shareCard'
 import { saveCommScore, scoreBand } from '../lib/san4Score'
 import { LANGUAGES, getLang, setLang, hasChosenLang, t } from '../lib/onboardingCopy'
+import { track, EV } from '../lib/analytics'
 import { pickPassage } from '../lib/passages'
 import Navbar    from '../components/Navbar'
 import VakMascot from '../components/VakMascot'
@@ -250,6 +251,13 @@ export default function Assessment() {
       saveCommScore(user?.id, result.communication_score)
     }
 
+    track(EV.ASSESSMENT_COMPLETED, {
+      guest: !user,
+      cefr_level: result.cefr_level,
+      communication_score: result.communication_score,
+      band: Number.isFinite(result.communication_score) ? scoreBand(result.communication_score)?.name : null,
+    })
+
     setReport(result)
     setPhase('report')
   }
@@ -378,6 +386,7 @@ export default function Assessment() {
           <button
             onClick={() => {
               if (!user && !guestConsent) { setError('Please tick the consent box to start.'); return }
+              track(EV.ASSESSMENT_STARTED, { guest: !user, lang })
               setError(null); setPhase('step1cue')
             }}
             disabled={!user && !guestConsent}

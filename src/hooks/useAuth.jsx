@@ -1,6 +1,8 @@
 import { useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import { create } from 'zustand'
+import { migrateGuestScores } from '../lib/san4Score'
+import { identifyUser, resetAnalytics, track, EV } from '../lib/analytics'
 
 // ── Global auth store ────────────────────────────────────────────────────────
 export const useAuthStore = create((set) => ({
@@ -25,7 +27,7 @@ export function useAuth() {
     supabase.auth.getSession()
       .then(({ data: { session } }) => {
         setUser(session?.user ?? null)
-        if (session?.user) fetchProfile(session.user.id)
+        if (session?.user) { onSignedIn(session.user); fetchProfile(session.user.id) }
         else setLoading(false)
       })
       .catch(() => setLoading(false))
@@ -33,12 +35,54 @@ export function useAuth() {
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null)
-      if (session?.user) fetchProfile(session.user.id)
-      else { setProfile(null); setLoading(false) }
+      if (session?.user) { onSignedIn(session.user); fetchProfile(session.user.id) }
+      else { setProfile(null); setLoading(false); resetAnalytics() }
     })
 
     return () => { clearTimeout(failsafe); subscription.unsubscribe() }
   }, [])
+
+  // Runs once per sign-in. Rescues the score a guest earned before signing up
+  // (see migrateGuestScores) and backfills the practice_sessions row that the
+  // guest run skipped, so the assessment shows in history and feeds the living
+  // San4 Score. Must never throw: this is a side-effect, not a gate.
+  async function onSignedIn(u) {
+    try {
+      identifyUser(u.id)
+      const migrated = migrateGuestScores(u.id)
+      if (!migrated) return
+
+      track(EV.GUEST_SCORE_MIGRATED, { had_comm: migrated.comm != null, had_cefr: !!migrated.cefr })
+
+      const result = migrated.cefr?.result
+      if (!result) return
+
+      // Only insert if this account has no assessment row yet (avoids dupes).
+      const { data: existing } = await supabase
+        .from('practice_sessions')
+        .select('id')
+        .eq('user_id', u.id)
+        .eq('scenario_id', 'cefr_assessment')
+        .limit(1)
+
+      if (existing?.length) return
+
+      await supabase.from('practice_sessions').insert({
+        user_id:          u.id,
+        scenario_id:      'cefr_assessment',
+        scenario_title:   `🎯 CEFR Assessment — ${result.cefr_level}`,
+        overall_score:    result.overall_score,
+        confidence_score: result.fluency,
+        pacing_score:     result.pronunciation,
+        duration_seconds: 0,
+        feedback:         result.band_description,
+        action_item:      result.next_step,
+        messages:         [],
+      })
+    } catch (e) {
+      console.warn('guest score migration skipped:', e?.message)
+    }
+  }
 
   // Never throws: a failed/slow profile read must still release the loading gate
   // so the user reaches the page (or the login redirect) instead of hanging.
@@ -72,6 +116,7 @@ export function useAuth() {
         emailRedirectTo: `${window.location.origin}/auth/callback`,
       },
     })
+    if (!error) track(EV.SIGNUP_COMPLETED)
     return { data, error }
   }
 
