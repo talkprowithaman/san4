@@ -18,16 +18,42 @@ const HOST = import.meta.env.VITE_POSTHOG_HOST || 'https://us.i.posthog.com'
 
 let ready = false
 
+// Our privacy posture, asserted in one place. PostHog fetches REMOTE config from
+// the project (…/array/<key>/config.js) which can re-enable autocapture and
+// session replay after init, so we also re-assert this in `loaded` below.
+const PRIVACY = {
+  autocapture: false,              // explicit events only — no accidental PII
+  disable_session_recording: true, // never record the screen
+  capture_pageview: false,         // we send these ourselves (SPA router)
+  disable_surveys: true,           // no survey scripts on our pages
+  capture_dead_clicks: false,
+  capture_performance: false,      // no web-vitals autocapture
+}
+
 export function initAnalytics() {
   if (ready || !KEY) return
   try {
     posthog.init(KEY, {
       api_host: HOST,
-      autocapture: false,              // explicit events only — no accidental PII
-      disable_session_recording: true, // never record the screen
-      capture_pageview: false,         // we send these ourselves (SPA router)
+      ...PRIVACY,
       person_profiles: 'identified_only',
       persistence: 'localStorage',
+      // Stop PostHog pulling remote project config / flags. Without this the
+      // server config is merged after init and silently re-enables autocapture
+      // and session replay, overriding the PRIVACY block above.
+      advanced_disable_flags: true,
+      advanced_disable_decide: true,
+      advanced_disable_feature_flags: true,
+      advanced_disable_feature_flags_on_first_load: true,
+      loaded: (ph) => {
+        // Remote project config is merged AFTER init and was observed flipping
+        // autocapture/session-recording back on. Re-assert, and hard-stop any
+        // recording that may have started, so the client is authoritative.
+        try {
+          ph.set_config(PRIVACY)
+          ph.stopSessionRecording?.()
+        } catch { /* ignore */ }
+      },
     })
     ready = true
   } catch (e) {
