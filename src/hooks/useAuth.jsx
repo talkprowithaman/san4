@@ -147,9 +147,24 @@ export function useAuth() {
     return { data, error }
   }
 
+  // Sends the "reset your password" email. The link lands on /auth/reset, which
+  // exchanges the code for a short-lived session and lets them set a new one.
+  async function resetPassword(email) {
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/auth/reset`,
+    })
+    return { error }
+  }
+
+  // Sets a new password for the user in the current (recovery) session.
+  async function updatePassword(password) {
+    const { error } = await supabase.auth.updateUser({ password })
+    return { error }
+  }
+
   async function signOut() {
     await supabase.auth.signOut()
   }
 
-  return { user, profile, loading, signUp, signIn, signOut, recordVoiceConsent }
+  return { user, profile, loading, signUp, signIn, signOut, recordVoiceConsent, resetPassword, updatePassword }
 }

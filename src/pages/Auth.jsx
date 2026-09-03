@@ -6,13 +6,15 @@ import { PRIVACY_POLICY_VERSION } from '../lib/consent'
 
 export default function Auth() {
   const [params]  = useSearchParams()
-  const [mode, setMode] = useState(params.get('mode') === 'signup' ? 'signup' : 'signin')
+  const [mode, setMode] = useState(
+    params.get('reset') ? 'forgot' : params.get('mode') === 'signup' ? 'signup' : 'signin'
+  )
   const [form, setForm] = useState({ name: '', email: '', password: '' })
   const [error, setError]   = useState('')
   const [loading, setLoading] = useState(false)
   const [consented, setConsented] = useState(false)
 
-  const { signIn, signUp } = useAuth()
+  const { signIn, signUp, resetPassword } = useAuth()
   const { user } = useAuthStore()
   const navigate = useNavigate()
 
@@ -41,6 +43,71 @@ export default function Auth() {
     if (err) { setError(err.message); setLoading(false) }
     else if (mode === 'signup') { setLoading(false); setMode('check-email') }
   }
+
+  // Forgot password: email them a reset link. We always show the same
+  // confirmation, even if the address has no account, so the form can't be used
+  // to discover which emails are registered.
+  async function sendReset(e) {
+    e.preventDefault()
+    if (!form.email) { setError('Enter your email first.'); return }
+    setLoading(true); setError('')
+    await resetPassword(form.email)
+    setLoading(false)
+    setMode('reset-sent')
+  }
+
+  // ── Forgot-password screens ─────────────────────────────────────────────────
+  if (mode === 'forgot') return (
+    <div className="min-h-screen flex items-center justify-center px-4" style={{ background: '#0a0a0f' }}>
+      <div className="max-w-md w-full rounded-3xl p-9 text-center"
+        style={{ background: 'linear-gradient(160deg,#10192E,#0B1220)', border: '1px solid rgba(255,255,255,0.08)' }}>
+        <div className="flex justify-center mb-4"><VakMascot level={3} size={78} mood="encouraging" /></div>
+        <h2 className="text-white font-black text-xl mb-1">Forgot your password?</h2>
+        <p className="text-sm mb-6" style={{ color: '#6B8CAE' }}>
+          Enter your email and we will send you a link to set a new one.
+        </p>
+
+        {error && (
+          <div className="rounded-2xl px-4 py-3 mb-4 text-sm text-left"
+            style={{ background: 'rgba(239,68,68,0.1)', color: '#FCA5A5', border: '1px solid rgba(239,68,68,0.3)' }}>
+            {error}
+          </div>
+        )}
+
+        <form onSubmit={sendReset} className="space-y-3 text-left">
+          <input className="input" type="email" autoComplete="email" placeholder="you@email.com"
+            value={form.email} onChange={e => update('email', e.target.value)} required />
+          <button type="submit" disabled={loading} className="btn-play mt-1 w-full">
+            {loading ? '…' : 'Send reset link →'}
+          </button>
+        </form>
+
+        <button onClick={() => { setMode('signin'); setError('') }}
+          className="mt-5 text-sm transition-colors hover:text-white" style={{ color: '#6B8CAE' }}>
+          ← Back to sign in
+        </button>
+      </div>
+    </div>
+  )
+
+  if (mode === 'reset-sent') return (
+    <div className="min-h-screen flex items-center justify-center px-4" style={{ background: '#0a0a0f' }}>
+      <div className="max-w-md w-full text-center rounded-3xl p-10"
+        style={{ background: 'linear-gradient(160deg,#10192E,#0B1220)', border: '1px solid rgba(255,255,255,0.08)' }}>
+        <div className="text-5xl mb-5">📧</div>
+        <h2 className="text-white font-black text-xl mb-3">Check your inbox</h2>
+        <p className="text-sm leading-relaxed mb-2" style={{ color: '#6B8CAE' }}>
+          If an account exists for{' '}
+          <span className="text-white font-semibold">{form.email}</span>, we have sent a link to reset your password.
+        </p>
+        <p className="text-xs" style={{ color: '#475F7B' }}>The link expires shortly and can only be used once.</p>
+        <button onClick={() => { setMode('signin'); setError('') }}
+          className="mt-6 text-sm transition-colors hover:text-white" style={{ color: '#6B8CAE' }}>
+          ← Back to sign in
+        </button>
+      </div>
+    </div>
+  )
 
   // ── Check-email screen ───────────────────────────────────────────────────────
   if (mode === 'check-email') return (
@@ -160,6 +227,16 @@ export default function Auth() {
                 value={form.password} onChange={e => update('password', e.target.value)}
                 minLength={8} required />
             </div>
+
+            {mode === 'signin' && (
+              <div className="text-right -mt-1">
+                <button type="button" onClick={() => { setMode('forgot'); setError('') }}
+                  className="text-xs font-semibold transition-colors hover:text-white"
+                  style={{ color: '#7B5EA7' }}>
+                  Forgot password?
+                </button>
+              </div>
+            )}
 
             {mode === 'signup' && (
               <label className="flex items-start gap-2.5 text-xs leading-relaxed cursor-pointer select-none"

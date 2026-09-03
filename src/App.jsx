@@ -13,6 +13,7 @@ import Practice       from './pages/Practice'
 import PracticeSession from './pages/PracticeSession'
 import MeetingPrep    from './pages/MeetingPrep'
 import AuthCallback   from './pages/AuthCallback'
+import ResetPassword  from './pages/ResetPassword'
 import Pricing        from './pages/Pricing'
 import ScriptReading  from './pages/ScriptReading'
 import DailyChallenge from './pages/DailyChallenge'
@@ -76,6 +77,7 @@ export default function App() {
         <Route path="/"              element={<Landing />} />
         <Route path="/auth"          element={<Auth />} />
         <Route path="/auth/callback" element={<AuthCallback />} />
+        <Route path="/auth/reset"    element={<ResetPassword />} />
         <Route path="/pricing"       element={<Pricing />} />
         <Route path="/how-it-works"  element={<HowItWorks />} />
         <Route path="/privacy"       element={<PrivacyPolicy />} />
