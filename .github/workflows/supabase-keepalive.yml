@@ -1,0 +1,62 @@
+# ── Supabase keep-alive ──────────────────────────────────────────────────────
+# Free-tier Supabase projects auto-pause after ~7 days without activity, which
+# takes auth and the database offline and stops anyone signing in. This has
+# already taken San4 down three times.
+#
+# A real database query each day resets that idle timer, so the project never
+# reaches the pause threshold. It doubles as uptime monitoring: if Supabase is
+# down or paused, this job fails and GitHub emails you, so you find out before
+# your users do.
+name: Supabase keep-alive
+
+on:
+  schedule:
+    # 06:00 UTC daily (~11:30 IST). GitHub may delay cron by a few minutes;
+    # irrelevant against a 7-day threshold.
+    - cron: '0 6 * * *'
+  workflow_dispatch:        # lets you run it by hand from the Actions tab
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Query the database (resets the idle timer)
+        env:
+          SUPABASE_URL:      ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+        run: |
+          set -euo pipefail
+
+          if [ -z "${SUPABASE_URL:-}" ] || [ -z "${SUPABASE_ANON_KEY:-}" ]; then
+            echo "::error::SUPABASE_URL / SUPABASE_ANON_KEY secrets are not set."
+            exit 1
+          fi
+
+          # A genuine PostgREST query. RLS may return an empty set for anon --
+          # that is fine and still counts as project activity.
+          db_status=$(curl -s -o /tmp/db.out -w '%{http_code}' --max-time 30 \
+            "${SUPABASE_URL}/rest/v1/profiles?select=id&limit=1" \
+            -H "apikey: ${SUPABASE_ANON_KEY}" \
+            -H "Authorization: Bearer ${SUPABASE_ANON_KEY}")
+
+          auth_status=$(curl -s -o /dev/null -w '%{http_code}' --max-time 30 \
+            "${SUPABASE_URL}/auth/v1/health" \
+            -H "apikey: ${SUPABASE_ANON_KEY}")
+
+          echo "database: HTTP $db_status"
+          echo "auth:     HTTP $auth_status"
+
+          # 2xx from the database means the project is awake and serving.
+          if [ "$db_status" -lt 200 ] || [ "$db_status" -ge 300 ]; then
+            echo "::error::Database did not respond OK (HTTP $db_status). Project may be paused or deleted."
+            cat /tmp/db.out || true
+            exit 1
+          fi
+
+          if [ "$auth_status" != "200" ]; then
+            echo "::error::Auth service unhealthy (HTTP $auth_status) -- sign-in is probably broken."
+            exit 1
+          fi
+
+          echo "Supabase is awake. Idle timer reset."

@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { BrowserRouter, HashRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { BrowserRouter, HashRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { Capacitor } from '@capacitor/core'
 import { App as CapApp } from '@capacitor/app'
 import ProtectedRoute from './components/ProtectedRoute'
@@ -13,6 +13,7 @@ import Practice       from './pages/Practice'
 import PracticeSession from './pages/PracticeSession'
 import MeetingPrep    from './pages/MeetingPrep'
 import AuthCallback   from './pages/AuthCallback'
+import ResetPassword  from './pages/ResetPassword'
 import Pricing        from './pages/Pricing'
 import ScriptReading  from './pages/ScriptReading'
 import DailyChallenge from './pages/DailyChallenge'
@@ -32,6 +33,15 @@ import ResponsibleAI  from './pages/ResponsibleAI'
 import ResumeBuilder  from './pages/ResumeBuilder'
 import ReminderScheduler from './components/ReminderScheduler'
 import { useAuth } from './hooks/useAuth'
+import { initAnalytics, trackPageview } from './lib/analytics'
+
+// SPA pageviews: the router changes the URL without a reload, so PostHog's own
+// pageview capture is off and we emit one here on every navigation.
+function PageviewTracker() {
+  const location = useLocation()
+  useEffect(() => { trackPageview(location.pathname) }, [location.pathname])
+  return null
+}
 
 // In the native Android/iOS shell there is no SPA server fallback, so deep
 // links and hard refreshes on a path route would 404. HashRouter keeps all
@@ -45,6 +55,9 @@ export default function App() {
   // initialises auth behind its own loading flag, deadlocking on the spinner.
   useAuth()
 
+  // Product analytics — no-ops unless VITE_POSTHOG_KEY is set.
+  useEffect(() => { initAnalytics() }, [])
+
   // Android hardware back button: go back through history, or exit at the root.
   useEffect(() => {
     if (!Capacitor.isNativePlatform()) return
@@ -57,12 +70,14 @@ export default function App() {
 
   return (
     <Router>
+      <PageviewTracker />
       <ReminderScheduler />
       <Routes>
         {/* Public */}
         <Route path="/"              element={<Landing />} />
         <Route path="/auth"          element={<Auth />} />
         <Route path="/auth/callback" element={<AuthCallback />} />
+        <Route path="/auth/reset"    element={<ResetPassword />} />
         <Route path="/pricing"       element={<Pricing />} />
         <Route path="/how-it-works"  element={<HowItWorks />} />
         <Route path="/privacy"       element={<PrivacyPolicy />} />

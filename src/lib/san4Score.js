@@ -39,6 +39,44 @@ export function getCommScore(userId) {
   }
 }
 
+// ── Guest → account migration ────────────────────────────────────────────────
+// The public /assessment lets a guest get a score BEFORE signing up, then says
+// "Save my score". But guest results were stored under the `guest` key and the
+// app then read `san4_comm_<uid>` / `san4_cefr_<uid>` — so the score silently
+// vanished at the exact moment we asked someone to create an account, and the
+// user landed on an empty Today card being asked to retake the test.
+//
+// Called once on sign-in (see useAuth). Never clobbers a score the account
+// already has; clears the guest keys afterwards so a shared device doesn't leak
+// one person's score into the next person's account.
+export function migrateGuestScores(userId) {
+  if (!userId) return null
+  try {
+    const guestComm = localStorage.getItem('san4_comm_guest')
+    const guestCefr = localStorage.getItem('san4_cefr_guest')
+    if (!guestComm && !guestCefr) return null
+
+    const migrated = { comm: null, cefr: null }
+
+    if (guestComm && localStorage.getItem(commKey(userId)) == null) {
+      localStorage.setItem(commKey(userId), guestComm)
+      const n = parseInt(guestComm, 10)
+      migrated.comm = Number.isFinite(n) ? n : null
+    }
+    if (guestCefr && localStorage.getItem(`san4_cefr_${userId}`) == null) {
+      localStorage.setItem(`san4_cefr_${userId}`, guestCefr)
+      try { migrated.cefr = JSON.parse(guestCefr) } catch { /* keep null */ }
+    }
+
+    localStorage.removeItem('san4_comm_guest')
+    localStorage.removeItem('san4_cefr_guest')
+
+    return (migrated.comm != null || migrated.cefr) ? migrated : null
+  } catch {
+    return null
+  }
+}
+
 // ── The score itself ──────────────────────────────────────────────────────────
 // sessions: rows with overall_score (newest first, as Dashboard/Today fetch).
 // Returns null when there's nothing to score yet (no fabricated numbers).
