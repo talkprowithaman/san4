@@ -147,6 +147,22 @@ export function useAuth() {
     return { data, error }
   }
 
+  // Sends a one-tap sign-in link.
+  // shouldCreateUser is FALSE on purpose: magic link is sign-IN only. If it
+  // could create accounts it would bypass the signup form, and with it the DPDP
+  // consent checkbox and the disposable-email block. New users must sign up
+  // properly; this only lets existing ones back in without a password.
+  async function signInWithMagicLink(email) {
+    const { error } = await supabase.auth.signInWithOtp({
+      email,
+      options: {
+        shouldCreateUser: false,
+        emailRedirectTo: `${window.location.origin}/auth/callback`,
+      },
+    })
+    return { error }
+  }
+
   // Sends the "reset your password" email. The link lands on /auth/reset, which
   // exchanges the code for a short-lived session and lets them set a new one.
   async function resetPassword(email) {
@@ -166,5 +182,5 @@ export function useAuth() {
     await supabase.auth.signOut()
   }
 
-  return { user, profile, loading, signUp, signIn, signOut, recordVoiceConsent, resetPassword, updatePassword }
+  return { user, profile, loading, signUp, signIn, signOut, recordVoiceConsent, resetPassword, updatePassword, signInWithMagicLink }
 }
