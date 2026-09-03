@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams, Link } from 'react-router-dom'
 import { useAuth, useAuthStore } from '../hooks/useAuth'
 import VakMascot from '../components/VakMascot'
 import { PRIVACY_POLICY_VERSION } from '../lib/consent'
+import { isDisposableEmail, DISPOSABLE_MESSAGE } from '../lib/disposableEmails'
 
 export default function Auth() {
   const [params]  = useSearchParams()
@@ -31,6 +32,12 @@ export default function Auth() {
     e.preventDefault()
     if (mode === 'signup' && !consented) {
       setError('Please agree to the Privacy Policy to create an account.')
+      return
+    }
+    // Real inboxes only, at signup. Sign-in is deliberately NOT checked so
+    // existing accounts are never locked out by a later blocklist update.
+    if (mode === 'signup' && isDisposableEmail(form.email)) {
+      setError(DISPOSABLE_MESSAGE)
       return
     }
     setLoading(true); setError('')

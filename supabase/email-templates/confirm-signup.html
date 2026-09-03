@@ -1,0 +1,56 @@
+<!-- San4 — signup confirmation email.
+     Paste into: Supabase Dashboard → Authentication → Emails → "Confirm signup".
+     Subject line: Knock knock, Vak wants to know if you're real
+     Supabase replaces {{ .ConfirmationURL }} at send time. -->
+<div style="margin:0;padding:0;background:#050810;">
+  <div style="max-width:520px;margin:0 auto;padding:36px 24px;font-family:'DM Sans',Helvetica,Arial,sans-serif;color:#F1F5F9;">
+
+    <!-- Brand -->
+    <div style="text-align:center;margin-bottom:26px;">
+      <span style="font-size:26px;font-weight:800;letter-spacing:-0.5px;color:#ffffff;">
+        SAN<span style="color:#7B5EA7;">4</span>
+      </span>
+    </div>
+
+    <!-- Card -->
+    <div style="background:linear-gradient(160deg,#10192E,#0B1220);border:1px solid rgba(255,255,255,0.08);border-radius:22px;padding:34px 28px;text-align:center;">
+
+      <div style="font-size:44px;line-height:1;margin-bottom:14px;">🦢</div>
+
+      <h1 style="margin:0 0 10px;font-size:23px;line-height:1.25;font-weight:800;color:#ffffff;">
+        Knock knock, Vak wants to know if you're real
+      </h1>
+
+      <p style="margin:0 0 24px;font-size:15px;line-height:1.6;color:#94A3B8;">
+        Tap the button and your account is live. That's the whole task.
+      </p>
+
+      <a href="{{ .ConfirmationURL }}"
+         style="display:inline-block;background:linear-gradient(135deg,#7B5EA7,#4FACFE);color:#ffffff;text-decoration:none;font-weight:700;font-size:15px;padding:15px 34px;border-radius:100px;">
+        Yes, I'm real →
+      </a>
+
+      <!-- What they get. Short on purpose: three lines they'll remember. -->
+      <div style="margin-top:30px;padding-top:22px;border-top:1px solid rgba(255,255,255,0.08);text-align:left;">
+        <p style="margin:0 0 14px;font-size:12px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:#6B8CAE;">
+          What happens next
+        </p>
+        <p style="margin:0 0 9px;font-size:14px;line-height:1.5;color:#E2E8F0;">
+          🎯 &nbsp;<b>2 minutes</b> to get your San4 Score
+        </p>
+        <p style="margin:0 0 9px;font-size:14px;line-height:1.5;color:#E2E8F0;">
+          🔥 &nbsp;<b>60 seconds a day</b> keeps it climbing
+        </p>
+        <p style="margin:0;font-size:14px;line-height:1.5;color:#E2E8F0;">
+          🗣️ &nbsp;We score <b>how you communicate</b>, not your English
+        </p>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <p style="margin:22px 0 0;text-align:center;font-size:12px;line-height:1.6;color:#475F7B;">
+      Didn't sign up? Ignore this and nothing happens.<br />
+      San4 · Your voice, your score.
+    </p>
+  </div>
+</div>
