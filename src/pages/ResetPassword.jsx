@@ -4,6 +4,21 @@ import { supabase } from '../lib/supabase'
 import { useAuth } from '../hooks/useAuth'
 import VakMascot from '../components/VakMascot'
 
+// Defined at MODULE scope on purpose. When this lived inside ResetPassword it was
+// a NEW component type on every render, so React unmounted the whole subtree and
+// mounted fresh DOM each keystroke. The password input lost focus every character
+// — on phones that closes the keyboard, which is exactly what users reported.
+function Shell({ children }) {
+  return (
+    <div className="min-h-screen flex items-center justify-center px-4" style={{ background: '#0a0a0f' }}>
+      <div className="max-w-md w-full rounded-3xl p-9 text-center"
+        style={{ background: 'linear-gradient(160deg,#10192E,#0B1220)', border: '1px solid rgba(255,255,255,0.08)' }}>
+        {children}
+      </div>
+    </div>
+  )
+}
+
 // Landing point for the "reset your password" email link.
 // Supabase sends the user here with a `code` (PKCE). We exchange it for a
 // short-lived recovery session, then let them set a new password. If the link
@@ -53,15 +68,6 @@ export default function ResetPassword() {
     setPhase('done')
     setTimeout(() => navigate('/today', { replace: true }), 1800)
   }
-
-  const Shell = ({ children }) => (
-    <div className="min-h-screen flex items-center justify-center px-4" style={{ background: '#0a0a0f' }}>
-      <div className="max-w-md w-full rounded-3xl p-9 text-center"
-        style={{ background: 'linear-gradient(160deg,#10192E,#0B1220)', border: '1px solid rgba(255,255,255,0.08)' }}>
-        {children}
-      </div>
-    </div>
-  )
 
   if (phase === 'verifying') return (
     <Shell>
