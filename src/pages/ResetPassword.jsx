@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../hooks/useAuth'
 import VakMascot from '../components/VakMascot'
+import { friendlyAuthError } from '../lib/authErrors'
 
 // Defined at MODULE scope on purpose. When this lived inside ResetPassword it was
 // a NEW component type on every render, so React unmounted the whole subtree and
@@ -64,7 +65,7 @@ export default function ResetPassword() {
     setLoading(true); setError('')
     const { error: err } = await updatePassword(password)
     setLoading(false)
-    if (err) { setError(err.message); return }
+    if (err) { setError(friendlyAuthError(err, 'signup')); return }
     setPhase('done')
     setTimeout(() => navigate('/today', { replace: true }), 1800)
   }

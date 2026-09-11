@@ -4,6 +4,7 @@ import { useAuth, useAuthStore } from '../hooks/useAuth'
 import VakMascot from '../components/VakMascot'
 import { PRIVACY_POLICY_VERSION } from '../lib/consent'
 import { isDisposableEmail, DISPOSABLE_MESSAGE } from '../lib/disposableEmails'
+import { friendlyAuthError, isRateLimited } from '../lib/authErrors'
 
 export default function Auth() {
   const [params]  = useSearchParams()
@@ -47,16 +48,8 @@ export default function Auth() {
           version: PRIVACY_POLICY_VERSION,
         })
       : await signIn(form.email, form.password)
-    if (err) { setError(err.message); setLoading(false) }
+    if (err) { setError(friendlyAuthError(err, mode)); setLoading(false) }
     else if (mode === 'signup') { setLoading(false); setMode('check-email') }
-  }
-
-  // Supabase rate-limits auth emails (a few per hour). That limit applies
-  // regardless of whether the account exists, so saying so leaks nothing, and
-  // it beats sending someone to an inbox that will never receive anything.
-  function isRateLimited(err) {
-    if (!err) return false
-    return err.status === 429 || /rate limit|too many|security purposes/i.test(err.message || '')
   }
 
   // Magic link: email a one-tap sign-in link. Like the reset flow, the
@@ -68,7 +61,7 @@ export default function Auth() {
     setLoading(true); setError('')
     const { error: err } = await signInWithMagicLink(form.email)
     setLoading(false)
-    if (isRateLimited(err)) { setError('Too many emails just now. Please wait a minute and try again.'); return }
+    if (isRateLimited(err)) { setError(friendlyAuthError(err, 'email')); return }
     setMode('magic-sent')
   }
 
@@ -81,7 +74,7 @@ export default function Auth() {
     setLoading(true); setError('')
     const { error: err } = await resetPassword(form.email)
     setLoading(false)
-    if (isRateLimited(err)) { setError('Too many emails just now. Please wait a minute and try again.'); return }
+    if (isRateLimited(err)) { setError(friendlyAuthError(err, 'email')); return }
     setMode('reset-sent')
   }
 
