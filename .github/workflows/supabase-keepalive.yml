@@ -1,19 +1,24 @@
-# ── Supabase keep-alive ──────────────────────────────────────────────────────
+# ── Supabase keep-alive + health check ───────────────────────────────────────
 # Free-tier Supabase projects auto-pause after ~7 days without activity, which
 # takes auth and the database offline and stops anyone signing in. This has
 # already taken San4 down three times.
 #
-# A real database query each day resets that idle timer, so the project never
-# reaches the pause threshold. It doubles as uptime monitoring: if Supabase is
-# down or paused, this job fails and GitHub emails you, so you find out before
-# your users do.
+# Real API calls reset that idle timer, so the project never reaches the pause
+# threshold. The job doubles as uptime monitoring: if Supabase is down, paused,
+# or broken, this fails and GitHub emails you, so you find out before users do.
+#
+# It runs TWICE a day on purpose. GitHub drops or delays scheduled runs under
+# load (observed delays here: 4-5 hours), so a single daily run is a single
+# point of failure. Two runs 12h apart means one missed run changes nothing.
 name: Supabase keep-alive
 
 on:
   schedule:
-    # 06:00 UTC daily (~11:30 IST). GitHub may delay cron by a few minutes;
-    # irrelevant against a 7-day threshold.
-    - cron: '0 6 * * *'
+    # Twice daily, 12h apart. Deliberately at :17 rather than :00 -- GitHub's
+    # cron queue is most congested on the hour, which is why the previous
+    # '0 6 * * *' consistently landed around 10:30 UTC.
+    - cron: '17 6 * * *'
+    - cron: '17 18 * * *'
   workflow_dispatch:        # lets you run it by hand from the Actions tab
 
 jobs:
@@ -21,10 +26,12 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - name: Query the database (resets the idle timer)
+      - name: Keep the project awake and verify it actually works
         env:
-          SUPABASE_URL:      ${{ secrets.SUPABASE_URL }}
-          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+          SUPABASE_URL:       ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY:  ${{ secrets.SUPABASE_ANON_KEY }}
+          TEST_EMAIL:         ${{ secrets.SUPABASE_TEST_EMAIL }}
+          TEST_PASSWORD:      ${{ secrets.SUPABASE_TEST_PASSWORD }}
         run: |
           set -euo pipefail
 
@@ -33,30 +40,88 @@ jobs:
             exit 1
           fi
 
+          # ── 1. Database read ────────────────────────────────────────────────
           # A genuine PostgREST query. RLS may return an empty set for anon --
           # that is fine and still counts as project activity.
           db_status=$(curl -s -o /tmp/db.out -w '%{http_code}' --max-time 30 \
             "${SUPABASE_URL}/rest/v1/profiles?select=id&limit=1" \
             -H "apikey: ${SUPABASE_ANON_KEY}" \
             -H "Authorization: Bearer ${SUPABASE_ANON_KEY}")
+          echo "database:  HTTP $db_status"
 
-          auth_status=$(curl -s -o /dev/null -w '%{http_code}' --max-time 30 \
-            "${SUPABASE_URL}/auth/v1/health" \
-            -H "apikey: ${SUPABASE_ANON_KEY}")
-
-          echo "database: HTTP $db_status"
-          echo "auth:     HTTP $auth_status"
-
-          # 2xx from the database means the project is awake and serving.
           if [ "$db_status" -lt 200 ] || [ "$db_status" -ge 300 ]; then
             echo "::error::Database did not respond OK (HTTP $db_status). Project may be paused or deleted."
             cat /tmp/db.out || true
             exit 1
           fi
 
+          # ── 2. Auth service reachable ───────────────────────────────────────
+          auth_status=$(curl -s -o /dev/null -w '%{http_code}' --max-time 30 \
+            "${SUPABASE_URL}/auth/v1/health" \
+            -H "apikey: ${SUPABASE_ANON_KEY}")
+          echo "auth:      HTTP $auth_status"
+
           if [ "$auth_status" != "200" ]; then
             echo "::error::Auth service unhealthy (HTTP $auth_status) -- sign-in is probably broken."
             exit 1
+          fi
+
+          # ── 3. Real sign-in (the test that actually matters) ────────────────
+          # /auth/v1/health only returns a static version string: it stays 200
+          # even when GoTrue has lost its database connection. The outage that
+          # hit San4 three times was "nobody can sign in", so we test exactly
+          # that -- a real password grant for the QA account, asserting we get
+          # a token back. This exercises auth AND the database together.
+          if [ -z "${TEST_EMAIL:-}" ] || [ -z "${TEST_PASSWORD:-}" ]; then
+            echo "::warning::SUPABASE_TEST_EMAIL / SUPABASE_TEST_PASSWORD not set -- skipping the sign-in test."
+          else
+            # jq builds the JSON so a password containing $ , \ or " cannot
+            # break out of the body. Written to a file, never to the log.
+            jq -n --arg e "$TEST_EMAIL" --arg p "$TEST_PASSWORD" \
+              '{email:$e,password:$p}' > /tmp/login.req
+
+            login_status=$(curl -s -o /tmp/login.json -w '%{http_code}' --max-time 30 \
+              "${SUPABASE_URL}/auth/v1/token?grant_type=password" \
+              -H "apikey: ${SUPABASE_ANON_KEY}" \
+              -H "Content-Type: application/json" \
+              --data-binary @/tmp/login.req)
+            echo "sign-in:   HTTP $login_status"
+
+            if [ "$login_status" != "200" ]; then
+              # Never print the body: it can echo back the submitted email.
+              echo "::error::Sign-in FAILED (HTTP $login_status). Real users cannot log in right now."
+              echo "::error::If you rotated the QA password, update the SUPABASE_TEST_PASSWORD secret."
+              exit 1
+            fi
+
+            token=$(jq -r '.access_token // empty' /tmp/login.json)
+            if [ -z "$token" ]; then
+              echo "::error::Sign-in returned 200 but no access_token -- auth is misbehaving."
+              exit 1
+            fi
+
+            # ── 4. Authenticated read as that user ────────────────────────────
+            # Proves the full user path end to end: JWT is valid, RLS evaluates,
+            # and the row comes back. A broken RLS policy or migration shows up
+            # here rather than in a user's bug report.
+            me_status=$(curl -s -o /tmp/me.json -w '%{http_code}' --max-time 30 \
+              "${SUPABASE_URL}/rest/v1/profiles?select=id&limit=1" \
+              -H "apikey: ${SUPABASE_ANON_KEY}" \
+              -H "Authorization: Bearer ${token}")
+            echo "rls read:  HTTP $me_status"
+
+            if [ "$me_status" -lt 200 ] || [ "$me_status" -ge 300 ]; then
+              echo "::error::Authenticated read failed (HTTP $me_status) -- RLS or the profiles table is broken."
+              exit 1
+            fi
+
+            # Be a good citizen: drop the session we just created.
+            curl -s -o /dev/null --max-time 15 -X POST \
+              "${SUPABASE_URL}/auth/v1/logout" \
+              -H "apikey: ${SUPABASE_ANON_KEY}" \
+              -H "Authorization: Bearer ${token}" || true
+
+            echo "Sign-in works: a real user can log in and read their data."
           fi
 
           echo "Supabase is awake. Idle timer reset."
