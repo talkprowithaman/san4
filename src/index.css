@@ -317,3 +317,46 @@
 .animate-shimmer    { animation: shimmer   2.2s linear infinite; }
 .animate-feather-in { animation: featherIn 0.65s var(--ease) both; }
 .animate-bounce-slow { animation: bounce 2.5s ease-in-out infinite; }
+
+/* ── Ink: the in-app design system (Claude Design handoff) ─────────────────────
+   The marketing site keeps its own look. Every app route gets body.ink (see
+   ThemeScope in App.jsx), which re-skins the shared classes that the older tool
+   pages still use, so they read as part of the same product. */
+@keyframes vb     { 0%,100% { transform: scaleY(.22); } 50% { transform: scaleY(1); } }
+@keyframes halo   { 0%,100% { transform: scale(1); opacity: .5; } 50% { transform: scale(1.18); opacity: .12; } }
+@keyframes fadeUp { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+@keyframes dots   { 0%,100% { opacity: .25; } 50% { opacity: 1; } }
+
+body.ink { background: #0A0A0C; color: #F2F2F0; }
+body.ink button { -webkit-tap-highlight-color: transparent; }
+body.ink.has-tabbar { padding-bottom: 96px; }
+
+body.ink .btn-primary {
+  background: #7B5EA7; border-radius: 15px; box-shadow: none; font-weight: 700;
+  padding: 0.85rem 1.4rem; font-family: 'DM Sans', sans-serif;
+}
+body.ink .btn-primary:hover:not(:disabled) { transform: none; box-shadow: none; filter: brightness(1.08); }
+body.ink .btn-secondary {
+  background: none; color: #C9C9D2; border: 1px solid rgba(255,255,255,.14); border-radius: 15px;
+}
+body.ink .btn-secondary:hover { background: rgba(255,255,255,.04); transform: none; color: #F2F2F0; }
+body.ink .btn-play {
+  background: #F2F2F0; color: #0A0A0C; border-radius: 16px; box-shadow: none; font-weight: 700;
+  font-size: 15px; font-family: 'DM Sans', sans-serif;
+}
+body.ink .btn-play:hover { transform: none; box-shadow: none; filter: brightness(.96); }
+body.ink .card, body.ink .game-card, body.ink .quest-card, body.ink .stat-gem {
+  background: linear-gradient(165deg,#121218,#0C0C10); backdrop-filter: none; -webkit-backdrop-filter: none;
+  border: 1px solid rgba(255,255,255,.08); border-radius: 18px;
+}
+body.ink .card:hover, body.ink .game-card:hover, body.ink .quest-card:hover {
+  border-color: rgba(169,140,224,.35); box-shadow: none; transform: none;
+}
+body.ink .input {
+  background: transparent; border: 1px solid rgba(255,255,255,.12); border-radius: 16px; color: #F2F2F0;
+  padding: 15px 17px; font-family: 'DM Sans', sans-serif; font-size: 15px;
+}
+body.ink .input::placeholder { color: #9A9AA8; opacity: .6; }
+body.ink .input:focus { border-color: rgba(169,140,224,.55); background: transparent; box-shadow: none; }
+body.ink h1, body.ink h2, body.ink h3 { letter-spacing: -.01em; }
+body.ink .text-gradient { background: none; -webkit-text-fill-color: #A98CE0; color: #A98CE0; }

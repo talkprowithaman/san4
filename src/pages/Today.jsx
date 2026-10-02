@@ -2,245 +2,207 @@ import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth }     from '../hooks/useAuth'
 import { useProgress } from '../hooks/useProgress'
-import { getTodaysReps, getRepCompletions, REPS_PER_DAY } from '../lib/dailyReps'
-import { getFreezes } from '../lib/streakFreeze'
-import { generateShareCard, shareCard } from '../lib/shareCard'
-import { computeSan4Score, scoreBand } from '../lib/san4Score'
-import { supabase } from '../lib/supabase'
-import Navbar    from '../components/Navbar'
-import VakMascot from '../components/VakMascot'
+import { useScenarioUnlocks } from '../hooks/useScenarioUnlocks'
+import { useSessions, useOfflineSync } from '../hooks/useSessions'
+import { getTodaysReps, getRepCompletions, repsUnlockedToday } from '../lib/dailyReps'
+import { SCENARIOS, ZONES, nextLevel } from '../lib/progression'
+import { C, F, mono, ZONE_COLORS } from '../lib/ink'
+import { TabScreen, MicIcon, FlameIcon, ChevronIcon, Notice } from '../components/ink/Ink'
 
-// ── Today — the home screen. One job: get the user to do today's 3 reps. ─────
+const DIFFICULTY = { Assertiveness: 2, Interview: 2, Money: 3, Workplace: 2, Charm: 1 }
+
+function Stat({ label, value }) {
+  return (
+    <div style={{ flex: 1, padding: '11px 12px', borderRadius: 14, background: C.fill, border: '1px solid rgba(255,255,255,.07)', minWidth: 0 }}>
+      <div style={mono(9, C.dim, '.12em')}>{label}</div>
+      <div style={{ font: `600 13px ${F.sans}`, marginTop: 4, lineHeight: 1.3 }}>{value}</div>
+    </div>
+  )
+}
+
+function SectionHead({ title, right }) {
+  return (
+    <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 10, gap: 10 }}>
+      <span style={{ font: `600 14px ${F.sans}` }}>{title}</span>
+      {right}
+    </div>
+  )
+}
+
+const titleCase = (s) => s.toLowerCase().replace(/\b\w/g, m => m.toUpperCase())
+
+// ── 09 · Today — the home screen. One job: get today's rep spoken. ──────────
 export default function Today() {
-  const { user, profile }       = useAuth()
-  const { progress, levelInfo } = useProgress()
+  const { user, profile } = useAuth()
+  const { progress } = useProgress()
+  const { unlockedSet, bestScores, highestLevel } = useScenarioUnlocks()
+  const { score, minutesThisWeek, refetch } = useSessions()
+  const [completions, setCompletions] = useState([])
+  const { pending } = useOfflineSync(() => { setCompletions(getRepCompletions(user?.id)); refetch() })
   const navigate = useNavigate()
 
-  const [completions, setCompletions] = useState([])
-  const [san4Score, setSan4Score] = useState(null)
+  useEffect(() => { setCompletions(getRepCompletions(user?.id)) }, [user])
+
   const reps = getTodaysReps()
-
-  useEffect(() => {
-    setCompletions(getRepCompletions(user?.id))
-  }, [user])
-
-  // The living San4 Score: assessment communication axis blended with the
-  // user's last 10 scored activities.
-  useEffect(() => {
-    if (!user) return
-    supabase
-      .from('practice_sessions')
-      .select('overall_score')
-      .eq('user_id', user.id)
-      .order('created_at', { ascending: false })
-      .limit(10)
-      .then(({ data }) => setSan4Score(computeSan4Score(data || [], user.id)))
-  }, [user])
-
-  const firstName = profile?.name?.split(' ')[0] || 'there'
-  const streak    = progress?.streak_count ?? 0
-  const doneCount = reps.filter(r => completions.some(c => c.id === r.id)).length
-  const allDone   = doneCount >= REPS_PER_DAY
+  const unlocked = repsUnlockedToday(progress)
+  const isDone = (rep) => completions.find(c => c.id === rep.id)
+  const doneCount = reps.slice(0, unlocked).filter(isDone).length
+  const hero = reps.slice(0, unlocked).find(r => !isDone(r)) || reps[0]
+  const heroDone = isDone(hero)
 
   const today = new Date().toLocaleDateString('en-CA')
   const practisedToday = (progress?.last_practice_date || '').slice(0, 10) === today
-  const streakInDanger = !practisedToday && streak > 0 && new Date().getHours() >= 20
+  const streak = progress?.streak_count ?? 0
+  const atRisk = !practisedToday && streak > 0 && new Date().getHours() >= 18
 
-  const nextRep = reps.find(r => !completions.some(c => c.id === r.id))
+  const firstName = profile?.name?.split(' ')[0] || ''
+  const dateLine = new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })
+
+  const level = nextLevel(unlockedSet, bestScores)
+  const zone = ZONES.find(z => z.key === level?.zone)
+  const nextNo = level ? level.level + 1 : null
+
+  const note = (() => {
+    if (pending > 0) return `${pending} take${pending === 1 ? '' : 's'} saved on your phone. ${pending === 1 ? 'It scores' : 'They score'} as soon as you are back online.`
+    if (atRisk) return `Your ${streak}-day streak ends at midnight. One rep saves it. Sixty seconds.`
+    if (doneCount === 0) return unlocked === 1 ? 'One rep today. That is the whole ask.' : 'You speak fastest when you are nervous. Today, start slow on purpose.'
+    if (doneCount < unlocked) return 'One down. The next one is the one you usually skip.'
+    if (unlocked < reps.length) return `Done for today. Rep ${unlocked + 1} unlocks tomorrow, once this becomes a habit.`
+    return 'Three for three. That is how the number moves.'
+  })()
+
+  const goRep = (rep) => navigate(`/session/mode?rep=${rep.id}`)
 
   return (
-    <div className="min-h-screen" style={{ background: '#050810' }}>
-      <Navbar />
-      <main className="max-w-lg mx-auto px-4 py-6 animate-fade-in">
-
-        {/* Greeting */}
-        <div className="flex items-center justify-between mb-5">
-          <div>
-            <h1 className="text-2xl font-black text-white">Hi {firstName} 👋</h1>
-            <p className="text-sm mt-0.5" style={{ color: '#6B8CAE' }}>
-              {new Date().toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long' })}
-            </p>
-          </div>
-          <div className="animate-float"><VakMascot level={levelInfo?.current?.level || 1} size={56} mood={allDone ? 'celebrating' : 'neutral'} /></div>
+    <TabScreen>
+      {/* Header */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 18 }}>
+        <div>
+          <div style={{ font: `400 12.5px ${F.sans}`, color: C.dim }}>{dateLine}</div>
+          <div style={{ fontFamily: F.display, fontWeight: 400, fontSize: 21, marginTop: 2 }}>{firstName || 'Today'}</div>
         </div>
-
-        {/* Streak hero */}
-        <div
-          className="rounded-3xl p-5 mb-5 flex items-center gap-4"
-          style={{
-            background: streakInDanger
-              ? 'linear-gradient(135deg, rgba(239,68,68,0.15), rgba(245,158,11,0.08))'
-              : 'linear-gradient(135deg, rgba(123,94,167,0.18), rgba(0,196,154,0.06))',
-            border: `1px solid ${streakInDanger ? 'rgba(239,68,68,0.4)' : 'rgba(123,94,167,0.3)'}`,
-          }}
-        >
-          <div className="text-5xl">{streakInDanger ? '⏳' : '🔥'}</div>
-          <div className="flex-1">
-            <div className="flex items-center gap-2">
-              <div className="text-2xl font-black text-white">
-                {streak} day{streak === 1 ? '' : 's'}
-              </div>
-              {getFreezes(user?.id) > 0 && (
-                <span className="text-xs font-bold px-2.5 py-1 rounded-full"
-                  title="A streak freeze automatically saves your streak if you miss one day. Earn one every 7-day milestone."
-                  style={{ background: 'rgba(79,172,254,0.12)', color: '#4FACFE', border: '1px solid rgba(79,172,254,0.3)' }}>
-                  🧊 ×{getFreezes(user?.id)}
-                </span>
-              )}
-            </div>
-            <p className="text-sm" style={{ color: streakInDanger ? '#FCA5A5' : '#94A3B8' }}>
-              {practisedToday
-                ? 'Streak safe for today ✓ Come back tomorrow.'
-                : streakInDanger
-                ? `Your ${streak}-day streak ends at midnight. One rep saves it.`
-                : streak > 0
-                ? 'Complete one rep to keep your streak alive.'
-                : 'Do your first rep today and start a streak.'}
-            </p>
-          </div>
-        </div>
-
-        {/* San4 Score: the number that goes on your CV */}
-        <Link to={san4Score != null ? '/progress' : '/assessment'}
-          className="block rounded-3xl p-5 mb-5 transition-all hover:opacity-95"
-          style={{
-            background: 'linear-gradient(160deg,#10192E,#0B1220)',
-            border: `1px solid ${san4Score != null ? `${scoreBand(san4Score).color}55` : 'rgba(255,255,255,0.08)'}`,
+        <div style={{ display: 'flex', gap: 7 }}>
+          <Link to="/streak" aria-label="Your streak" style={{
+            display: 'flex', alignItems: 'center', gap: 6, padding: '7px 11px', borderRadius: 20, textDecoration: 'none',
+            border: `1px solid ${atRisk ? 'rgba(245,158,11,.45)' : 'rgba(123,94,167,.35)'}`, background: atRisk ? 'rgba(245,158,11,.08)' : 'rgba(123,94,167,.1)',
           }}>
-          {san4Score != null ? (
-            <div className="flex items-center gap-4">
-              <div className="text-4xl font-black" style={{ color: scoreBand(san4Score).color }}>
-                {san4Score}
-              </div>
-              <div className="flex-1">
-                <div className="text-white font-bold text-sm">
-                  San4 Score · {scoreBand(san4Score).name}
-                </div>
-                <p className="text-xs mt-0.5" style={{ color: '#6B8CAE' }}>
-                  {scoreBand(san4Score).blurb} Every rep moves this number.
-                </p>
-              </div>
-              <span className="text-xs font-bold" style={{ color: '#7B5EA7' }}>View →</span>
-            </div>
-          ) : (
-            <div className="flex items-center gap-4">
-              <div className="text-3xl">🎯</div>
-              <div className="flex-1">
-                <div className="text-white font-bold text-sm">Get your San4 Score</div>
-                <p className="text-xs mt-0.5" style={{ color: '#6B8CAE' }}>
-                  One number for how you communicate. 2 minutes, free.
-                </p>
-              </div>
-              <span className="text-xs font-bold" style={{ color: '#7B5EA7' }}>Start →</span>
-            </div>
-          )}
-        </Link>
+            <FlameIcon color={atRisk ? C.amber : C.lilac} />
+            <span style={{ font: `600 12px ${F.mono}`, color: atRisk ? C.amber : C.lilac }}>{streak}</span>
+          </Link>
+          <Link to={score != null ? '/me' : '/assessment'} aria-label="Your San4 Score" style={{
+            display: 'flex', alignItems: 'center', gap: 6, padding: '7px 11px', borderRadius: 20, textDecoration: 'none',
+            border: '1px solid rgba(0,196,154,.3)', background: 'rgba(0,196,154,.08)',
+          }}>
+            <span style={{ font: `600 12px ${F.mono}`, color: C.teal }}>{score != null ? score : 'GET SCORE'}</span>
+          </Link>
+        </div>
+      </div>
 
-        {/* Daily goal */}
-        <div className="flex items-center justify-between mb-3">
-          <h2 className="text-white font-bold">Today's reps</h2>
-          <span className="text-xs font-bold px-3 py-1 rounded-full"
-            style={{
-              background: allDone ? 'rgba(0,196,154,0.15)' : 'rgba(255,255,255,0.06)',
-              color: allDone ? '#00C49A' : '#6B8CAE',
-              border: `1px solid ${allDone ? 'rgba(0,196,154,0.35)' : 'rgba(255,255,255,0.1)'}`,
-            }}>
-            {doneCount}/{REPS_PER_DAY} {allDone && '· done! 🎉'}
+      {/* Stat strip */}
+      <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
+        <Stat label="TODAY" value={`${doneCount} of ${unlocked} rep${unlocked === 1 ? '' : 's'}`} />
+        <Stat label="THIS WEEK" value={`${minutesThisWeek} min spoken`} />
+        <Stat label="LEVEL" value={`${Math.max(1, highestLevel)} of ${SCENARIOS.length}`} />
+      </div>
+
+      {/* Today's challenge */}
+      <SectionHead title="Today's challenge" right={<span style={mono(10, C.dim, 0)}>{hero === reps[0] ? 'EVERYONE GETS THE SAME ONE' : `REP ${reps.indexOf(hero) + 1} OF ${unlocked}`}</span>} />
+      <div style={{
+        border: `1px solid ${heroDone ? 'rgba(0,196,154,.3)' : 'rgba(169,140,224,.45)'}`,
+        background: heroDone ? 'rgba(0,196,154,.06)' : 'rgba(123,94,167,.1)', borderRadius: 22, padding: 20, marginBottom: 10,
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+          <span style={mono(10, heroDone ? C.teal : C.lilac, '.14em')}>
+            {heroDone ? `DONE TODAY · ${heroDone.score}` : `${hero.category.toUpperCase()} · 60 SEC`}
+          </span>
+          <span style={{ width: 3, height: 3, borderRadius: '50%', background: C.dim }} />
+          <span style={mono(10, C.dim, 0)}>DAILY REP</span>
+          <span style={{ flex: 1 }} />
+          <span style={{ display: 'flex', gap: 3 }} aria-label={`Difficulty ${DIFFICULTY[hero.category] || 2} of 3`}>
+            {[1, 2, 3].map(i => (
+              <span key={i} style={{ width: 5, height: 5, borderRadius: 1, background: i <= (DIFFICULTY[hero.category] || 2) ? C.lilac : 'rgba(255,255,255,.15)' }} />
+            ))}
           </span>
         </div>
+        <p style={{ margin: '0 0 6px', fontFamily: F.display, fontWeight: 400, fontSize: 19, lineHeight: 1.35 }}>{hero.situation}</p>
+        <p style={{ margin: '0 0 18px', fontSize: 12.5, lineHeight: 1.5, color: C.dim }}>{hero.prompt}</p>
+        <button onClick={() => goRep(hero)} style={{
+          width: '100%', border: 'none', cursor: 'pointer', padding: 15, borderRadius: 14, background: C.purple, color: '#fff',
+          font: `700 14.5px ${F.sans}`, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 9,
+        }}>
+          <MicIcon size={17} width={1.8} />
+          {heroDone ? 'Practise again' : 'Speak'}
+        </button>
+      </div>
 
-        <div className="space-y-3 mb-6">
-          {reps.map(rep => {
-            const done = completions.find(c => c.id === rep.id)
-            const isNext = !done && nextRep?.id === rep.id
-            return (
-              <button
-                key={rep.id}
-                onClick={() => !done && navigate(`/daily-rep/${rep.id}`)}
-                disabled={!!done}
-                className="w-full text-left rounded-2xl p-4 transition-all"
-                style={{
-                  background: done
-                    ? 'rgba(0,196,154,0.06)'
-                    : isNext
-                    ? 'linear-gradient(160deg, #171233, #0B1220)'
-                    : 'rgba(255,255,255,0.03)',
-                  border: `1px solid ${done ? 'rgba(0,196,154,0.25)' : isNext ? 'rgba(123,94,167,0.5)' : 'rgba(255,255,255,0.07)'}`,
-                  cursor: done ? 'default' : 'pointer',
-                }}
-              >
-                <div className="flex items-center gap-3">
-                  <span className="text-2xl">{done ? '✅' : rep.emoji}</span>
-                  <div className="flex-1 min-w-0">
-                    <div className="text-xs font-bold uppercase tracking-widest mb-0.5"
-                      style={{ color: done ? '#00C49A' : '#7B5EA7' }}>
-                      {rep.category} · 60 sec
-                    </div>
-                    <p className="text-white text-sm font-medium leading-snug">{rep.situation}</p>
-                  </div>
-                  {done ? (
-                    <span className="text-lg font-black shrink-0" style={{ color: '#00C49A' }}>{done.score}%</span>
-                  ) : isNext ? (
-                    <span className="text-xs font-bold px-3 py-1.5 rounded-full shrink-0 text-white"
-                      style={{ background: 'linear-gradient(135deg,#7B5EA7,#9B7EC8)' }}>
-                      Speak →
-                    </span>
-                  ) : null}
-                </div>
-              </button>
-            )
-          })}
-        </div>
+      {/* The rest of today's reps: done, open, or visibly locked */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 14 }}>
+        {reps.map((rep, i) => {
+          if (rep === hero) return null
+          const done = isDone(rep)
+          const open = i < unlocked
+          return (
+            <button key={rep.id} onClick={() => open && goRep(rep)} disabled={!open} style={{
+              width: '100%', textAlign: 'left', cursor: open ? 'pointer' : 'default', borderRadius: 14, padding: '11px 14px',
+              border: `1px solid ${done ? 'rgba(0,196,154,.25)' : C.line}`, background: done ? 'rgba(0,196,154,.05)' : 'transparent',
+              display: 'flex', alignItems: 'center', gap: 12,
+            }}>
+              <span style={{ ...mono(9.5, done ? C.teal : open ? C.lilac : C.dim, '.1em'), flex: 'none', width: 40 }}>REP {i + 1}</span>
+              <span style={{ flex: 1, minWidth: 0, font: `500 12.5px ${F.sans}`, color: open ? C.soft : C.dim, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                {open ? rep.situation : i === unlocked ? 'Opens tomorrow if today is done' : `Opens on day ${i + 1} of your streak`}
+              </span>
+              <span style={mono(10, done ? C.teal : C.dim, 0)}>{done ? done.score : open ? '' : 'LOCKED'}</span>
+            </button>
+          )
+        })}
+      </div>
 
-        {/* All done — boss battle CTA */}
-        {allDone && (
-          <div className="rounded-2xl p-5 mb-6 text-center"
-            style={{ background: 'linear-gradient(135deg, rgba(0,196,154,0.1), rgba(123,94,167,0.1))', border: '1px solid rgba(0,196,154,0.3)' }}>
-            <div className="text-3xl mb-2">🏆</div>
-            <p className="text-white font-bold mb-1">All reps done. Vak is impressed.</p>
-            <p className="text-sm mb-4" style={{ color: '#94A3B8' }}>
-              Ready for a boss battle? Take on a full scenario and climb the ladder.
-            </p>
-            <div className="flex gap-3 justify-center">
-              <Link to="/practice" className="btn-primary inline-block px-6 py-3 text-sm">
-                Go to the Climb →
-              </Link>
-              <button
-                onClick={async () => {
-                  const blob = await generateShareCard({
-                    big: `${REPS_PER_DAY}/${REPS_PER_DAY}`,
-                    bigColor: '#00C49A',
-                    label: 'Daily reps done',
-                    sub: 'Three speaking challenges, one take each.',
-                    streak,
-                    name: profile?.name || '',
-                  })
-                  shareCard(blob, `Daily speaking reps done on San4 🎤🔥 ${streak}-day streak. Practise with Vak free: san4.vercel.app`)
-                }}
-                className="px-6 py-3 rounded-2xl font-bold text-sm text-white transition-all hover:opacity-90"
-                style={{ background: 'linear-gradient(135deg,#7B5EA7,#9B7EC8)' }}
-              >
-                📲 Share
-              </button>
+      {/* Quick actions */}
+      <div style={{ display: 'flex', gap: 8, marginBottom: 18 }}>
+        {[
+          { to: '/warm-up', k: 'WARM UP · 20 SEC', t: 'Tongue twister, three times fast' },
+          { to: '/script-reading?script=cabin_crew', k: 'READ ALOUD · 60 SEC', t: 'Cabin crew announcement' },
+        ].map(a => (
+          <Link key={a.to} to={a.to} style={{ flex: 1, textDecoration: 'none', border: `1px solid ${C.line}`, background: C.fill2, borderRadius: 16, padding: '13px 14px' }}>
+            <span style={{ display: 'block', ...mono(9, C.dim, '.12em') }}>{a.k}</span>
+            <span style={{ display: 'block', font: `600 13px ${F.sans}`, color: C.paper, marginTop: 5, lineHeight: 1.3 }}>{a.t}</span>
+          </Link>
+        ))}
+      </div>
+
+      {/* Pick up the climb */}
+      {level && <>
+        <SectionHead title="Pick up the climb" right={
+          <Link to="/practice" style={{ font: `500 11.5px ${F.sans}`, color: C.lilac, textDecoration: 'none' }}>All {SCENARIOS.length} levels</Link>
+        } />
+        <button onClick={() => navigate(level.tier === 'pro' ? '/pro' : `/session/mode?scenario=${level.id}`)} style={{
+          width: '100%', textAlign: 'left', cursor: 'pointer', border: '1px solid rgba(169,140,224,.4)', background: 'rgba(123,94,167,.08)',
+          borderRadius: 18, padding: '15px 16px', display: 'flex', alignItems: 'center', gap: 13, marginBottom: 18,
+        }}>
+          <span style={{ ...mono(10, ZONE_COLORS[level.zone] || C.blue, 0), flex: 'none' }}>LV {level.level}</span>
+          <span style={{ flex: 1 }}>
+            <span style={{ display: 'block', font: `600 14px ${F.sans}`, color: C.paper }}>{level.title}</span>
+            <span style={{ display: 'block', font: `400 12px ${F.sans}`, color: C.dim, marginTop: 3 }}>
+              {level.passScore
+                ? `Next in ${zone ? titleCase(zone.label) : 'the Climb'} · pass ${level.passScore}% to open Level ${nextNo}`
+                : 'The Summit · Pro'}
+            </span>
+          </span>
+          <ChevronIcon />
+        </button>
+      </>}
+
+      {/* Vak's note */}
+      {atRisk && doneCount === 0
+        ? <Notice tone="amber">{note}</Notice>
+        : (
+          <div style={{ padding: '16px 18px', borderRadius: 18, border: `1px solid ${C.line}`, display: 'flex', alignItems: 'center', gap: 14 }}>
+            <div style={{ width: 32, height: 32, borderRadius: 10, border: '1px solid rgba(169,140,224,.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 'none' }}>
+              <div style={{ width: 8, height: 8, borderRadius: '50%', background: C.lilac }} />
             </div>
+            <p style={{ margin: 0, flex: 1, fontSize: 12.5, lineHeight: 1.55, color: C.dim }}>{note}</p>
           </div>
         )}
-
-        {/* Quick links */}
-        <div className="grid grid-cols-2 gap-3">
-          <Link to="/practice" className="card text-center py-4 hover:opacity-90 transition-opacity">
-            <div className="text-2xl mb-1">🧗</div>
-            <div className="text-white text-sm font-semibold">The Climb</div>
-            <div className="text-xs mt-0.5" style={{ color: '#6B8CAE' }}>Full scenarios</div>
-          </Link>
-          <Link to="/assessment" className="card text-center py-4 hover:opacity-90 transition-opacity">
-            <div className="text-2xl mb-1">🎯</div>
-            <div className="text-white text-sm font-semibold">English Score</div>
-            <div className="text-xs mt-0.5" style={{ color: '#6B8CAE' }}>Your CEFR level</div>
-          </Link>
-        </div>
-
-      </main>
-    </div>
+    </TabScreen>
   )
 }

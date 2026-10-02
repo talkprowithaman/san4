@@ -81,23 +81,23 @@ export default function CallAnalyzer() {
   // ── Elite gate ───────────────────────────────────────────────────────────────
   if (!isProPlus) {
     return (
-      <div className="min-h-screen" style={{ background: '#060E1A' }}>
+      <div className="min-h-screen" style={{ background: '#0A0A0C' }}>
         <Navbar />
         <main className="max-w-lg mx-auto px-4 py-10 text-center">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full mb-4 text-sm font-semibold"
-            style={{ background: 'rgba(139,92,246,0.12)', color: '#A78BFA', border: '1px solid rgba(139,92,246,0.3)' }}>
+            style={{ background: 'rgba(139,92,246,0.12)', color: '#A98CE0', border: '1px solid rgba(139,92,246,0.3)' }}>
             💎 Vak Elite
           </div>
           <div className="text-5xl mb-4">📞</div>
           <h1 className="text-2xl font-black text-white mb-2">Call Analyzer</h1>
-          <p className="text-sm mb-6" style={{ color: '#6B8CAE' }}>
+          <p className="text-sm mb-6" style={{ color: '#9A9AA8' }}>
             Upload a recording of a real Zoom, Google Meet, or Microsoft Teams call and get
             executive-grade coaching on how <em>you</em> showed up — talk-time, clarity, filler
             words, key moments, and exactly what to say differently next time.
           </p>
 
           <div className="rounded-2xl p-5 mb-6 text-left space-y-3"
-            style={{ background: 'linear-gradient(160deg,#10192E,#0B1220)', border: '1px solid rgba(139,92,246,0.2)' }}>
+            style={{ background: 'linear-gradient(160deg,#121218,#0C0C10)', border: '1px solid rgba(139,92,246,0.2)' }}>
             {[
               ['🎙️', 'Upload any meeting recording — audio or video'],
               ['📊', 'Talk-ratio, clarity & confidence scoring'],
@@ -106,15 +106,15 @@ export default function CallAnalyzer() {
               ['🔴', 'Live in-meeting assist — joining Zoom/Meet/Teams (rolling out)'],
             ].map(([ic, t]) => (
               <div key={t} className="flex items-start gap-3">
-                <span>{ic}</span><span className="text-sm" style={{ color: '#E2E8F0' }}>{t}</span>
+                <span>{ic}</span><span className="text-sm" style={{ color: '#E6E6EA' }}>{t}</span>
               </div>
             ))}
           </div>
 
-          <Link to="/pricing" className="btn-primary w-full block text-center py-4">
+          <Link to="/pro" className="btn-primary w-full block text-center py-4">
             Unlock with Vak Elite · ₹999/mo →
           </Link>
-          <p className="text-xs mt-3" style={{ color: '#6B8CAE' }}>30-day money-back guarantee. Cancel anytime.</p>
+          <p className="text-xs mt-3" style={{ color: '#9A9AA8' }}>30-day money-back guarantee. Cancel anytime.</p>
         </main>
       </div>
     )
@@ -123,15 +123,15 @@ export default function CallAnalyzer() {
   // ── UPLOAD ──────────────────────────────────────────────────────────────────
   if (phase === 'upload') {
     return (
-      <div className="min-h-screen" style={{ background: '#060E1A' }}>
+      <div className="min-h-screen" style={{ background: '#0A0A0C' }}>
         <Navbar />
         <main className="max-w-lg mx-auto px-4 py-8">
           <div className="flex items-center gap-2 mb-2">
             <span className="text-xs font-bold px-2 py-0.5 rounded-full"
-              style={{ background: 'rgba(139,92,246,0.15)', color: '#A78BFA' }}>💎 Elite</span>
+              style={{ background: 'rgba(139,92,246,0.15)', color: '#A98CE0' }}>💎 Elite</span>
           </div>
           <h1 className="text-2xl font-black text-white mb-1">📞 Call Analyzer</h1>
-          <p className="text-sm mb-6" style={{ color: '#6B8CAE' }}>
+          <p className="text-sm mb-6" style={{ color: '#9A9AA8' }}>
             Upload a recording of a real meeting. Vak reviews how you communicated and coaches you.
           </p>
 
@@ -152,12 +152,12 @@ export default function CallAnalyzer() {
             {file ? (
               <>
                 <div className="text-white font-bold text-sm">{file.name}</div>
-                <div className="text-xs mt-1" style={{ color: '#6B8CAE' }}>{(file.size / 1024 / 1024).toFixed(1)} MB · tap to change</div>
+                <div className="text-xs mt-1" style={{ color: '#9A9AA8' }}>{(file.size / 1024 / 1024).toFixed(1)} MB · tap to change</div>
               </>
             ) : (
               <>
                 <div className="text-white font-bold text-sm">Tap to choose a recording</div>
-                <div className="text-xs mt-1" style={{ color: '#6B8CAE' }}>MP3, M4A, WAV, MP4, WebM · under {MAX_MB} MB</div>
+                <div className="text-xs mt-1" style={{ color: '#9A9AA8' }}>MP3, M4A, WAV, MP4, WebM · under {MAX_MB} MB</div>
               </>
             )}
           </button>
@@ -166,7 +166,7 @@ export default function CallAnalyzer() {
           {/* Context */}
           <div className="mb-5">
             <label className="block text-sm font-semibold text-white mb-2">
-              What was this meeting? <span style={{ color: '#6B8CAE' }}>(optional, sharpens feedback)</span>
+              What was this meeting? <span style={{ color: '#9A9AA8' }}>(optional, sharpens feedback)</span>
             </label>
             <textarea value={context} onChange={e => setContext(e.target.value)} rows={3}
               className="input w-full" placeholder="e.g. Client status call where I presented the Q2 roadmap and handled pushback on timelines."
@@ -181,7 +181,7 @@ export default function CallAnalyzer() {
           <div className="mt-6 rounded-2xl px-4 py-3 flex items-start gap-3"
             style={{ background: 'rgba(245,158,11,0.06)', border: '1px solid rgba(245,158,11,0.2)' }}>
             <span>🔴</span>
-            <p className="text-xs leading-relaxed" style={{ color: '#6B8CAE' }}>
+            <p className="text-xs leading-relaxed" style={{ color: '#9A9AA8' }}>
               <strong className="text-white">Coming soon:</strong> live in-meeting assist — Vak joins your
               Zoom/Meet/Teams call and coaches you in real time. Upload-based analysis is available now.
             </p>
@@ -194,11 +194,11 @@ export default function CallAnalyzer() {
   // ── ANALYZING ──────────────────────────────────────────────────────────────
   if (phase === 'analyzing') {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center gap-6" style={{ background: '#060E1A' }}>
+      <div className="min-h-screen flex flex-col items-center justify-center gap-6" style={{ background: '#0A0A0C' }}>
         <div className="animate-float"><VakMascot level={4} size={100} /></div>
         <div className="text-center">
           <div className="text-white font-bold text-xl mb-2">Reviewing your meeting…</div>
-          <div style={{ color: '#6B8CAE' }}>Listening for talk-ratio, clarity, fillers and key moments</div>
+          <div style={{ color: '#9A9AA8' }}>Listening for talk-ratio, clarity, fillers and key moments</div>
         </div>
         <div className="flex gap-2">
           {[0,1,2].map(i => (
@@ -206,7 +206,7 @@ export default function CallAnalyzer() {
               style={{ background: '#8B5CF6', animationDelay: `${i * 0.15}s` }} />
           ))}
         </div>
-        <p className="text-xs px-4 py-2 rounded-full" style={{ background: 'rgba(0,196,154,0.06)', color: '#6B8CAE', border: '1px solid rgba(0,196,154,0.15)' }}>
+        <p className="text-xs px-4 py-2 rounded-full" style={{ background: 'rgba(0,196,154,0.06)', color: '#9A9AA8', border: '1px solid rgba(0,196,154,0.15)' }}>
           Longer recordings can take 30–60 seconds
         </p>
       </div>
@@ -216,7 +216,7 @@ export default function CallAnalyzer() {
   // ── REPORT ──────────────────────────────────────────────────────────────────
   if (phase === 'report' && report) {
     return (
-      <div className="min-h-screen" style={{ background: '#060E1A' }}>
+      <div className="min-h-screen" style={{ background: '#0A0A0C' }}>
         <Navbar />
         <main className="max-w-2xl mx-auto px-4 py-8 animate-slide-up">
           <div className="text-center mb-6">
@@ -225,10 +225,10 @@ export default function CallAnalyzer() {
           </div>
 
           <div className="rounded-3xl p-6 mb-5 text-center"
-            style={{ background: 'linear-gradient(145deg,#0F1E35,#091522)', border: `1px solid ${scoreColor(report.overall_score)}40` }}>
+            style={{ background: 'linear-gradient(145deg,#121218,#091522)', border: `1px solid ${scoreColor(report.overall_score)}40` }}>
             <div className="text-5xl font-black mb-1" style={{ color: scoreColor(report.overall_score) }}>{report.overall_score}%</div>
             <div className="text-white font-semibold mb-2">Overall communication</div>
-            <p className="text-sm leading-relaxed" style={{ color: '#94A3B8' }}>{report.summary}</p>
+            <p className="text-sm leading-relaxed" style={{ color: '#C9C9D2' }}>{report.summary}</p>
           </div>
 
           <div className="grid grid-cols-2 gap-3 mb-5">
@@ -238,7 +238,7 @@ export default function CallAnalyzer() {
             ].map(([label, v]) => (
               <div key={label} className="card text-center">
                 <div className="text-3xl font-black" style={{ color: scoreColor(v) }}>{v}%</div>
-                <div className="text-xs mt-1" style={{ color: '#6B8CAE' }}>{label}</div>
+                <div className="text-xs mt-1" style={{ color: '#9A9AA8' }}>{label}</div>
               </div>
             ))}
           </div>
@@ -247,7 +247,7 @@ export default function CallAnalyzer() {
             <div className="card mb-4" style={{ background: 'rgba(59,130,246,0.06)', borderColor: 'rgba(59,130,246,0.2)' }}>
               <div className="flex gap-3"><span className="text-xl">🗣️</span>
                 <div><div className="text-white font-semibold text-sm mb-0.5">Talk time</div>
-                  <p className="text-sm" style={{ color: '#94A3B8' }}>{report.talk_ratio_note}</p></div></div>
+                  <p className="text-sm" style={{ color: '#C9C9D2' }}>{report.talk_ratio_note}</p></div></div>
             </div>
           )}
 
@@ -271,7 +271,7 @@ export default function CallAnalyzer() {
               <h3 className="text-white font-semibold text-sm mb-3">🔑 Key moments</h3>
               <ul className="space-y-2">
                 {report.key_moments.map((m, i) => (
-                  <li key={i} className="text-sm flex gap-2" style={{ color: '#94A3B8' }}><span style={{ color: '#8B5CF6' }}>•</span> {m}</li>
+                  <li key={i} className="text-sm flex gap-2" style={{ color: '#C9C9D2' }}><span style={{ color: '#8B5CF6' }}>•</span> {m}</li>
                 ))}
               </ul>
             </div>
@@ -281,32 +281,32 @@ export default function CallAnalyzer() {
             <div className="card">
               <h3 className="font-semibold text-sm mb-3" style={{ color: '#00C49A' }}>✅ What worked</h3>
               <ul className="space-y-2">{report.strengths?.map((s, i) => (
-                <li key={i} className="text-sm flex gap-2" style={{ color: '#94A3B8' }}><span style={{ color: '#00C49A' }}>•</span> {s}</li>))}</ul>
+                <li key={i} className="text-sm flex gap-2" style={{ color: '#C9C9D2' }}><span style={{ color: '#00C49A' }}>•</span> {s}</li>))}</ul>
             </div>
             <div className="card">
               <h3 className="font-semibold text-sm mb-3" style={{ color: '#FF6B35' }}>↑ Work on this</h3>
               <ul className="space-y-2">{report.improvements?.map((s, i) => (
-                <li key={i} className="text-sm flex gap-2" style={{ color: '#94A3B8' }}><span style={{ color: '#FF6B35' }}>•</span> {s}</li>))}</ul>
+                <li key={i} className="text-sm flex gap-2" style={{ color: '#C9C9D2' }}><span style={{ color: '#FF6B35' }}>•</span> {s}</li>))}</ul>
             </div>
           </div>
 
           {/* Per-point rewrites: the weak line, then the improved version */}
           {report.fixes?.length > 0 ? (
             <div className="card mb-4" style={{ background: 'rgba(139,92,246,0.06)', borderColor: 'rgba(139,92,246,0.2)' }}>
-              <h3 className="font-semibold text-sm mb-3" style={{ color: '#A78BFA' }}>✍️ Say it this way instead</h3>
+              <h3 className="font-semibold text-sm mb-3" style={{ color: '#A98CE0' }}>✍️ Say it this way instead</h3>
               <div className="space-y-3">
                 {report.fixes.map((f, i) => (
                   <div key={i} className="rounded-xl p-3" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
                     <p className="text-xs mb-1.5 line-through" style={{ color: '#8B95A8' }}>"{f.issue}"</p>
-                    <p className="text-sm" style={{ color: '#E2E8F0' }}><span style={{ color: '#00C49A' }}>→ </span>"{f.better}"</p>
+                    <p className="text-sm" style={{ color: '#E6E6EA' }}><span style={{ color: '#00C49A' }}>→ </span>"{f.better}"</p>
                   </div>
                 ))}
               </div>
             </div>
           ) : report.what_to_say_differently && (
             <div className="card mb-4" style={{ background: 'rgba(139,92,246,0.06)', borderColor: 'rgba(139,92,246,0.2)' }}>
-              <h3 className="font-semibold text-sm mb-1" style={{ color: '#A78BFA' }}>✍️ Say it this way instead</h3>
-              <p className="text-sm italic" style={{ color: '#E2E8F0' }}>"{report.what_to_say_differently}"</p>
+              <h3 className="font-semibold text-sm mb-1" style={{ color: '#A98CE0' }}>✍️ Say it this way instead</h3>
+              <p className="text-sm italic" style={{ color: '#E6E6EA' }}>"{report.what_to_say_differently}"</p>
             </div>
           )}
 
@@ -317,7 +317,7 @@ export default function CallAnalyzer() {
             return (
               <div className="card mb-4" style={{ background: 'rgba(255,107,53,0.05)', border: '1px solid rgba(255,107,53,0.22)' }}>
                 <h3 className="font-semibold text-sm mb-1" style={{ color: '#FF6B35' }}>📺 Watch this to improve</h3>
-                <p className="text-xs mb-3" style={{ color: '#6B8CAE' }}>Short lessons picked for exactly what tripped you up.</p>
+                <p className="text-xs mb-3" style={{ color: '#9A9AA8' }}>Short lessons picked for exactly what tripped you up.</p>
                 <div className="space-y-2">
                   {vids.map((v, i) => (
                     <a key={i} href={v.url} target="_blank" rel="noopener noreferrer"
@@ -332,11 +332,11 @@ export default function CallAnalyzer() {
                       )}
                       <div className="min-w-0 flex-1">
                         <p className="text-sm text-white leading-snug truncate">{v.title}</p>
-                        <p className="text-xs" style={{ color: v.source === 'owned' ? '#A78BFA' : '#6B8CAE' }}>
+                        <p className="text-xs" style={{ color: v.source === 'owned' ? '#A98CE0' : '#9A9AA8' }}>
                           {v.source === 'owned' ? '▶ ' + v.channel : 'Search on YouTube'}
                         </p>
                       </div>
-                      <span className="shrink-0 text-xs" style={{ color: '#6B8CAE' }}>↗</span>
+                      <span className="shrink-0 text-xs" style={{ color: '#9A9AA8' }}>↗</span>
                     </a>
                   ))}
                 </div>

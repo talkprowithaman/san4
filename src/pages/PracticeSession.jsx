@@ -1,26 +1,30 @@
 import { useState, useEffect, useRef } from 'react'
-import { useLocation, useNavigate, useParams, Link } from 'react-router-dom'
+import { useNavigate, useParams, useSearchParams, Link } from 'react-router-dom'
 import { useAuth }     from '../hooks/useAuth'
 import { useProgress } from '../hooks/useProgress'
+import { useSubscription } from '../hooks/useSubscription'
 import { supabase }    from '../lib/supabase'
 import { sendPracticeMessage, analyzeSession, analyzeSessionFromAudio, synthesizeSpeech, transcribeSpeech, LANGUAGES, OPENING_LINES } from '../lib/gemini'
 import { track, EV } from '../lib/analytics'
 import { playPcmBase64, stopPlayback, primeAudio } from '../lib/voicePlayer'
-import { PERSONAS, FREE_PERSONA_IDS, getPersona } from '../lib/personas'
-import { useSubscription } from '../hooks/useSubscription'
-import Navbar      from '../components/Navbar'
-import RewardCard  from '../components/RewardCard'
-import VakMascot   from '../components/VakMascot'
+import { getPersona, personaName, personaSub } from '../lib/personas'
+import { SCENARIOS } from '../lib/progression'
+import { fetchSan4Score, getLastMetrics, saveLastMetrics, fmtDelta } from '../lib/san4Score'
+import { C, F, mono } from '../lib/ink'
+import {
+  Screen, Back, Btn, TextBtn, H1, Sub, Spacer, Rows, PrivatePill, Waveform, MicButton, Dots, Working,
+  Notice, BackIcon, SpeakerIcon, LockIcon,
+} from '../components/ink/Ink'
 
 // ── Browser speech API support check ─────────────────────────────────────────
 const SR_Class = window.SpeechRecognition || window.webkitSpeechRecognition
 const VOICE_SUPPORTED = !!SR_Class && !!window.speechSynthesis
 
+// Free sessions run four minutes; Pro sells the longer ones.
+const FREE_SESSION_SECONDS = 240
+
 // ── Helpers ───────────────────────────────────────────────────────────────────
-function fmt(s) {
-  const m = Math.floor(s / 60)
-  return `${m}:${(s % 60).toString().padStart(2, '0')}`
-}
+const clock = (s) => `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`
 
 // Convert ArrayBuffer → base64 safely (avoids call-stack overflow on large buffers)
 function arrayBufferToBase64(buffer) {
@@ -35,106 +39,79 @@ function arrayBufferToBase64(buffer) {
 
 // Pick the best supported audio MIME type for MediaRecorder
 function pickMime() {
-  const types = [
-    'audio/webm;codecs=opus',
-    'audio/webm',
-    'audio/ogg;codecs=opus',
-    'audio/ogg',
-  ]
+  const types = ['audio/webm;codecs=opus', 'audio/webm', 'audio/ogg;codecs=opus', 'audio/ogg']
   return types.find(t => MediaRecorder.isTypeSupported(t)) || 'audio/webm'
 }
-function scoreColor(s) {
-  if (s >= 80) return '#00C49A'
-  if (s >= 60) return '#FF6B35'
-  return '#F87171'
-}
-function wpmLabel(wpm) {
-  if (!wpm) return null
-  if (wpm < 100) return { text: `${wpm} WPM · too slow`, color: '#F87171' }
-  if (wpm > 180) return { text: `${wpm} WPM · too fast`, color: '#F59E0B' }
-  return { text: `${wpm} WPM · good pace`, color: '#00C49A' }
+
+// ── Chat bubble, as designed: persona left, you right, live take in teal ────
+function Bubble({ role, tag, text }) {
+  const s = role === 'ai'
+    ? { align: 'flex-start', tagColor: C.lilac, bg: 'rgba(255,255,255,.045)', bd: C.line, fg: C.bubble, radius: '4px 16px 16px 16px' }
+    : role === 'user'
+      ? { align: 'flex-end', tagColor: C.dim, bg: 'rgba(123,94,167,.16)', bd: 'rgba(123,94,167,.4)', fg: C.paper, radius: '16px 4px 16px 16px' }
+      : { align: 'flex-end', tagColor: C.teal, bg: 'rgba(0,196,154,.07)', bd: 'rgba(0,196,154,.3)', fg: C.soft, radius: '16px 4px 16px 16px' }
+  return (
+    <div style={{ alignSelf: s.align, maxWidth: '84%', animation: 'fadeUp .25s ease both' }}>
+      <div style={{ ...mono(10, s.tagColor, '.12em'), marginBottom: 6, textAlign: role === 'ai' ? 'left' : 'right' }}>{tag}</div>
+      <div style={{ padding: '13px 15px', borderRadius: s.radius, background: s.bg, border: `1px solid ${s.bd}`, fontSize: 14.5, lineHeight: 1.55, color: s.fg }}>{text}</div>
+    </div>
+  )
 }
 
 // ── Main component ────────────────────────────────────────────────────────────
 export default function PracticeSession() {
   const { scenarioId }  = useParams()
-  const { state }       = useLocation()
-  const { user, profile, recordVoiceConsent } = useAuth()
+  const [params]        = useSearchParams()
+  const { user }        = useAuth()
   const navigate        = useNavigate()
   const { awardXP }     = useProgress()
   const { isPro }       = useSubscription()
 
-  const scenario = state?.scenario || { id: scenarioId, title: scenarioId, icon: '🎭' }
+  const scenario = SCENARIOS.find(s => s.id === scenarioId) || { id: scenarioId, title: scenarioId, level: null }
+  const typed = params.get('mode') === 'type'
+
+  // Interview mode (Pro): the pasted job post shapes the interview and the score.
+  const jobPost = (() => {
+    if (params.get('jd') !== '1' || !isPro) return ''
+    try { return sessionStorage.getItem('san4_jd') || '' } catch { return '' }
+  })()
+  const jobPostRef = useRef(jobPost)
+  useEffect(() => { jobPostRef.current = jobPost }, [jobPost])
 
   // ── Core session state ────────────────────────────────────────────────────
+  // stage: live | review | analyzing | report | empty | failed
+  const [stage,      setStage]      = useState('live')
   const [messages,   setMessages]   = useState([])
   const [aiThinking, setAiThinking] = useState(false)
-  const [analyzing,  setAnalyzing]  = useState(false)
   const [report,     setReport]     = useState(null)
-  const [reward,     setReward]     = useState(null)
   const [seconds,    setSeconds]    = useState(0)
   const [started,    setStarted]    = useState(false)
-  const [setupDone,  setSetupDone]  = useState(false)  // gates beginSession()
-  const [emptyEnded, setEmptyEnded] = useState(false)  // ended without speaking
-  const [failed,     setFailed]     = useState(false)  // analysis genuinely failed
+  const [hitLimit,   setHitLimit]   = useState(false)
 
   // ── Voice state ───────────────────────────────────────────────────────────
-  const [voiceMode,   setVoiceMode]   = useState(VOICE_SUPPORTED)
+  const [voiceMode,   setVoiceMode]   = useState(!typed && VOICE_SUPPORTED)
   const [listening,   setListening]   = useState(false)
   const [liveText,    setLiveText]    = useState('')   // shown while recording
   const [transcribing, setTranscribing] = useState(false) // Gemini STT fallback in flight
-  const [ttsOn,       setTtsOn]       = useState(true)
+  const [ttsOn,       setTtsOn]       = useState(!typed)
   const [vakSpeaking, setVakSpeaking] = useState(false)
   const [micBlocked,  setMicBlocked]  = useState(false) // mic permission denied
 
-  // ── Voice-recording consent (DPDP) ────────────────────────────────────────
-  // profile.voice_consent_at is set once, permanently, the first time a user
-  // agrees. After that we don't ask again — only the checkbox gates first use.
-  const alreadyGaveVoiceConsent = !!profile?.voice_consent_at
-  const [voiceConsentChecked, setVoiceConsentChecked] = useState(false)
-
-  // ── ESL mode state ────────────────────────────────────────────────────────
-  const [eslMode, setEslMode] = useState(() => {
-    try { return localStorage.getItem('san4_esl_mode') === 'true' } catch { return false }
-  })
-
-  function toggleEsl() {
-    setEslMode(v => {
-      const next = !v
-      try { localStorage.setItem('san4_esl_mode', String(next)) } catch {}
-      return next
-    })
-  }
-
-  // ── Language state ─────────────────────────────────────────────────────────
-  const [lang, setLang] = useState(() => {
-    try { return localStorage.getItem('san4_lang') || 'en-US' } catch { return 'en-US' }
-  })
+  // Speaking language (chosen in onboarding). Any Indian language turns on
+  // ESL mode: Vak won't penalise code-switching or Indian English structure.
+  const lang = (() => { try { return localStorage.getItem('san4_lang') || 'en-US' } catch { return 'en-US' } })()
   const langRef = useRef(lang)
+  const eslMode = (() => {
+    if (lang !== 'en-US') return true
+    try { return localStorage.getItem('san4_esl_mode') === 'true' } catch { return false }
+  })()
 
-  useEffect(() => {
-    langRef.current = lang
-    try { localStorage.setItem('san4_lang', lang) } catch {}
-    // Auto-enable ESL for any Indian language — Vak won't penalise
-    // code-switching, Indian English structure, or mixed responses
-    if (lang !== 'en-US') {
-      setEslMode(true)
-      try { localStorage.setItem('san4_esl_mode', 'true') } catch {}
-    }
-  }, [lang])
-
-  // ── Persona state (accent / context of the counterpart) ────────────────────
-  const [personaId, setPersonaId] = useState(() => {
-    try { return localStorage.getItem('san4_persona') || 'default' } catch { return 'default' }
-  })
-  const persona    = getPersona(personaId)
+  // ── Persona (accent / context of the counterpart) ──────────────────────────
+  const persona = getPersona(params.get('persona') || (() => { try { return localStorage.getItem('san4_persona') } catch { return null } })() || 'default')
   const personaRef = useRef(persona)
-  useEffect(() => {
-    personaRef.current = getPersona(personaId)
-    try { localStorage.setItem('san4_persona', personaId) } catch {}
-  }, [personaId])
+  const pName = personaName(persona)
 
-  // ── Text mode state ───────────────────────────────────────────────────────
+  // ── Text input ────────────────────────────────────────────────────────────
   const [textInput, setTextInput] = useState('')
 
   // ── Voice refs ────────────────────────────────────────────────────────────
@@ -145,6 +122,8 @@ export default function PracticeSession() {
   const speechStart     = useRef(null)
   const voiceMetaRef    = useRef({ wpmSamples: [], totalSpeakingSeconds: 0 })
   const ttsReqRef       = useRef(0)   // supersedes stale/pending neural TTS
+  const ttsOnRef        = useRef(ttsOn)
+  useEffect(() => { ttsOnRef.current = ttsOn }, [ttsOn])
 
   // ── MediaRecorder — records full session audio as Gemini analysis backup ──
   const mediaRecRef    = useRef(null)
@@ -159,39 +138,62 @@ export default function PracticeSession() {
   const turnRecRef    = useRef(null)
   const turnChunksRef = useRef([])
 
+  // The finished take, held until the user keeps it or throws it away.
+  const takeRef = useRef(null)
+
   const bottomRef = useRef(null)
   const textRef   = useRef(null)
+  const endingRef = useRef(false)
 
-  // ── Timer ─────────────────────────────────────────────────────────────────
+  // ── Timer + free-tier limit ───────────────────────────────────────────────
   useEffect(() => {
     if (!started) return
     const t = setInterval(() => setSeconds(s => s + 1), 1000)
     return () => clearInterval(t)
   }, [started])
 
+  useEffect(() => {
+    if (started && !isPro && seconds >= FREE_SESSION_SECONDS && !endingRef.current) {
+      setHitLimit(true)
+      endSession()
+    }
+  }, [seconds]) // eslint-disable-line
+
   // ── Auto-scroll ───────────────────────────────────────────────────────────
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [messages, aiThinking, liveText])
+    bottomRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' })
+  }, [messages, aiThinking, liveText, transcribing])
 
-  // ── Start session — fires once when user clicks "Start" on the setup screen
-  useEffect(() => { if (setupDone) beginSession() }, [setupDone]) // eslint-disable-line
+  // ── Start straight away (persona and mode were chosen on the screens before)
+  useEffect(() => { beginSession(); return () => teardown() }, []) // eslint-disable-line
 
   function beginSession() {
+    endingRef.current = false
     setStarted(true)
+    setSeconds(0)
+    setHitLimit(false)
+    voiceMetaRef.current = { wpmSamples: [], totalSpeakingSeconds: 0 }
+    audioChunksRef.current = []
 
-    // ── Vak speaks instantly — opening lines are fixed per scenario, so no
-    // Gemini round-trip is needed. The first real API call happens with the
-    // user's first response.
+    // Opening lines are fixed per scenario, so Vak speaks instantly with no
+    // Gemini round-trip. The first real API call is the user's first answer.
     const opening = OPENING_LINES[scenario.id] || "Let's begin. I'm ready when you are."
     setMessages([{ role: 'ai', content: opening }])
     speak(opening)
-    if (!voiceMode) textRef.current?.focus()
+    if (typed) setTimeout(() => textRef.current?.focus(), 50)
 
-    // ── Mic + MediaRecorder in parallel — never blocks the session start.
-    // The recording is the assessment backup: even if STT fails, Gemini
-    // analyses the raw audio at the end.
-    startRecorder()
+    // Mic + MediaRecorder in parallel; never blocks the start. The recording
+    // is the assessment backup: if STT fails, Gemini analyses the raw audio.
+    if (!typed) startRecorder()
+  }
+
+  function teardown() {
+    stopVak()
+    isListeningRef.current = false
+    clearTimeout(autoSendTimer.current)
+    try { recRef.current?.abort() } catch { /* ignore */ }
+    try { if (mediaRecRef.current?.state !== 'inactive') mediaRecRef.current?.stop() } catch { /* ignore */ }
+    audioStreamRef.current?.getTracks().forEach(t => t.stop())
   }
 
   function startRecorder() {
@@ -202,13 +204,13 @@ export default function PracticeSession() {
         audioMimeRef.current = mime
         const rec = new MediaRecorder(stream, { mimeType: mime, audioBitsPerSecond: 32000 })
         rec.ondataavailable = e => { if (e.data.size > 0) audioChunksRef.current.push(e.data) }
-        rec.start(1000)  // collect in 1-second chunks
+        rec.start(1000)
         mediaRecRef.current = rec
         setMicBlocked(false)
       })
       .catch(err => {
         console.warn('Mic unavailable:', err.message)
-        setMicBlocked(true)   // visible banner with recovery steps
+        setMicBlocked(true)
       })
   }
 
@@ -216,8 +218,8 @@ export default function PracticeSession() {
   useEffect(() => {
     if (!SR_Class) return
     const rec = new SR_Class()
-    rec.lang             = 'en-US'  // en-US is universally supported; handles Indian accents well
-    rec.continuous       = true     // keep alive until we explicitly call stop()
+    rec.lang             = 'en-US'
+    rec.continuous       = true
     rec.interimResults   = true
     rec.maxAlternatives  = 1
 
@@ -229,17 +231,13 @@ export default function PracticeSession() {
         if (e.results[i].isFinal) finalChunk += t + ' '
         else interimChunk += t
       }
-
       if (finalChunk) {
         accRef.current = (accRef.current + ' ' + finalChunk).trim()
         setLiveText(accRef.current)
-
         // Auto-send after 1.8 s of silence following the last final chunk
         clearTimeout(autoSendTimer.current)
         autoSendTimer.current = setTimeout(() => {
-          if (isListeningRef.current && accRef.current.trim()) {
-            stopAndSend()
-          }
+          if (isListeningRef.current && accRef.current.trim()) stopAndSend()
         }, 1800)
       } else if (interimChunk) {
         setLiveText((accRef.current + ' ' + interimChunk).trim())
@@ -247,20 +245,18 @@ export default function PracticeSession() {
     }
 
     rec.onend = () => {
-      // continuous:true means onend fires only when stop()/abort() is called
-      // OR if the browser forcibly closes it (network timeout, ~60 s silence).
-      // If we still want to be listening, restart after a brief safety delay.
+      // continuous:true → onend fires on stop()/abort() or when the browser
+      // closes the stream itself. Restart if we still want to listen.
       if (isListeningRef.current) {
         setTimeout(() => {
           if (isListeningRef.current) {
             try { rec.start() } catch (err) {
-              // Could not restart — give up gracefully
               console.warn('STT restart failed:', err.message)
               isListeningRef.current = false
               setListening(false)
             }
           }
-        }, 120) // 120 ms gap lets the browser fully reset before re-starting
+        }, 120)
       } else {
         setListening(false)
       }
@@ -268,62 +264,34 @@ export default function PracticeSession() {
 
     rec.onerror = (e) => {
       console.warn('STT error:', e.error)
-      switch (e.error) {
-        case 'not-allowed':
-        case 'permission-denied':
-        case 'audio-capture':
-          // Show the in-app recovery banner instead of a blocking alert.
-          // Keep voice mode on — the text input below the mic always works.
-          setMicBlocked(true)
-          isListeningRef.current = false
-          setListening(false)
-          break
-
-        case 'no-speech':
-        case 'aborted':
-          // no-speech: user hasn't spoken yet — keep listening
-          // aborted: we called rec.abort() ourselves — onend will handle cleanup
-          break
-
-        case 'network':
-          // Transient network blip — onend will fire and restart automatically
-          break
-
-        default:
-          // Unknown error — don't panic, let onend handle the restart
-          console.warn('Unhandled STT error:', e.error)
+      if (['not-allowed', 'permission-denied', 'audio-capture'].includes(e.error)) {
+        setMicBlocked(true)
+        isListeningRef.current = false
+        setListening(false)
       }
+      // no-speech / aborted / network: onend handles the restart
     }
 
     recRef.current = rec
-
     return () => {
       isListeningRef.current = false
       clearTimeout(autoSendTimer.current)
-      try { rec.abort() } catch (_) {}
+      try { rec.abort() } catch { /* ignore */ }
     }
   }, [])
 
   function startListening() {
     if (!recRef.current || listening) return
-
-    // Apply the currently selected language before (re-)starting
     recRef.current.lang = langRef.current
-
-    // Stop Vak's TTS immediately — user wants to speak
-    stopVak()
-
+    stopVak() // user wants to speak
     accRef.current = ''
     setLiveText('')
     speechStart.current = Date.now()
 
-    // Per-turn recording on the already-open mic stream. If STT fails
-    // (common for Hindi), Gemini transcribes this clip instead.
+    // Per-turn recording on the already-open mic stream (Gemini STT fallback).
     if (audioStreamRef.current) {
       try {
-        const turnRec = new MediaRecorder(audioStreamRef.current, {
-          mimeType: audioMimeRef.current, audioBitsPerSecond: 40000,
-        })
+        const turnRec = new MediaRecorder(audioStreamRef.current, { mimeType: audioMimeRef.current, audioBitsPerSecond: 40000 })
         turnChunksRef.current = []
         turnRec.ondataavailable = e => { if (e.data.size > 0) turnChunksRef.current.push(e.data) }
         turnRec.start(500)
@@ -336,16 +304,12 @@ export default function PracticeSession() {
 
     try {
       recRef.current.start()
-      // Only flip state after start() succeeds
       isListeningRef.current = true
       setListening(true)
     } catch (err) {
       console.error('Could not start microphone:', err.message)
-      // Most likely cause: recognition is already running (double-tap)
-      // or browser blocked it. Show user a helpful message.
       if (err.name === 'InvalidStateError') {
-        // Already running — abort and restart cleanly
-        try { recRef.current.abort() } catch (_) {}
+        try { recRef.current.abort() } catch { /* ignore */ }
         setTimeout(() => startListening(), 200)
       }
     }
@@ -353,11 +317,10 @@ export default function PracticeSession() {
 
   async function stopAndSend() {
     isListeningRef.current = false
-    try { recRef.current.stop() } catch (_) {}
+    try { recRef.current.stop() } catch { /* ignore */ }
     clearTimeout(autoSendTimer.current)
     setListening(false)
 
-    // Stop the per-turn recorder and collect its clip
     let turnBlob = null
     if (turnRecRef.current && turnRecRef.current.state !== 'inactive') {
       await new Promise(resolve => {
@@ -383,9 +346,7 @@ export default function PracticeSession() {
       try {
         const buf = await turnBlob.arrayBuffer()
         const langName = LANGUAGES.find(l => l.code === langRef.current)?.nativeName || 'English or Hindi'
-        text = await transcribeSpeech(
-          arrayBufferToBase64(buf), audioMimeRef.current.split(';')[0], langName
-        )
+        text = await transcribeSpeech(arrayBufferToBase64(buf), audioMimeRef.current.split(';')[0], langName)
       } finally {
         setTranscribing(false)
       }
@@ -394,10 +355,8 @@ export default function PracticeSession() {
         return
       }
     }
-
     if (!text) return
 
-    // Track pacing
     if (durSec > 0) {
       const wpm = Math.round((text.split(/\s+/).length / durSec) * 60)
       if (wpm > 30 && wpm < 400) {
@@ -405,29 +364,26 @@ export default function PracticeSession() {
         voiceMetaRef.current.totalSpeakingSeconds += durSec
       }
     }
-
     submitMessage(text)
   }
 
   // ── Stop any Vak speech (neural audio + browser TTS) ──────────────────────
   function stopVak() {
-    ttsReqRef.current++   // abandon any in-flight neural TTS fetch
+    ttsReqRef.current++
     stopPlayback()
     window.speechSynthesis?.cancel()
     setVakSpeaking(false)
   }
 
-  // ── TTS — Vak speaks back ─────────────────────────────────────────────────
-  // Primary: natural Gemini neural voice. Fallback: browser speechSynthesis
-  // (robotic, but never leaves the user in silence).
+  // ── TTS — the persona speaks back ─────────────────────────────────────────
+  // Primary: natural Gemini neural voice. Fallback: browser speechSynthesis.
   async function speak(text) {
-    if (!ttsOn || !text) return
+    if (!ttsOnRef.current || !text) return
     stopVak()
     const reqId = ++ttsReqRef.current
     try {
       const { audioBase64, sampleRate } = await synthesizeSpeech(text)
-      // A newer utterance (or the user starting to talk) supersedes this one.
-      if (reqId !== ttsReqRef.current || !ttsOn) return
+      if (reqId !== ttsReqRef.current || !ttsOnRef.current) return
       await playPcmBase64(audioBase64, sampleRate, {
         onstart: () => setVakSpeaking(true),
         onend:   () => setVakSpeaking(false),
@@ -446,8 +402,7 @@ export default function PracticeSession() {
     utt.rate  = 0.95
     utt.pitch = 1.1
     const voices = window.speechSynthesis.getVoices?.() || []
-    const match  = voices.find(v => v.lang === utt.lang) ||
-                   voices.find(v => v.lang?.startsWith(utt.lang.split('-')[0]))
+    const match  = voices.find(v => v.lang === utt.lang) || voices.find(v => v.lang?.startsWith(utt.lang.split('-')[0]))
     if (match) utt.voice = match
     utt.onstart = () => setVakSpeaking(true)
     utt.onend   = () => setVakSpeaking(false)
@@ -459,28 +414,23 @@ export default function PracticeSession() {
   // ── Shared message submission ─────────────────────────────────────────────
   async function submitMessage(text) {
     if (!text || aiThinking) return
-
     const newMsgs = [...messages, { role: 'user', content: text }]
     setMessages(newMsgs)
     setTextInput('')
     setAiThinking(true)
 
+    const jdNote = jobPostRef.current
+      ? `\n\nINTERVIEW MODE: You are interviewing the user for this specific role. Ask about what this job post actually needs, and probe the gaps.\nJOB POST:\n${jobPostRef.current.slice(0, 4000)}`
+      : ''
     try {
       const response = await sendPracticeMessage(scenario.id, messages, text, {
         eslMode,
-        personaPrompt: personaRef.current?.prompt || '',
+        personaPrompt: (personaRef.current?.prompt || '') + jdNote,
       })
-
       if (response.includes('[SESSION_ENDED]')) {
         const clean = response.replace('[SESSION_ENDED]', '').trim()
-        const finalMsgs = clean
-          ? [...newMsgs, { role: 'ai', content: clean }]
-          : newMsgs
-        if (clean) {
-          setMessages(finalMsgs)
-          speak(clean)
-        }
-        // Wait for last TTS to finish before ending
+        const finalMsgs = clean ? [...newMsgs, { role: 'ai', content: clean }] : newMsgs
+        if (clean) { setMessages(finalMsgs); speak(clean) }
         setTimeout(() => endSession(finalMsgs), clean ? 2500 : 0)
       } else {
         setMessages([...newMsgs, { role: 'ai', content: response }])
@@ -488,24 +438,24 @@ export default function PracticeSession() {
       }
     } catch (err) {
       console.error('Gemini error:', err)
-      setMessages([...newMsgs, {
-        role: 'ai',
-        content: "Sorry, I couldn't connect. Please check your internet and try again.",
-      }])
+      setMessages([...newMsgs, { role: 'ai', content: "Sorry, I couldn't connect. Please check your internet and try again." }])
     }
     setAiThinking(false)
   }
 
-  // ── End session ───────────────────────────────────────────────────────────
+  // ── End: stop capturing, hold the take, ask keep or retry ────────────────
+  // Nothing is scored, stored or counted until the user keeps the take.
   async function endSession(finalMessages) {
+    if (endingRef.current) return
+    endingRef.current = true
     stopVak()
     isListeningRef.current = false
+    try { recRef.current?.abort() } catch { /* ignore */ }
     setListening(false)
-    setStarted(false)   // stop the session timer immediately
+    setStarted(false)
 
     const msgList = finalMessages || messages
 
-    // ── Stop MediaRecorder and collect audio ──────────────────────────────
     let audioPayload = null
     if (mediaRecRef.current && mediaRecRef.current.state !== 'inactive') {
       await new Promise(resolve => {
@@ -516,866 +466,295 @@ export default function PracticeSession() {
     audioStreamRef.current?.getTracks().forEach(t => t.stop())
     if (audioChunksRef.current.length > 0) {
       try {
-        const blob   = new Blob(audioChunksRef.current, { type: audioMimeRef.current })
-        const buffer = await blob.arrayBuffer()
-        audioPayload = {
-          base64:   arrayBufferToBase64(buffer),
-          mimeType: audioMimeRef.current.split(';')[0],  // strip codec suffix for Gemini
-        }
+        const blob = new Blob(audioChunksRef.current, { type: audioMimeRef.current })
+        audioPayload = { base64: arrayBufferToBase64(await blob.arrayBuffer()), mimeType: audioMimeRef.current.split(';')[0] }
       } catch (err) {
         console.warn('Audio encoding failed:', err.message)
       }
     }
+    audioChunksRef.current = []
 
-    // Build voice metadata for analysis
     const wpmSamples = voiceMetaRef.current.wpmSamples
-    const voiceMeta  = wpmSamples.length
-      ? {
-          avgWpm:               Math.round(wpmSamples.reduce((a, b) => a + b, 0) / wpmSamples.length),
-          totalSpeakingSeconds: Math.round(voiceMetaRef.current.totalSpeakingSeconds),
-        }
+    const voiceMeta = wpmSamples.length
+      ? { avgWpm: Math.round(wpmSamples.reduce((a, b) => a + b, 0) / wpmSamples.length), totalSpeakingSeconds: Math.round(voiceMetaRef.current.totalSpeakingSeconds) }
       : null
 
-    // ── Choose analysis path ──────────────────────────────────────────────
-    // If STT didn't capture any user messages AND we have audio, use Gemini
-    // audio analysis (it transcribes + coaches in one shot). Otherwise fall
-    // back to the transcript-based path.
+    // Don't score an empty session: require recognised/typed input, or a
+    // real chunk of recorded audio (~12s).
     const hasUserMessages = msgList.some(m => m.role === 'user')
-
-    // ── Guard: don't score or award XP for an empty session ───────────────
-    // Opening and ending without speaking should NOT give XP, streak, or a
-    // fabricated 70%. Require either typed/recognised input, or a real chunk
-    // of recorded audio (at least ~12s) before we analyse and reward.
     const spokeSomething = hasUserMessages || (audioPayload && seconds >= 12)
-    if (!spokeSomething) {
-      audioChunksRef.current = []
-      setEmptyEnded(true)
-      return
-    }
+    if (!spokeSomething) { takeRef.current = null; setStage('empty'); return }
 
-    setAnalyzing(true)
+    takeRef.current = { msgList, audioPayload, voiceMeta, hasUserMessages, seconds }
+    setStage('review')
+  }
+
+  function retry() {
+    takeRef.current = null
+    setReport(null)
+    setMessages([])
+    setStage('live')
+    beginSession()
+  }
+
+  function discard() {
+    takeRef.current = null
+    navigate('/today')
+  }
+
+  // ── Keep: score it, save it, move the number ─────────────────────────────
+  async function keepTake() {
+    const take = takeRef.current
+    if (!take) return
+    setStage('analyzing')
     try {
+      const scoreBefore = await fetchSan4Score(user?.id)
+      const prevMetrics = getLastMetrics(user?.id)
       let analysis = null
-
-      if (!hasUserMessages && audioPayload) {
-        // Primary path: audio-first analysis — STT didn't work but we have the recording
-        analysis = await analyzeSessionFromAudio(
-          scenario.title, audioPayload.base64, audioPayload.mimeType, lang
-        )
+      if (!take.hasUserMessages && take.audioPayload) {
+        analysis = await analyzeSessionFromAudio(scenario.title, take.audioPayload.base64, take.audioPayload.mimeType, lang, { jobPost: jobPostRef.current })
       }
-
       if (!analysis) {
-        // Transcript-based path (STT worked, or audio analysis also failed)
-        analysis = await analyzeSession(scenario.title, msgList, voiceMeta, { eslMode })
+        analysis = await analyzeSession(scenario.title, take.msgList, take.voiceMeta, { eslMode, jobPost: jobPostRef.current })
       }
-
-      // Both paths failed: surface it honestly, no fabricated score, no XP.
-      if (!analysis || typeof analysis.overall_score !== 'number') {
-        setFailed(true)
-        setAnalyzing(false)
-        return
-      }
+      if (!analysis || typeof analysis.overall_score !== 'number') { setStage('failed'); return }
 
       if (user) {
         await supabase.from('practice_sessions').insert({
           user_id:           user.id,
           scenario_id:       scenario.id,
           scenario_title:    scenario.title,
-          messages:          msgList,
+          messages:          take.msgList,
           filler_word_count: analysis.filler_word_count,
           confidence_score:  analysis.confidence_score,
           pacing_score:      analysis.pacing_score,
           overall_score:     analysis.overall_score,
-          duration_seconds:  seconds,
+          duration_seconds:  take.seconds,
           feedback:          analysis.summary,
           action_item:       analysis.action_item,
         })
       }
-
       track(EV.SESSION_COMPLETED, { scenario_id: scenarioId, score: analysis.overall_score })
+      takeRef.current = null // the audio is gone once scored
 
-      const rewardResult = await awardXP(analysis.overall_score)
-      setReward(rewardResult)
-      setReport({ ...analysis, voiceMeta })
+      const reward = await awardXP(analysis.overall_score)
+      const scoreAfter = await fetchSan4Score(user?.id)
+      const metrics = {
+        clarity:   Number.isFinite(analysis.clarity_score) ? analysis.clarity_score : null,
+        structure: Number.isFinite(analysis.structure_score) ? analysis.structure_score : null,
+      }
+      if (metrics.clarity != null || metrics.structure != null) saveLastMetrics(user?.id, metrics)
+      setReport({ ...analysis, reward, scoreBefore, scoreAfter, metrics, prevMetrics })
+      setStage('report')
     } catch (err) {
       console.error('Analysis error:', err)
-      // Don't fabricate a 70% or award XP on failure — surface it honestly so
-      // the user can retry. A real score must come from a real analysis.
-      setFailed(true)
+      setStage('failed') // never fabricate a score
     }
-    setAnalyzing(false)
   }
 
-  // ── Views ─────────────────────────────────────────────────────────────────
+  // ── EMPTY — nothing to score ──────────────────────────────────────────────
+  if (stage === 'empty') return (
+    <Screen>
+      <Back to="/today" />
+      <H1 size={28}>Nothing to score yet.</H1>
+      <Sub>You ended before saying anything, so there is no score and no streak for this one. Nothing was kept.</Sub>
+      <Spacer />
+      <Btn onClick={retry}>Start again</Btn>
+      <TextBtn to="/today" style={{ marginTop: 10 }}>Back to Today</TextBtn>
+    </Screen>
+  )
 
-  // ── SETUP SCREEN ──────────────────────────────────────────────────────────
-  if (!setupDone) return (
-    <div className="min-h-screen flex flex-col" style={{ background: '#050810' }}>
-      <Navbar />
-      <main className="flex-1 flex flex-col items-center justify-center px-4 py-8 max-w-lg mx-auto w-full animate-fade-in">
+  // ── FAILED — honest, no fabricated score or XP ────────────────────────────
+  if (stage === 'failed') return (
+    <Screen>
+      <H1 size={28} style={{ marginTop: 24 }}>We could not score that one.</H1>
+      <Sub>Something went wrong while analysing, so nothing was saved and your streak is untouched. Check your connection and try again.</Sub>
+      <Spacer />
+      <Btn onClick={retry}>Try again</Btn>
+      <TextBtn to="/today" style={{ marginTop: 10 }}>Back to Today</TextBtn>
+    </Screen>
+  )
 
-        {/* Scenario card */}
-        <div
-          className="w-full rounded-3xl p-6 mb-6 text-center"
-          style={{ background: 'linear-gradient(160deg, #10192E 0%, #0B1220 100%)', border: '1px solid rgba(255,255,255,0.08)' }}
-        >
-          <div className="text-5xl mb-3">{scenario.icon || '🎭'}</div>
-          <h1 className="text-xl font-black text-white mb-1">{scenario.title}</h1>
-          <p className="text-sm" style={{ color: '#6B8CAE' }}>
-            Vak plays the other person. Speak naturally. Your voice is recorded and analysed.
-          </p>
+  if (stage === 'analyzing') return <Working title="Scoring how you communicate" sub="One instruction coming up, and your own words, rewritten" />
+
+  // ── 17 · Keep or retry ────────────────────────────────────────────────────
+  if (stage === 'review') return (
+    <Screen pad="30px 28px 26px">
+      <PrivatePill />
+      <H1 size={28} style={{ margin: '24px 0 14px' }}>Take as many goes as you want.</H1>
+      <Sub mb={22} size={14}>Only the take you keep is scored. Attempts are not counted, not stored, and never shown to anyone.</Sub>
+      {hitLimit && (
+        <Notice tone="amber" style={{ marginBottom: 16 }}>
+          Free sessions run four minutes, so we stopped here. <Link to="/pro" style={{ color: C.amber, fontWeight: 600 }}>Pro runs longer.</Link>
+        </Notice>
+      )}
+      <Rows radius={18}>
+        {[
+          'Audio goes to the scorer and is deleted the same minute',
+          'No leaderboard, no classmates, no public profile unless you publish it',
+          'Mixing Hindi into an English answer is not a mistake here',
+        ].map((t, i) => (
+          <div key={i} style={{ padding: '14px 17px', background: C.panel, display: 'flex', gap: 13, alignItems: 'flex-start' }}>
+            <span style={{ ...mono(11, C.teal, 0), paddingTop: 2 }}>0{i + 1}</span>
+            <span style={{ fontSize: 13, lineHeight: 1.5, color: C.soft }}>{t}</span>
+          </div>
+        ))}
+      </Rows>
+      <Spacer min={24} />
+      <div style={{ display: 'flex', gap: 10, marginBottom: 14 }}>
+        <Btn kind="quiet" onClick={retry} style={{ padding: 15, borderRadius: 15 }}>Try again, free</Btn>
+        <Btn kind="teal" onClick={keepTake} style={{ padding: 15, borderRadius: 15 }}>Keep this take</Btn>
+      </div>
+      <TextBtn onClick={discard}>Delete and start over</TextBtn>
+    </Screen>
+  )
+
+  // ── 18 · The one instruction ──────────────────────────────────────────────
+  if (stage === 'report' && report) {
+    const delta = fmtDelta(report.scoreAfter, report.scoreBefore)
+    const points = delta == null ? '' : delta === '±0' ? ' · SCORE HELD' : ` · ${delta} POINT${Math.abs(report.scoreAfter - report.scoreBefore) === 1 ? '' : 'S'}`
+    const passed = scenario.passScore && report.overall_score >= scenario.passScore
+    const tiles = [
+      ['CLARITY', report.metrics.clarity, report.prevMetrics?.clarity],
+      ['STRUCTURE', report.metrics.structure, report.prevMetrics?.structure],
+    ].filter(([, v]) => Number.isFinite(v))
+    return (
+      <Screen pad="28px 28px 24px">
+        <div style={mono(10, C.dim, '.18em')}>AFTER THE SESSION{points}{report.reward?.xpGained ? ` · +${report.reward.xpGained} XP` : ''}</div>
+        <div style={{ margin: '20px 0 0', padding: '24px 22px', borderRadius: 22, background: C.cardHi, border: '1px solid rgba(169,140,224,.35)' }}>
+          <div style={{ ...mono(10, C.lilac), marginBottom: 14 }}>DO THIS NEXT TIME</div>
+          <p style={{ margin: 0, fontFamily: F.display, fontWeight: 300, fontSize: 24, lineHeight: 1.32, letterSpacing: '-.01em' }}>{report.action_item}</p>
+          {report.better_opening && <>
+            <div style={{ height: 1, background: 'rgba(255,255,255,.1)', margin: '20px 0 14px' }} />
+            <div style={{ ...mono(10, C.teal, '.14em'), marginBottom: 8 }}>SAY IT LIKE THIS INSTEAD</div>
+            <p style={{ margin: 0, fontSize: 13, lineHeight: 1.6, color: C.soft }}>"{report.better_opening}"</p>
+          </>}
         </div>
 
-        {/* Persona / accent picker */}
-        <div className="w-full mb-5">
-          <div className="text-xs font-bold mb-2 uppercase tracking-widest" style={{ color: '#6B8CAE' }}>
-            🎭 Who you'll talk to
-          </div>
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-            {PERSONAS.map(p => {
-              const locked   = !p.free && !isPro
-              const selected = personaId === p.id
-              return (
-                <button
-                  key={p.id}
-                  onClick={() => { if (locked) { navigate('/pricing'); return } setPersonaId(p.id) }}
-                  className="relative text-left rounded-2xl p-3 transition-all"
-                  style={{
-                    background: selected ? 'rgba(139,92,246,0.15)' : 'rgba(255,255,255,0.04)',
-                    border:     `1px solid ${selected ? 'rgba(139,92,246,0.5)' : 'rgba(255,255,255,0.08)'}`,
-                    opacity:    locked ? 0.7 : 1,
-                  }}
-                  title={p.blurb}
-                >
-                  {locked && (
-                    <span className="absolute top-2 right-2 text-xs font-bold px-1.5 py-0.5 rounded-full"
-                      style={{ background: 'rgba(245,158,11,0.15)', color: '#F59E0B' }}>🔒 Pro</span>
-                  )}
-                  <div className="text-lg mb-0.5">{p.flag}</div>
-                  <div className="text-white font-bold text-xs leading-tight">{p.name}</div>
-                  <div className="text-xs mt-0.5" style={{ color: selected ? '#A78BFA' : '#6B8CAE' }}>{p.accent}</div>
-                </button>
-              )
-            })}
-          </div>
-          <p className="text-xs mt-2" style={{ color: '#6B8CAE' }}>{persona.blurb}</p>
+        <div style={{ display: 'flex', gap: 10, marginTop: 16 }}>
+          {(tiles.length ? tiles : [['OVERALL', report.overall_score, null]]).map(([label, v, prev]) => {
+            const d = fmtDelta(v, prev)
+            return (
+              <div key={label} style={{ flex: 1, padding: '15px 17px', borderRadius: 16, border: `1px solid ${C.line}` }}>
+                <div style={mono(9.5, C.dim, '.14em')}>{label}</div>
+                <div style={{ fontFamily: F.display, fontWeight: 400, fontSize: 26, marginTop: 5 }}>{v}</div>
+                {d && <div style={{ ...mono(11, d.startsWith('-') ? C.amber : C.teal, 0), marginTop: 3 }}>{d}</div>}
+              </div>
+            )
+          })}
         </div>
 
-        {/* Language picker */}
-        <div className="w-full mb-5">
-          <div className="text-xs font-bold mb-2 uppercase tracking-widest" style={{ color: '#6B8CAE' }}>
-            🌐 I'll be speaking in
-          </div>
-          <div className="flex flex-wrap gap-2">
-            {LANGUAGES.map(l => (
-              <button
-                key={l.code}
-                onClick={() => setLang(l.code)}
-                className="text-xs px-3 py-2 rounded-full transition-all font-semibold"
-                style={{
-                  background: lang === l.code ? 'rgba(0,196,154,0.18)'  : 'rgba(255,255,255,0.05)',
-                  color:      lang === l.code ? '#00C49A'                : '#6B8CAE',
-                  border:     `1px solid ${lang === l.code ? 'rgba(0,196,154,0.45)' : 'rgba(255,255,255,0.1)'}`,
-                }}
-              >
-                {l.flag} {l.nativeName}
-              </button>
-            ))}
-          </div>
-          {lang !== 'en-US' && (
-            <p className="text-xs mt-2 px-3 py-2 rounded-xl"
-              style={{ background: 'rgba(245,158,11,0.08)', color: '#F59E0B', border: '1px solid rgba(245,158,11,0.2)' }}>
-              🇮🇳 ESL mode on. Vak won't penalise Indian English or code-switching.
-            </p>
-          )}
-        </div>
-
-        {/* ESL toggle */}
-        <div
-          className="w-full mb-5 flex items-center justify-between p-4 rounded-2xl"
-          style={{ background: 'linear-gradient(160deg, #10192E 0%, #0B1220 100%)', border: '1px solid rgba(255,255,255,0.07)' }}
-        >
-          <div>
-            <div className="text-white font-semibold text-sm">ESL / Indian English mode</div>
-            <div className="text-xs mt-0.5" style={{ color: '#6B8CAE' }}>
-              Adapts feedback for non-native speakers, no grammar penalties
-            </div>
-          </div>
-          <button
-            onClick={toggleEsl}
-            className="px-3 py-1.5 rounded-full text-xs font-bold transition-all ml-4 shrink-0"
-            style={{
-              background: eslMode ? 'rgba(0,196,154,0.15)' : 'rgba(255,255,255,0.07)',
-              color:      eslMode ? '#00C49A'               : '#6B8CAE',
-              border:     `1px solid ${eslMode ? 'rgba(0,196,154,0.35)' : 'rgba(255,255,255,0.1)'}`,
-            }}
-          >
-            {eslMode ? '✓ On' : 'Off'}
-          </button>
-        </div>
-
-        {/* Quick tips */}
-        <div className="w-full mb-6 space-y-2">
-          {[
-            { icon: '🎤', text: 'Tap the mic to speak. Vak listens and responds' },
-            { icon: '🔴', text: 'Your audio is always recorded, even if text doesn\'t appear' },
-            { icon: '🏁', text: 'Say "end session" or tap End → when you\'re done' },
-          ].map(({ icon, text }) => (
-            <div
-              key={text}
-              className="flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm"
-              style={{ color: '#6B8CAE', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)' }}
-            >
-              <span>{icon}</span>
-              <span>{text}</span>
-            </div>
-          ))}
-        </div>
-
-        {/* Voice-recording consent (DPDP) — only shown until given once */}
-        {!alreadyGaveVoiceConsent && (
-          <label className="w-full mb-4 flex items-start gap-2.5 text-xs leading-relaxed cursor-pointer select-none px-4 py-3 rounded-2xl"
-            style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', color: '#6B8CAE' }}>
-            <input
-              type="checkbox"
-              checked={voiceConsentChecked}
-              onChange={e => setVoiceConsentChecked(e.target.checked)}
-              className="mt-0.5 shrink-0"
-              style={{ accentColor: '#7B5EA7' }}
-              required
-            />
-            <span>
-              I consent to San4 recording my voice during this session and sending it to our
-              AI processor (Google Gemini) to transcribe and score my speech. See the{' '}
-              <Link to="/privacy" target="_blank" className="font-semibold hover:text-white transition-colors"
-                style={{ color: '#7B5EA7' }}>Privacy Policy</Link>.
-            </span>
-          </label>
+        {passed && (
+          <Notice style={{ marginTop: 14 }}>
+            Passed Level {scenario.level} with {report.overall_score}%. {scenario.unlockHint ? 'The next level is open.' : ''}
+          </Notice>
         )}
 
-        <button
-          onClick={async () => {
-            primeAudio()
-            if (!alreadyGaveVoiceConsent && user) await recordVoiceConsent(user.id)
-            setSetupDone(true)
-          }}
-          disabled={!alreadyGaveVoiceConsent && !voiceConsentChecked}
-          className="btn-play w-full"
-          style={!alreadyGaveVoiceConsent && !voiceConsentChecked ? { opacity: 0.5, cursor: 'not-allowed' } : undefined}
-        >
-          <span className="text-xl">🎮</span>
-          <span>Start Session</span>
-          <span style={{ opacity: 0.7, fontSize: '0.85rem' }}>→</span>
-        </button>
-
-      </main>
-    </div>
-  )
-
-  // ── ENDED WITHOUT SPEAKING — no score, no XP ──────────────────────────────
-  if (emptyEnded) return (
-    <div className="min-h-screen flex items-center justify-center px-4" style={{ background: '#050810' }}>
-      <div className="text-center max-w-sm animate-fade-in">
-        <div className="text-5xl mb-4">🤫</div>
-        <h2 className="text-white font-black text-xl mb-2">No response recorded</h2>
-        <p className="text-sm mb-6" style={{ color: '#6B8CAE' }}>
-          You ended before saying anything, so there's nothing to score, so no XP or
-          streak for this one. Jump back in and speak to get your coaching report.
-        </p>
-        <div className="flex gap-3 justify-center">
-          <button onClick={() => navigate('/practice')} className="btn-primary px-5">Try again →</button>
-          <button onClick={() => navigate('/dashboard')} className="btn-secondary px-5">Dashboard</button>
-        </div>
-      </div>
-    </div>
-  )
-
-  // ── ANALYSIS FAILED — surface honestly, no fabricated score / XP ──────────
-  if (failed) return (
-    <div className="min-h-screen flex items-center justify-center px-4" style={{ background: '#050810' }}>
-      <div className="text-center max-w-sm animate-fade-in">
-        <div className="text-5xl mb-4">😕</div>
-        <h2 className="text-white font-black text-xl mb-2">Couldn't score this session</h2>
-        <p className="text-sm mb-6" style={{ color: '#6B8CAE' }}>
-          Something went wrong while analysing your session, so we didn't award XP.
-          Please check your connection and try again.
-        </p>
-        <div className="flex gap-3 justify-center">
-          <button onClick={() => navigate('/practice')} className="btn-primary px-5">Practice again →</button>
-          <button onClick={() => navigate('/dashboard')} className="btn-secondary px-5">Dashboard</button>
-        </div>
-      </div>
-    </div>
-  )
-
-  if (analyzing) return (
-    <div className="min-h-screen flex items-center justify-center" style={{ background: '#050810' }}>
-      <div className="text-center animate-fade-in">
-        <div className="flex justify-center mb-4 animate-float">
-          <VakMascot level={3} size={100} mood="thinking" />
-        </div>
-        <h2 className="text-white font-bold text-xl mb-2">Vak is reviewing your session…</h2>
-        <p className="text-sm" style={{ color: '#6B8CAE' }}>Checking filler words, pacing, confidence. Building your report.</p>
-        <div className="flex gap-2 justify-center mt-5">
-          {[0,1,2].map(i => (
-            <div key={i} className="w-2 h-2 rounded-full animate-bounce"
-              style={{ background: '#7B5EA7', animationDelay: `${i * 0.18}s` }} />
-          ))}
-        </div>
-      </div>
-    </div>
-  )
-
-  if (report) return (
-    <div className="min-h-screen" style={{ background: '#050810' }}>
-      <Navbar />
-      <main className="max-w-2xl mx-auto px-4 py-8 animate-slide-up">
-
-        {/* Header */}
-        <div className="text-center mb-6">
-          <div className="text-5xl mb-3">{scenario.icon || '🎭'}</div>
-          <h1 className="text-2xl font-black text-white">Session Complete</h1>
-          <p className="text-sm mt-1" style={{ color: '#6B8CAE' }}>
-            {scenario.title} · {fmt(seconds)}
-            {voiceMode && ' · 🎤 Voice'}
-          </p>
-        </div>
-
-        {/* XP reward */}
-        <RewardCard reward={reward} />
-
-        {/* Score row */}
-        <div className="grid grid-cols-3 gap-3 mb-4">
-          {[
-            { label: 'Overall',    val: report.overall_score },
-            { label: 'Confidence', val: report.confidence_score },
-            { label: 'Pacing',     val: report.pacing_score },
-          ].map(({ label, val }) => (
-            <div key={label} className="card text-center">
-              <div className="text-3xl font-black" style={{ color: scoreColor(val) }}>{val}%</div>
-              <div className="text-xs mt-1" style={{ color: '#6B8CAE' }}>{label}</div>
-            </div>
-          ))}
-        </div>
-
-        {/* Pacing note (voice only) */}
-        {report.voiceMeta && (() => {
-          const w = wpmLabel(report.voiceMeta.avgWpm)
-          return w ? (
-            <div className="card mb-4 flex items-center gap-3">
-              <span className="text-xl">🎙️</span>
-              <div>
-                <div className="text-white font-semibold text-sm">Speaking pace</div>
-                <div className="text-sm font-bold mt-0.5" style={{ color: w.color }}>{w.text}</div>
-                {report.pacing_note && (
-                  <p className="text-xs mt-1" style={{ color: '#6B8CAE' }}>{report.pacing_note}</p>
-                )}
-              </div>
-            </div>
-          ) : null
-        })()}
-
-        {/* Filler words */}
-        <div className="card mb-4">
-          <div className="flex items-center justify-between mb-2">
-            <h3 className="text-white font-semibold text-sm">Filler Words</h3>
-            <span className="font-black text-xl" style={{
-              color: report.filler_word_count > 10 ? '#F87171' : report.filler_word_count > 5 ? '#FF6B35' : '#00C49A'
-            }}>
-              {report.filler_word_count}
-            </span>
-          </div>
-          {report.top_filler_words?.length > 0 && (
-            <div className="flex flex-wrap gap-2 mt-2">
-              {report.top_filler_words.map(w => (
-                <span key={w} className="text-xs px-3 py-1 rounded-full"
-                  style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', color: '#F87171' }}>
-                  "{w}"
-                </span>
+        {/* Line-by-line: Pro depth */}
+        {report.line_notes?.length > 0 && (isPro ? (
+          <div style={{ marginTop: 16 }}>
+            <div style={{ ...mono(10, C.lilac), marginBottom: 10 }}>LINE BY LINE</div>
+            <Rows>
+              {report.line_notes.slice(0, 6).map((n, i) => (
+                <div key={i} style={{ padding: '13px 16px', background: C.panel }}>
+                  <p style={{ margin: 0, fontSize: 12.5, lineHeight: 1.5, color: C.dim }}>"{n.said}"</p>
+                  <p style={{ margin: '6px 0 0', fontSize: 13, lineHeight: 1.5, color: C.paper }}>{n.better}</p>
+                </div>
               ))}
-            </div>
-          )}
-          <p className="text-xs mt-2" style={{ color: '#6B8CAE' }}>
-            {report.filler_word_count === 0
-              ? '🎉 No filler words detected. Excellent!'
-              : report.filler_word_count <= 5
-              ? 'Good control. Keep it up.'
-              : 'Filler words reduce perceived confidence. Pause instead of filling silence.'}
-          </p>
-        </div>
-
-        {/* Coach summary */}
-        <div className="card mb-4">
-          <h3 className="text-white font-semibold text-sm mb-2">Vak's Assessment</h3>
-          <p className="text-sm leading-relaxed" style={{ color: '#94A3B8' }}>{report.summary}</p>
-        </div>
-
-        {/* What Vak heard — transcript from audio analysis */}
-        {report.transcript && (
-          <div className="card mb-4" style={{ background: 'rgba(0,196,154,0.05)', border: '1px solid rgba(0,196,154,0.2)' }}>
-            <div className="flex gap-3 items-start">
-              <span className="text-xl shrink-0">📝</span>
-              <div className="flex-1">
-                <h3 className="text-white font-semibold text-sm mb-2">What Vak heard</h3>
-                <p className="text-sm leading-relaxed italic" style={{ color: '#94A3B8' }}>
-                  "{report.transcript}"
-                </p>
-                <p className="text-xs mt-2" style={{ color: '#6B8CAE' }}>
-                  This is Gemini's transcription of your audio, used to generate the feedback above.
-                </p>
-              </div>
-            </div>
+            </Rows>
           </div>
-        )}
+        ) : (
+          <Link to="/pro" style={{ marginTop: 16, display: 'flex', alignItems: 'center', gap: 10, padding: '14px 16px', borderRadius: 16, border: '1px dashed rgba(255,255,255,.16)', textDecoration: 'none' }}>
+            <LockIcon color={C.lilac} />
+            <span style={{ flex: 1, font: `500 12.5px ${F.sans}`, color: C.soft }}>Line by line breakdown of what you said</span>
+            <span style={mono(9.5, C.amber, '.1em')}>PRO</span>
+          </Link>
+        ))}
 
-        {/* Strengths + improvements */}
-        <div className="grid md:grid-cols-2 gap-3 mb-4">
-          <div className="card">
-            <h3 className="font-semibold text-sm mb-3" style={{ color: '#00C49A' }}>✓ What worked</h3>
-            <ul className="space-y-2">
-              {report.strengths?.map((s, i) => (
-                <li key={i} className="text-sm flex gap-2" style={{ color: '#94A3B8' }}>
-                  <span style={{ color: '#00C49A' }}>•</span> {s}
-                </li>
-              ))}
-            </ul>
-          </div>
-          <div className="card">
-            <h3 className="font-semibold text-sm mb-3" style={{ color: '#7B5EA7' }}>↑ Work on this</h3>
-            <ul className="space-y-2">
-              {report.improvements?.map((s, i) => (
-                <li key={i} className="text-sm flex gap-2" style={{ color: '#94A3B8' }}>
-                  <span style={{ color: '#7B5EA7' }}>•</span> {s}
-                </li>
-              ))}
-            </ul>
-          </div>
-        </div>
+        <div style={{ flex: 1, minHeight: 14 }} />
+        <Btn onClick={retry} style={{ padding: 16, borderRadius: 15, fontSize: 14.5, marginTop: 14 }}>Redo it with that one change</Btn>
+        <TextBtn to="/today" style={{ marginTop: 10 }}>Back to Today</TextBtn>
+      </Screen>
+    )
+  }
 
-        {/* Action item */}
-        <div className="card mb-8"
-          style={{ background: 'rgba(123,94,167,0.07)', border: '1px solid rgba(123,94,167,0.25)' }}>
-          <div className="flex gap-3 items-start">
-            <span className="text-2xl">🎯</span>
-            <div>
-              <h3 className="font-semibold text-sm mb-1" style={{ color: '#7B5EA7' }}>Your action item</h3>
-              <p className="text-white text-sm">{report.action_item}</p>
-            </div>
-          </div>
-        </div>
-
-        <div className="flex gap-3">
-          <button onClick={() => navigate('/practice')} className="btn-primary flex-1">Practice again →</button>
-          <button onClick={() => navigate('/dashboard')} className="btn-secondary flex-1">Dashboard</button>
-        </div>
-        <div className="h-8" />
-      </main>
-    </div>
-  )
-
-  // ── Live session ──────────────────────────────────────────────────────────
-  const lastAiMsg = [...messages].reverse().find(m => m.role === 'ai')
+  // ── 16 · Live session ─────────────────────────────────────────────────────
+  const turns = messages.filter(m => m.role === 'user').length
+  const busy = aiThinking || transcribing
+  const nearLimit = !isPro && seconds >= FREE_SESSION_SECONDS - 15
+  const hint = transcribing ? 'Writing down what you said'
+    : aiThinking ? `${pName} is thinking`
+    : vakSpeaking ? `${pName} is speaking. Tap to cut in`
+    : listening ? 'Tap to send'
+    : turns >= 3 ? 'Tap End when you are ready' : 'Tap and speak'
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ background: '#050810' }}>
-      <Navbar />
-
-      {/* Session header */}
-      <div
-        className="px-4 py-3 flex items-center justify-between"
-        style={{ borderBottom: '1px solid rgba(255,255,255,0.07)', background: 'rgba(9,21,40,0.9)' }}
-      >
-        <div className="flex items-center gap-3">
-          <span className="text-xl">{scenario.icon || '🎭'}</span>
-          <div>
-            <div className="text-white font-semibold text-sm">{scenario.title}</div>
-            <div className="text-xs" style={{ color: '#6B8CAE' }}>
-              {fmt(seconds)} · {messages.filter(m => m.role === 'user').length} responses
+    <div style={{ height: '100dvh', background: C.ink, color: C.paper, display: 'flex', justifyContent: 'center' }}>
+      <div style={{ width: '100%', maxWidth: 480, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: 'calc(env(safe-area-inset-top, 0px) + 14px) 22px 14px', borderBottom: '1px solid rgba(255,255,255,.07)', flex: 'none' }}>
+          <button aria-label="Back" onClick={() => { teardown(); navigate(-1) }} style={{ border: 'none', background: 'none', cursor: 'pointer', padding: 0, display: 'flex', color: C.dim }}><BackIcon /></button>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ font: `600 14px ${F.sans}` }}>{pName}</div>
+            <div style={{ font: `400 11.5px ${F.sans}`, color: C.dim, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              {jobPost ? 'Interview mode · your job post' : `${scenario.title} · ${personaSub(persona)}`}
             </div>
           </div>
-        </div>
-        <div className="flex items-center gap-2">
-          {/* Language selector */}
-          <select
-            value={lang}
-            onChange={e => setLang(e.target.value)}
-            title="Choose your speaking language"
-            className="text-xs px-2 py-1.5 rounded-full transition-all cursor-pointer"
-            style={{
-              background: lang !== 'en-US' ? 'rgba(245,158,11,0.12)' : 'rgba(255,255,255,0.07)',
-              color:      lang !== 'en-US' ? '#F59E0B' : '#6B8CAE',
-              border:     `1px solid ${lang !== 'en-US' ? 'rgba(245,158,11,0.3)' : 'rgba(255,255,255,0.1)'}`,
-              WebkitAppearance: 'none',
-              appearance: 'none',
-            }}
-          >
-            {LANGUAGES.map(l => (
-              <option key={l.code} value={l.code} style={{ background: '#0F1E35', color: '#E2E8F0' }}>
-                {l.flag} {l.nativeName}
-              </option>
-            ))}
-          </select>
-
-          {/* ESL mode toggle */}
-          <button
-            onClick={toggleEsl}
-            className="text-xs px-3 py-1.5 rounded-full transition-all"
-            style={{
-              background: eslMode ? 'rgba(245,158,11,0.12)' : 'rgba(255,255,255,0.07)',
-              color: eslMode ? '#F59E0B' : '#6B8CAE',
-              border: `1px solid ${eslMode ? 'rgba(245,158,11,0.3)' : 'rgba(255,255,255,0.1)'}`,
-            }}
-            title="ESL / Indian English mode, Vak adapts feedback for non-native speakers"
-          >
-            {eslMode ? '🇮🇳 ESL on' : '🌐 ESL'}
+          <button aria-label={ttsOn ? 'Mute the voice' : 'Turn the voice on'} onClick={() => { setTtsOn(v => !v); stopVak() }}
+            style={{ border: 'none', background: 'none', cursor: 'pointer', padding: 4, display: 'flex' }}>
+            <SpeakerIcon on={ttsOn} />
           </button>
+          <div style={{ ...mono(12, nearLimit ? C.amber : C.dim, 0), padding: '5px 10px', border: `1px solid ${nearLimit ? 'rgba(245,158,11,.5)' : 'rgba(255,255,255,.1)'}`, borderRadius: 8 }}>{clock(seconds)}</div>
+          <button onClick={() => endSession()} style={{ border: `1px solid ${C.line3}`, background: 'none', cursor: 'pointer', padding: '6px 12px', borderRadius: 9, color: C.soft, font: `600 12px ${F.sans}` }}>End</button>
+        </div>
 
-          {/* Voice / Text toggle */}
-          {VOICE_SUPPORTED && (
-            <button
-              onClick={() => setVoiceMode(v => !v)}
-              className="text-xs px-3 py-1.5 rounded-full transition-all"
-              style={{
-                background: voiceMode ? 'rgba(0,196,154,0.12)' : 'rgba(255,255,255,0.07)',
-                color: voiceMode ? '#00C49A' : '#6B8CAE',
-                border: `1px solid ${voiceMode ? 'rgba(0,196,154,0.3)' : 'rgba(255,255,255,0.1)'}`,
-              }}
-            >
-              {voiceMode ? '🎤 Voice' : '⌨️ Text'}
-            </button>
+        <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: '16px 22px 10px', display: 'flex', flexDirection: 'column', gap: 14 }}>
+          {messages.map((m, i) => (
+            <Bubble key={i} role={m.role} tag={m.role === 'ai' ? pName.toUpperCase() : 'YOU'} text={m.content} />
+          ))}
+          {listening && <Bubble role="live" tag="LIVE" text={liveText || 'Listening…'} />}
+          {!listening && liveText && <p style={{ alignSelf: 'flex-end', margin: 0, fontSize: 12, color: C.amber }}>{liveText}</p>}
+          {busy && <div style={{ alignSelf: transcribing ? 'flex-end' : 'flex-start', padding: '6px 2px' }}><Dots size={6} /></div>}
+          {micBlocked && (
+            <Notice tone="red">
+              The microphone is blocked. Allow it for this site, then <button onClick={startRecorder} style={{ border: 'none', background: 'none', color: '#FCA5A5', textDecoration: 'underline', cursor: 'pointer', padding: 0, font: 'inherit' }}>try again</button>. Or type below, everything still works.
+            </Notice>
           )}
-          <button
-            onClick={() => endSession()}
-            className="text-sm px-4 py-1.5 rounded-xl font-semibold transition-all hover:opacity-90"
-            style={{ background: 'rgba(239,68,68,0.15)', color: '#F87171', border: '1px solid rgba(239,68,68,0.25)' }}
-          >
-            End →
-          </button>
-        </div>
-      </div>
-
-      {/* ── FOCUSED RECORDING OVERLAY ────────────────────────────────────────
-          When the user is speaking, the mic takes over the whole screen so
-          nothing else competes for attention. Covers all other UI. */}
-      {voiceMode && listening && (
-        <div className="fixed inset-0 z-40 flex flex-col items-center justify-center px-6"
-          style={{ background: '#050810' }}>
-          {/* Tiny reminder of what Vak asked, muted so it doesn't distract */}
-          {lastAiMsg && (
-            <p className="absolute top-6 left-0 right-0 px-8 text-center text-xs" style={{ color: 'rgba(107,140,174,0.7)' }}>
-              {lastAiMsg.content}
-            </p>
-          )}
-
-          {/* THE MIC — dead centre, glowing, the only thing that matters */}
-          <button
-            onClick={stopAndSend}
-            className="relative flex items-center justify-center rounded-full transition-all active:scale-95"
-            style={{
-              width: 132, height: 132,
-              background: 'linear-gradient(135deg, #7B5EA7, #FF4500)',
-              boxShadow: '0 0 70px rgba(123,94,167,0.6)',
-            }}
-          >
-            <span className="absolute inset-0 rounded-full animate-ping" style={{ background: 'rgba(123,94,167,0.3)' }} />
-            <span className="relative" style={{ fontSize: 54 }}>⏹</span>
-          </button>
-
-          <p className="text-base font-semibold text-white mt-7">Listening… tap to send</p>
-          <p className="text-xs mt-1" style={{ color: '#6B8CAE' }}>Or just pause for 2 seconds</p>
-
-          {/* Their words, live */}
-          <div className="w-full max-w-md mt-8 rounded-2xl px-4 py-3 min-h-[64px] max-h-40 overflow-y-auto"
-            style={{ background: liveText ? 'rgba(123,94,167,0.08)' : 'rgba(255,255,255,0.03)', border: `1px solid ${liveText ? 'rgba(123,94,167,0.3)' : 'rgba(255,255,255,0.06)'}` }}>
-            {liveText
-              ? <p className="text-white text-sm italic leading-relaxed text-center">{liveText}</p>
-              : <p className="text-sm italic text-center" style={{ color: 'rgba(107,140,174,0.6)' }}>Speak now, your words appear here</p>}
-          </div>
-        </div>
-      )}
-
-      {voiceMode ? (
-        /* ── VOICE MODE ─────────────────────────────────────────────────────── */
-        <div className="flex-1 flex flex-col items-center justify-between px-4 py-6 max-w-md mx-auto w-full">
-
-          {/* Vak avatar + last message */}
-          <div className="flex-1 flex flex-col items-center justify-center w-full">
-
-            {/* Vak with speaking/listening aura */}
-            <div className="relative mb-6 flex items-center justify-center">
-              {/* Outer pulse ring */}
-              {(vakSpeaking || listening) && (
-                <div
-                  className="absolute rounded-full animate-ping"
-                  style={{
-                    width: 160, height: 160,
-                    background: vakSpeaking
-                      ? 'rgba(139,92,246,0.15)'
-                      : 'rgba(123,94,167,0.15)',
-                    border: `2px solid ${vakSpeaking ? 'rgba(139,92,246,0.3)' : 'rgba(123,94,167,0.3)'}`,
-                    animationDuration: '1.5s',
-                  }}
-                />
-              )}
-              {/* Inner glow */}
-              <div
-                className="absolute rounded-full transition-all duration-300"
-                style={{
-                  width: 130, height: 130,
-                  background: vakSpeaking
-                    ? 'radial-gradient(circle, rgba(139,92,246,0.15) 0%, transparent 70%)'
-                    : listening
-                    ? 'radial-gradient(circle, rgba(123,94,167,0.15) 0%, transparent 70%)'
-                    : 'transparent',
-                }}
-              />
-              <div className={vakSpeaking ? 'animate-float' : listening ? '' : 'animate-float'}>
-                <VakMascot level={3} size={110}
-                  mood={vakSpeaking ? 'encouraging' : listening ? 'listening' : aiThinking ? 'thinking' : 'neutral'} />
-              </div>
-            </div>
-
-            {/* Status badge */}
-            <div
-              className="text-xs font-bold px-4 py-1.5 rounded-full mb-6 transition-all"
-              style={{
-                background: vakSpeaking
-                  ? 'rgba(139,92,246,0.15)'
-                  : listening
-                  ? 'rgba(123,94,167,0.15)'
-                  : aiThinking
-                  ? 'rgba(245,158,11,0.15)'
-                  : 'rgba(255,255,255,0.07)',
-                color: vakSpeaking ? '#A78BFA' : listening ? '#7B5EA7' : aiThinking ? '#F59E0B' : '#6B8CAE',
-                border: `1px solid ${vakSpeaking ? 'rgba(139,92,246,0.3)' : listening ? 'rgba(123,94,167,0.3)' : aiThinking ? 'rgba(245,158,11,0.3)' : 'rgba(255,255,255,0.1)'}`,
-              }}
-            >
-              {vakSpeaking
-                ? '🦢 Vak is speaking…'
-                : listening
-                ? '🎤 Listening…'
-                : transcribing
-                ? '✍️ Writing down what you said…'
-                : aiThinking
-                ? '⏳ Thinking…'
-                : '👆 Tap mic to speak'}
-            </div>
-
-            {/* Last Vak message */}
-            {lastAiMsg && (
-              <div
-                className="w-full rounded-2xl px-5 py-4 mb-4"
-                style={{ background: 'linear-gradient(160deg, #10192E 0%, #0B1220 100%)', border: '1px solid rgba(255,255,255,0.08)' }}
-              >
-                <div className="text-xs mb-2 font-semibold" style={{ color: '#6B8CAE' }}>🦢 Vak says</div>
-                <p className="text-white text-sm leading-relaxed">{lastAiMsg.content}</p>
-                {/* Re-play TTS */}
-                {ttsOn && (
-                  <button
-                    onClick={() => speak(lastAiMsg.content)}
-                    className="mt-2 text-xs transition-colors"
-                    style={{ color: '#6B8CAE' }}
-                  >
-                    🔊 Replay
-                  </button>
-                )}
-              </div>
-            )}
-
-            {/* Mic blocked — visible recovery banner */}
-            {micBlocked && (
-              <div className="w-full rounded-2xl px-4 py-3 mb-3"
-                style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.35)' }}>
-                <div className="flex items-start gap-3">
-                  <span className="text-xl shrink-0">🎙️🚫</span>
-                  <div className="flex-1">
-                    <div className="text-sm font-bold mb-1" style={{ color: '#F87171' }}>
-                      Microphone is blocked
-                    </div>
-                    <p className="text-xs leading-relaxed mb-2" style={{ color: '#FCA5A5' }}>
-                      Click the <strong>🔒 lock icon</strong> in your address bar → set
-                      <strong> Microphone to Allow</strong> → then tap retry. Or just type your
-                      responses below — everything still works.
-                    </p>
-                    <button
-                      onClick={startRecorder}
-                      className="text-xs font-bold px-3 py-1.5 rounded-full"
-                      style={{ background: 'rgba(239,68,68,0.2)', color: '#F87171', border: '1px solid rgba(239,68,68,0.4)' }}
-                    >
-                      🔄 Retry mic access
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Live transcript — always visible so user knows voice is being captured */}
-            <div
-              className="w-full rounded-2xl px-4 py-3 mb-2 min-h-[60px] transition-all"
-              style={{
-                background: liveText ? 'rgba(123,94,167,0.08)' : 'rgba(255,255,255,0.03)',
-                border: `1px solid ${liveText ? 'rgba(123,94,167,0.3)' : 'rgba(255,255,255,0.06)'}`,
-              }}
-            >
-              <div className="flex items-center gap-2 mb-1">
-                <span className="text-xs font-semibold" style={{ color: '#7B5EA7' }}>
-                  🎤 What Vak hears
-                </span>
-                {mediaRecRef.current && (
-                  <span className="flex items-center gap-1 text-xs" style={{ color: '#00C49A' }}>
-                    <span className="w-1.5 h-1.5 rounded-full bg-red-500 inline-block animate-pulse" />
-                    Recording
-                  </span>
-                )}
-              </div>
-              {liveText ? (
-                <p className="text-white text-sm italic leading-relaxed">{liveText}</p>
-              ) : (
-                <p className="text-sm italic" style={{ color: 'rgba(107,140,174,0.6)' }}>
-                  {listening
-                    ? 'Speak now, your words will appear here'
-                    : 'Tap the mic below and start speaking'}
-                </p>
-              )}
-            </div>
-          </div>
-
-          {/* Mic button + text fallback */}
-          <div className="flex flex-col items-center gap-3 w-full">
-            <button
-              onClick={() => { primeAudio(); listening ? stopAndSend() : startListening() }}
-              disabled={aiThinking || vakSpeaking || transcribing}
-              className="relative flex items-center justify-center rounded-full transition-all active:scale-95"
-              style={{
-                width: 80, height: 80,
-                background: listening
-                  ? 'linear-gradient(135deg, #7B5EA7, #FF4500)'
-                  : 'linear-gradient(135deg, #0F1E35, #1A2F4A)',
-                border: listening
-                  ? '3px solid rgba(123,94,167,0.6)'
-                  : '2px solid rgba(255,255,255,0.15)',
-                boxShadow: listening ? '0 0 30px rgba(123,94,167,0.5)' : 'none',
-                opacity: (aiThinking || vakSpeaking || transcribing) ? 0.4 : 1,
-              }}
-            >
-              <span style={{ fontSize: 32 }}>{listening ? '⏹' : '🎤'}</span>
-            </button>
-            <p className="text-xs text-center" style={{ color: '#6B8CAE' }}>
-              {listening
-                ? 'Tap to stop & send, or pause for 2 seconds to auto-send'
-                : 'Tap to speak · your voice is always recorded for analysis'}
-            </p>
-
-            {/* Text fallback — always visible so user can type if mic doesn't transcribe */}
-            <div className="w-full flex gap-2 items-center">
-              <input
-                value={textInput}
-                onChange={e => setTextInput(e.target.value)}
-                onKeyDown={e => {
-                  if (e.key === 'Enter' && textInput.trim()) {
-                    if (listening) { isListeningRef.current = false; try { recRef.current?.stop() } catch (_) {} }
-                    submitMessage(textInput.trim())
-                  }
-                }}
-                placeholder="Or type your response here…"
-                className="input flex-1 text-sm"
-                style={{ height: 40, paddingTop: 0, paddingBottom: 0 }}
-                disabled={aiThinking}
-              />
-              <button
-                onClick={() => { submitMessage(textInput.trim()) }}
-                disabled={!textInput.trim() || aiThinking}
-                className="btn-primary text-sm px-4"
-                style={{ height: 40 }}
-              >
-                Send
-              </button>
-            </div>
-
-            {/* TTS toggle */}
-            <button
-              onClick={() => { setTtsOn(v => !v); stopVak() }}
-              className="text-xs px-4 py-1.5 rounded-full transition-all"
-              style={{
-                background: ttsOn ? 'rgba(0,196,154,0.1)' : 'rgba(255,255,255,0.05)',
-                color: ttsOn ? '#00C49A' : '#6B8CAE',
-                border: `1px solid ${ttsOn ? 'rgba(0,196,154,0.25)' : 'rgba(255,255,255,0.08)'}`,
-              }}
-            >
-              {ttsOn ? '🔊 Vak voice on' : '🔇 Vak voice off'}
-            </button>
-          </div>
-
-          <div className="h-2" />
+          {nearLimit && <p style={{ margin: 0, textAlign: 'center', fontSize: 11.5, color: C.amber }}>Free sessions end at four minutes. Start wrapping up.</p>}
+          <div ref={bottomRef} />
         </div>
 
-      ) : (
-        /* ── TEXT MODE ─────────────────────────────────────────────────────── */
-        <>
-          <div className="flex-1 overflow-y-auto px-4 py-6 space-y-4 max-w-3xl mx-auto w-full">
-            {messages.map((msg, i) => (
-              <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'} animate-fade-in`}>
-                {msg.role === 'ai' && (
-                  <div className="w-7 h-7 mr-2 mt-1 shrink-0 flex items-center justify-center rounded-full text-sm"
-                    style={{ background: 'rgba(139,92,246,0.2)' }}>
-                    🦢
-                  </div>
-                )}
-                <div
-                  className="max-w-[80%] px-4 py-3 rounded-2xl text-sm leading-relaxed"
-                  style={msg.role === 'ai'
-                    ? { background: 'rgba(255,255,255,0.06)', color: '#E2E8F0', borderRadius: '4px 18px 18px 18px' }
-                    : { background: '#7B5EA7', color: 'white', borderRadius: '18px 4px 18px 18px' }
-                  }
-                >
-                  {msg.content}
-                </div>
+        {voiceMode ? (
+          <>
+            <div style={{ padding: '10px 22px 0', display: 'flex', alignItems: 'center', gap: 16, flex: 'none' }}>
+              <div style={{ flex: 1 }}>
+                <Waveform active={listening} flex count={24} height={26} gap={3} color={C.teal} origin="bottom" speed={1} />
               </div>
-            ))}
-
-            {aiThinking && (
-              <div className="flex justify-start animate-fade-in">
-                <div className="w-7 h-7 mr-2 mt-1 shrink-0 flex items-center justify-center rounded-full text-sm"
-                  style={{ background: 'rgba(139,92,246,0.2)' }}>🦢</div>
-                <div className="px-4 py-3 rounded-2xl" style={{ background: 'rgba(255,255,255,0.06)' }}>
-                  <div className="flex gap-1.5 items-center h-5">
-                    {[0,1,2].map(i => (
-                      <div key={i} className="w-1.5 h-1.5 rounded-full animate-bounce"
-                        style={{ background: '#6B8CAE', animationDelay: `${i * 0.15}s` }} />
-                    ))}
-                  </div>
-                </div>
-              </div>
-            )}
-            <div ref={bottomRef} />
-          </div>
-
-          <div className="px-4 py-4" style={{ borderTop: '1px solid rgba(255,255,255,0.07)', background: 'rgba(9,21,40,0.9)' }}>
-            <div className="max-w-3xl mx-auto flex gap-3">
-              <textarea
-                ref={textRef}
-                value={textInput}
+              <MicButton size={66} listening={listening} stopSquare disabled={busy}
+                onClick={() => { primeAudio(); listening ? stopAndSend() : startListening() }} />
+            </div>
+            <div style={{ textAlign: 'center', padding: '12px 0 4px', ...mono(11.5, C.dim, 0), flex: 'none' }}>{hint}</div>
+            <TextBtn onClick={() => { if (listening) stopAndSend(); setVoiceMode(false) }} size={11.5}
+              style={{ margin: '0 auto calc(env(safe-area-inset-bottom, 0px) + 14px)', flex: 'none' }}>Type instead</TextBtn>
+          </>
+        ) : (
+          <div style={{ padding: '10px 22px calc(env(safe-area-inset-bottom, 0px) + 18px)', borderTop: '1px solid rgba(255,255,255,.07)', flex: 'none' }}>
+            <div style={{ display: 'flex', gap: 10, alignItems: 'flex-end' }}>
+              <textarea ref={textRef} className="input" rows={2} value={textInput} disabled={aiThinking}
                 onChange={e => setTextInput(e.target.value)}
                 onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submitMessage(textInput.trim()) } }}
-                placeholder="Type your response… (Enter to send)"
-                className="input flex-1 resize-none"
-                style={{ height: 48, paddingTop: 12 }}
-                rows={1}
-              />
-              <button
-                onClick={() => submitMessage(textInput.trim())}
-                disabled={!textInput.trim() || aiThinking}
-                className="btn-primary px-5 h-12 flex items-center text-sm"
-              >
-                Send
-              </button>
+                placeholder={`Answer ${pName}…`} style={{ resize: 'none', fontSize: 14 }} />
+              <button onClick={() => submitMessage(textInput.trim())} disabled={!textInput.trim() || aiThinking} style={{
+                border: 'none', cursor: 'pointer', borderRadius: 14, padding: '0 18px', height: 50, background: C.purple, color: '#fff',
+                font: `700 14px ${F.sans}`, opacity: !textInput.trim() || aiThinking ? 0.45 : 1,
+              }}>Send</button>
             </div>
-            <p className="text-xs text-center mt-2" style={{ color: '#6B8CAE' }}>
-              Type <strong>end session</strong> or click "End →" when finished
-            </p>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 8 }}>
+              <span style={mono(10.5, C.dim, 0)}>{aiThinking ? `${pName} is thinking` : 'Enter to send'}</span>
+              {!typed && VOICE_SUPPORTED && <TextBtn size={11.5} onClick={() => setVoiceMode(true)} style={{ padding: 0 }}>Speak instead</TextBtn>}
+            </div>
           </div>
-        </>
-      )}
+        )}
+      </div>
     </div>
   )
 }

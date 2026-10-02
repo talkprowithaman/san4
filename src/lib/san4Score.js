@@ -11,6 +11,8 @@
 // 60% recency-weighted average of the last 10 scored activities.
 // ─────────────────────────────────────────────────────────────────────────────
 
+import { supabase } from './supabase'
+
 export const SCORE_BANDS = [
   { min: 85, name: 'Influential', color: '#10B981', blurb: 'People act on what you say.' },
   { min: 70, name: 'Confident',   color: '#00C49A', blurb: 'Clear, assured, listened to.' },
@@ -104,4 +106,40 @@ export function computeSan4Score(sessions = [], userId) {
   if (recentAvg == null) return Math.round(comm)
   if (comm == null) return Math.round(recentAvg)
   return Math.round(0.4 * comm + 0.6 * recentAvg)
+}
+
+// Fetch the user's recent sessions and compute the live score in one go.
+// Used before/after a kept take to show how far the number moved.
+export async function fetchSan4Score(userId) {
+  if (!userId) return getCommScore(null)
+  try {
+    const { data } = await supabase
+      .from('practice_sessions')
+      .select('overall_score')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false })
+      .limit(10)
+    return computeSan4Score(data || [], userId)
+  } catch {
+    return computeSan4Score([], userId)
+  }
+}
+
+// ── Clarity / structure trend (the two numbers the report keeps) ────────────
+// Stored per user so the report can show "+4" against the previous take.
+const metricsKey = (userId) => `san4_last_metrics_${userId || 'guest'}`
+
+export function getLastMetrics(userId) {
+  try { return JSON.parse(localStorage.getItem(metricsKey(userId)) || 'null') } catch { return null }
+}
+
+export function saveLastMetrics(userId, metrics) {
+  try { localStorage.setItem(metricsKey(userId), JSON.stringify(metrics)) } catch { /* ignore */ }
+}
+
+// Format a delta for the mono labels: "+4", "-1", "±0".
+export function fmtDelta(now, before) {
+  if (!Number.isFinite(now) || !Number.isFinite(before)) return null
+  const d = Math.round(now - before)
+  return d > 0 ? `+${d}` : d < 0 ? `${d}` : '±0'
 }

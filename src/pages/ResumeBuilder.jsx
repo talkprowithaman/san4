@@ -30,14 +30,14 @@ const BLANK = {
 // UI atoms
 const Field = ({ label, ...p }) => (
   <label className="block">
-    <span className="block text-xs font-semibold mb-1" style={{ color: '#94A3B8' }}>{label}</span>
+    <span className="block text-xs font-semibold mb-1" style={{ color: '#C9C9D2' }}>{label}</span>
     <input {...p} className="w-full rounded-xl px-3 py-2.5 text-sm text-white outline-none"
       style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)' }} />
   </label>
 )
 const Area = ({ label, hint, ...p }) => (
   <label className="block">
-    <span className="block text-xs font-semibold mb-1" style={{ color: '#94A3B8' }}>{label}{hint && <span className="font-normal" style={{ color: '#6B8CAE' }}> · {hint}</span>}</span>
+    <span className="block text-xs font-semibold mb-1" style={{ color: '#C9C9D2' }}>{label}{hint && <span className="font-normal" style={{ color: '#9A9AA8' }}> · {hint}</span>}</span>
     <textarea {...p} className="w-full rounded-xl px-3 py-2.5 text-sm text-white outline-none resize-y"
       style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', minHeight: 72 }} />
   </label>
@@ -165,17 +165,17 @@ export default function ResumeBuilder() {
       <div className="text-3xl font-black" style={{ color: '#00C49A' }}>{san4.score}</div>
       <div className="flex-1">
         <div className="text-sm font-bold text-white">San4 Score added ✓ {san4.band ? `· ${san4.band}` : ''}</div>
-        <div className="text-xs" style={{ color: '#6B8CAE' }}>This will appear on your resume, so recruiters can see how you communicate.</div>
+        <div className="text-xs" style={{ color: '#9A9AA8' }}>This will appear on your resume, so recruiters can see how you communicate.</div>
       </div>
       <a href="/assessment" target="_blank" rel="noopener noreferrer" className="text-xs font-semibold underline" style={{ color: '#34E0B0' }}>Retake</a>
     </div>
   ) : (
     <div className="rounded-2xl p-4" style={{ background: 'rgba(255,107,53,0.08)', border: '1px solid rgba(255,107,53,0.3)' }}>
       <div className="text-sm font-bold text-white mb-1">🎯 One step before your resume: get your San4 Score</div>
-      <div className="text-xs mb-3" style={{ color: '#94A3B8' }}>A 2-minute voice test. Your communication score goes on the resume, the thing employers can't see from a CV. Required to generate.</div>
+      <div className="text-xs mb-3" style={{ color: '#C9C9D2' }}>A 2-minute voice test. Your communication score goes on the resume, the thing employers can't see from a CV. Required to generate.</div>
       <div className="flex gap-2">
         <a href="/assessment" target="_blank" rel="noopener noreferrer" className="btn-primary text-sm px-5 py-2.5">Take the 2-min test ↗</a>
-        <button onClick={readScore} className="text-sm px-4 py-2.5 rounded-full" style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)', color: '#cbd5e1' }}>I've done it — check</button>
+        <button onClick={readScore} className="text-sm px-4 py-2.5 rounded-full" style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)', color: '#C9C9D2' }}>I've done it — check</button>
       </div>
     </div>
   )
@@ -183,31 +183,31 @@ export default function ResumeBuilder() {
   // ── INTRO ───────────────────────────────────────────────────────────────────
   if (phase === 'intro') {
     return (
-      <div className="min-h-screen" style={{ background: '#050810', color: '#F1F5F9' }}>
+      <div className="min-h-screen" style={{ background: '#0A0A0C', color: '#F1F5F9' }}>
         <MarketingHeader />
         <main className="max-w-2xl mx-auto px-6 py-14 text-center">
           <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full mb-4 text-xs font-bold" style={{ background: 'rgba(0,196,154,0.14)', color: '#34E0B0', border: '1px solid rgba(0,196,154,0.3)' }}>✅ Free · ATS-friendly</div>
           <h1 className="text-3xl font-black text-white mb-3" style={{ fontFamily: 'Outfit, sans-serif' }}>Free ATS-Friendly Resume Builder</h1>
-          <p className="text-base mb-8 max-w-lg mx-auto" style={{ color: '#94A3B8' }}>
+          <p className="text-base mb-8 max-w-lg mx-auto" style={{ color: '#C9C9D2' }}>
             Build a clean, recruiter-ready resume, tailored to the job, scored for ATS, and stamped with your San4 Communication Score. One page, no fluff.
           </p>
           {error && <div className="rounded-xl px-4 py-3 mb-5 text-sm" style={{ background: 'rgba(239,68,68,0.1)', color: '#FCA5A5', border: '1px solid rgba(239,68,68,0.3)' }}>{error}</div>}
           <div className="grid sm:grid-cols-2 gap-4 text-left">
             <button onClick={() => fileRef.current?.click()} disabled={parsing}
-              className="rounded-2xl p-6 transition-all hover:opacity-90 text-left" style={{ background: 'linear-gradient(145deg,#10192E,#0B1220)', border: '1px solid rgba(123,94,167,0.35)' }}>
+              className="rounded-2xl p-6 transition-all hover:opacity-90 text-left" style={{ background: 'linear-gradient(145deg,#121218,#0C0C10)', border: '1px solid rgba(123,94,167,0.35)' }}>
               <div className="text-3xl mb-2">📄</div>
               <div className="font-bold text-white mb-1">{parsing ? 'Reading your resume…' : 'Upload your resume'}</div>
-              <div className="text-xs" style={{ color: '#94A3B8' }}>We read it and fill everything in. You review, then get your San4 Score.</div>
+              <div className="text-xs" style={{ color: '#C9C9D2' }}>We read it and fill everything in. You review, then get your San4 Score.</div>
             </button>
             <button onClick={() => setPhase('form')}
-              className="rounded-2xl p-6 transition-all hover:opacity-90 text-left" style={{ background: 'linear-gradient(145deg,#10192E,#0B1220)', border: '1px solid rgba(255,255,255,0.1)' }}>
+              className="rounded-2xl p-6 transition-all hover:opacity-90 text-left" style={{ background: 'linear-gradient(145deg,#121218,#0C0C10)', border: '1px solid rgba(255,255,255,0.1)' }}>
               <div className="text-3xl mb-2">✍️</div>
               <div className="font-bold text-white mb-1">Fill it in</div>
-              <div className="text-xs" style={{ color: '#94A3B8' }}>Type your details. Takes a few minutes.</div>
+              <div className="text-xs" style={{ color: '#C9C9D2' }}>Type your details. Takes a few minutes.</div>
             </button>
           </div>
           <input ref={fileRef} type="file" accept=".pdf,.png,.jpg,.jpeg,.webp" hidden onChange={onFile} />
-          <p className="text-xs mt-6" style={{ color: '#6B8CAE' }}>Your data is used only to build your resume. LinkedIn/GitHub links are shown on the resume; we don't log into them.</p>
+          <p className="text-xs mt-6" style={{ color: '#9A9AA8' }}>Your data is used only to build your resume. LinkedIn/GitHub links are shown on the resume; we don't log into them.</p>
         </main>
       </div>
     )
@@ -218,26 +218,26 @@ export default function ResumeBuilder() {
     const ats = result.ats_score ?? 0
     const atsColor = ats >= 80 ? '#00C49A' : ats >= 60 ? '#FF6B35' : '#F87171'
     return (
-      <div className="min-h-screen" style={{ background: '#050810', color: '#F1F5F9' }}>
+      <div className="min-h-screen" style={{ background: '#0A0A0C', color: '#F1F5F9' }}>
         <MarketingHeader />
         <main className="max-w-5xl mx-auto px-4 py-8">
           <div className="grid lg:grid-cols-[300px_1fr] gap-6">
             {/* ATS panel */}
             <aside className="lg:sticky lg:top-20 h-fit space-y-4">
-              <div className="rounded-2xl p-5 text-center" style={{ background: 'linear-gradient(145deg,#10192E,#0B1220)', border: `1px solid ${atsColor}44` }}>
-                <div className="text-xs font-bold uppercase tracking-widest mb-1" style={{ color: '#6B8CAE' }}>ATS Score</div>
-                <div className="text-5xl font-black" style={{ color: atsColor }}>{ats}<span className="text-lg" style={{ color: '#6B8CAE' }}>/100</span></div>
-                {result.ats_summary && <p className="text-xs mt-2" style={{ color: '#94A3B8' }}>{result.ats_summary}</p>}
+              <div className="rounded-2xl p-5 text-center" style={{ background: 'linear-gradient(145deg,#121218,#0C0C10)', border: `1px solid ${atsColor}44` }}>
+                <div className="text-xs font-bold uppercase tracking-widest mb-1" style={{ color: '#9A9AA8' }}>ATS Score</div>
+                <div className="text-5xl font-black" style={{ color: atsColor }}>{ats}<span className="text-lg" style={{ color: '#9A9AA8' }}>/100</span></div>
+                {result.ats_summary && <p className="text-xs mt-2" style={{ color: '#C9C9D2' }}>{result.ats_summary}</p>}
               </div>
               {result.ats_tips?.length > 0 && (
                 <div className="rounded-2xl p-4" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}>
                   <div className="text-xs font-bold mb-2" style={{ color: '#FF6B35' }}>↑ To score higher</div>
-                  <ul className="space-y-1.5">{result.ats_tips.map((t, i) => <li key={i} className="text-xs flex gap-2" style={{ color: '#94A3B8' }}><span style={{ color: '#FF6B35' }}>•</span>{t}</li>)}</ul>
+                  <ul className="space-y-1.5">{result.ats_tips.map((t, i) => <li key={i} className="text-xs flex gap-2" style={{ color: '#C9C9D2' }}><span style={{ color: '#FF6B35' }}>•</span>{t}</li>)}</ul>
                 </div>
               )}
               {result.missing_keywords?.length > 0 && (
                 <div className="rounded-2xl p-4" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}>
-                  <div className="text-xs font-bold mb-2" style={{ color: '#A78BFA' }}>Keywords to add (if true for you)</div>
+                  <div className="text-xs font-bold mb-2" style={{ color: '#A98CE0' }}>Keywords to add (if true for you)</div>
                   <div className="flex flex-wrap gap-1.5">{result.missing_keywords.map((k, i) => <span key={i} className="text-xs px-2 py-1 rounded-full" style={{ background: 'rgba(167,139,250,0.12)', color: '#C4B5FD' }}>{k}</span>)}</div>
                 </div>
               )}
@@ -260,7 +260,7 @@ export default function ResumeBuilder() {
                       background: fit.fits ? '#00C49A' : '#FF6B35',
                     }} />
                   </div>
-                  <p className="text-xs mb-2" style={{ color: '#94A3B8' }}>
+                  <p className="text-xs mb-2" style={{ color: '#C9C9D2' }}>
                     {fit.fits
                       ? 'Your PDF will print on a single page.'
                       : 'This will spill onto a second page. Trim it so nothing gets lost.'}
@@ -277,7 +277,7 @@ export default function ResumeBuilder() {
 
               <div className="flex flex-col gap-2">
                 <button onClick={() => { track(EV.RESUME_DOWNLOADED, { ats_score: result.ats_score, fits_one_page: fit?.fits ?? null }); window.print() }} className="btn-primary py-3">⬇ Download PDF</button>
-                <button onClick={() => setPhase('form')} className="text-sm py-2.5 rounded-full" style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)', color: '#cbd5e1' }}>← Edit details</button>
+                <button onClick={() => setPhase('form')} className="text-sm py-2.5 rounded-full" style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)', color: '#C9C9D2' }}>← Edit details</button>
               </div>
             </aside>
 
@@ -293,11 +293,11 @@ export default function ResumeBuilder() {
 
   // ── FORM (and generating) ────────────────────────────────────────────────────
   return (
-    <div className="min-h-screen" style={{ background: '#050810', color: '#F1F5F9' }}>
+    <div className="min-h-screen" style={{ background: '#0A0A0C', color: '#F1F5F9' }}>
       <MarketingHeader />
       <main className="max-w-2xl mx-auto px-5 py-10">
         <h1 className="text-2xl font-black text-white mb-1" style={{ fontFamily: 'Outfit, sans-serif' }}>Your details</h1>
-        <p className="text-sm mb-6" style={{ color: '#6B8CAE' }}>We'll polish the wording and tailor it to the job. Just get the facts down.</p>
+        <p className="text-sm mb-6" style={{ color: '#9A9AA8' }}>We'll polish the wording and tailor it to the job. Just get the facts down.</p>
 
         {error && <div className="rounded-xl px-4 py-3 mb-5 text-sm" style={{ background: 'rgba(239,68,68,0.1)', color: '#FCA5A5', border: '1px solid rgba(239,68,68,0.3)' }}>{error}</div>}
 
@@ -319,7 +319,7 @@ export default function ResumeBuilder() {
 
           {/* Experience */}
           <div>
-            <div className="text-xs font-semibold mb-2" style={{ color: '#94A3B8' }}>Experience</div>
+            <div className="text-xs font-semibold mb-2" style={{ color: '#C9C9D2' }}>Experience</div>
             <div className="space-y-3">
               {form.experience.map((e, i) => (
                 <div key={i} className="rounded-2xl p-3" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}>
@@ -336,7 +336,7 @@ export default function ResumeBuilder() {
                 </div>
               ))}
             </div>
-            <button onClick={() => update({ experience: [...form.experience, BLANK_EXP()] })} className="text-sm mt-2 font-semibold" style={{ color: '#A78BFA' }}>+ Add another role</button>
+            <button onClick={() => update({ experience: [...form.experience, BLANK_EXP()] })} className="text-sm mt-2 font-semibold" style={{ color: '#A98CE0' }}>+ Add another role</button>
           </div>
 
           <Area label="Skills" hint="Category: skill, skill — one per line" value={form.skills} onChange={e => update({ skills: e.target.value })} placeholder={'Marketing: SEO, Campaign Strategy, Analytics\nTools: Excel, Google Analytics, Figma'} />

@@ -8,6 +8,10 @@
 //
 // ttsLang picks the browser SpeechSynthesis voice locale so Vak SOUNDS like the
 // persona too (best-effort — depends on installed system voices).
+//
+// Every persona is free. Nobody pays to practise against an accent; Pro sells
+// depth (longer sessions, line-by-line breakdowns, the credential, interview
+// mode), not access to voices.
 // ─────────────────────────────────────────────────────────────────────────────
 
 export const PERSONAS = [
@@ -48,7 +52,7 @@ export const PERSONAS = [
     accent: 'British RP',
     blurb: 'A London-based senior executive. Understated, dry wit, expects polish.',
     ttsLang: 'en-GB',
-    free: false,
+    free: true,
     prompt: `\n\nADOPT THIS PERSONA: You are James Whitfield, a London-based senior executive in your 50s. You speak in polished British Received Pronunciation with understated, dry wit. You value brevity, structure, and composure; you find waffling tiresome. Use British spellings and idioms ("keen", "spot on", "a touch"). Stay fully in character.`,
   },
   {
@@ -58,7 +62,7 @@ export const PERSONAS = [
     accent: 'American',
     blurb: 'A fast-talking Silicon Valley startup founder. High energy, impatient, loves momentum.',
     ttsLang: 'en-US',
-    free: false,
+    free: true,
     prompt: `\n\nADOPT THIS PERSONA: You are Jordan Blake, a high-energy Silicon Valley startup founder in your 30s. You speak fast, casual American English ("totally", "for sure", "let's go", "what's the TLDR"). You are impatient with long preambles and reward momentum, confidence, and crisp answers. Stay fully in character.`,
   },
   {
@@ -68,7 +72,7 @@ export const PERSONAS = [
     accent: 'Australian',
     blurb: 'A relaxed Sydney manager. Friendly, informal, no-nonsense underneath.',
     ttsLang: 'en-AU',
-    free: false,
+    free: true,
     prompt: `\n\nADOPT THIS PERSONA: You are Riley Carter, a relaxed Sydney-based manager in your 40s. You speak friendly, informal Australian English ("no worries", "good on ya", "reckon", "heaps"). You are easygoing on the surface but sharp underneath — you notice when someone is vague. Stay fully in character.`,
   },
   {
@@ -78,7 +82,7 @@ export const PERSONAS = [
     accent: 'Singaporean',
     blurb: 'A pragmatic Singapore enterprise client. Efficient, value-focused, direct.',
     ttsLang: 'en-SG',
-    free: false,
+    free: true,
     prompt: `\n\nADOPT THIS PERSONA: You are Wei Lin, a pragmatic Singaporean enterprise client in your 40s. You speak efficient Singaporean English, occasionally clipped ("can", "cannot", "lah" sparingly). You are value- and outcome-focused, dislike fluff, and want to know the bottom line and the cost. Stay fully in character.`,
   },
 ]
@@ -88,3 +92,17 @@ export const FREE_PERSONA_IDS = PERSONAS.filter(p => p.free).map(p => p.id)
 export function getPersona(id) {
   return PERSONAS.find(p => p.id === id) || PERSONAS[0]
 }
+
+// Display helpers: "Vak" not "Vak (Neutral)", and a one-line context.
+export const personaName = (p) => p.name.replace(/\s*\(.*\)$/, '')
+// "North Indian HR · Gurgaon" style one-liners for the picker.
+const PERSONA_SUB = {
+  default:            'Neutral Indian English',
+  north_indian_hr:    'North Indian HR · Gurgaon',
+  south_indian_lead:  'Bengaluru tech lead',
+  british_exec:       'London executive, British RP',
+  american_founder:   'Silicon Valley founder, American',
+  australian_manager: 'Sydney manager, Australian',
+  singaporean_client: 'Singapore enterprise client',
+}
+export const personaSub = (p) => PERSONA_SUB[p.id] || p.accent

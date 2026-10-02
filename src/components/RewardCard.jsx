@@ -48,7 +48,7 @@ export default function RewardCard({ reward }) {
       >
         <div className="flex items-center justify-between mb-4">
           <div>
-            <p className="text-xs uppercase tracking-widest font-semibold mb-1" style={{ color: '#6B8CAE' }}>
+            <p className="text-xs uppercase tracking-widest font-semibold mb-1" style={{ color: '#9A9AA8' }}>
               XP Earned
             </p>
             <div className="flex items-baseline gap-2">
@@ -72,7 +72,7 @@ export default function RewardCard({ reward }) {
           >
             <span>🔥</span>
             <span className="text-white">{reward.streakCount}</span>
-            <span style={{ color: '#6B8CAE' }}>
+            <span style={{ color: '#9A9AA8' }}>
               {reward.streakCount === 1 ? 'day streak' : 'day streak'}
             </span>
           </div>
@@ -103,7 +103,7 @@ export default function RewardCard({ reward }) {
             </p>
             <p className="text-white font-bold text-base">
               {oldLevelData?.name}
-              <span className="mx-2" style={{ color: '#6B8CAE' }}>→</span>
+              <span className="mx-2" style={{ color: '#9A9AA8' }}>→</span>
               <span style={{ color: newLevelData?.color }}>{newLevelData?.name}</span>
             </p>
           </div>

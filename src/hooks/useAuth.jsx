@@ -49,6 +49,7 @@ export function useAuth() {
   async function onSignedIn(u) {
     try {
       identifyUser(u.id)
+      applyPendingSignup(u)
       const migrated = migrateGuestScores(u.id)
       if (!migrated) return
 
@@ -142,6 +143,39 @@ export function useAuth() {
     }
   }
 
+  // ── Phone (+91) one-time code ─────────────────────────────────────────────
+  // Creates the account on first use, so the DPDP consent travels in the
+  // user metadata exactly like email signup (handle_new_user writes it).
+  async function sendPhoneCode(phone, consent) {
+    const { error } = await supabase.auth.signInWithOtp({
+      phone,
+      options: {
+        shouldCreateUser: true,
+        data: consent ? { terms_consent_at: consent.consentedAt, terms_version: consent.version } : undefined,
+      },
+    })
+    return { error }
+  }
+
+  async function verifyPhoneCode(phone, token) {
+    const { data, error } = await supabase.auth.verifyOtp({ phone, token, type: 'sms' })
+    if (!error) track(EV.SIGNUP_COMPLETED, { method: 'phone' })
+    return { data, error }
+  }
+
+  // ── Google ────────────────────────────────────────────────────────────────
+  // OAuth can't carry custom metadata into handle_new_user, so consent (and
+  // the onboarding goal) is parked locally and written on first sign-in by
+  // applyPendingSignup().
+  async function signInWithGoogle(consent) {
+    if (consent) setPendingSignup({ consent })
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: { redirectTo: `${window.location.origin}/auth/callback` },
+    })
+    return { error }
+  }
+
   async function signIn(email, password) {
     const { data, error } = await supabase.auth.signInWithPassword({ email, password })
     return { data, error }
@@ -182,5 +216,58 @@ export function useAuth() {
     await supabase.auth.signOut()
   }
 
-  return { user, profile, loading, signUp, signIn, signOut, recordVoiceConsent, resetPassword, updatePassword, signInWithMagicLink }
+  return {
+    user, profile, loading, signUp, signIn, signOut, recordVoiceConsent, resetPassword, updatePassword,
+    signInWithMagicLink, sendPhoneCode, verifyPhoneCode, signInWithGoogle, updateName,
+  }
+}
+
+// ── Display name (phone and Google signups may not have one yet) ──────────────
+async function updateName(userId, name) {
+  const clean = String(name || '').trim().slice(0, 80)
+  if (!userId || !clean) return false
+  const current = useAuthStore.getState().profile
+  useAuthStore.getState().setProfile({ ...(current || { id: userId }), name: clean })
+  try {
+    const { error } = await supabase.from('profiles').update({ name: clean }).eq('id', userId)
+    return !error
+  } catch {
+    return false
+  }
+}
+
+// ── Pending signup details (consent, goal) applied after the first sign-in ────
+const PENDING_KEY = 'san4_pending_signup'
+
+export function setPendingSignup(patch) {
+  try {
+    const cur = JSON.parse(localStorage.getItem(PENDING_KEY) || '{}')
+    localStorage.setItem(PENDING_KEY, JSON.stringify({ ...cur, ...patch }))
+  } catch { /* ignore */ }
+}
+
+// Writes consent (if the account has none yet), the onboarding goal and a
+// display name. Best-effort; never throws.
+async function applyPendingSignup(u) {
+  let pending = null
+  try { pending = JSON.parse(localStorage.getItem(PENDING_KEY) || 'null') } catch { /* ignore */ }
+  let goal = null
+  try { goal = localStorage.getItem('san4_goal') } catch { /* ignore */ }
+  if (!pending && !goal) return
+  try {
+    const { data: prof } = await supabase.from('profiles')
+      .select('terms_consent_at, goal, name').eq('id', u.id).single()
+    const patch = {}
+    if (pending?.consent && !prof?.terms_consent_at) {
+      patch.terms_consent_at = pending.consent.consentedAt
+      patch.terms_version = pending.consent.version
+    }
+    if (goal && !prof?.goal) patch.goal = goal
+    const metaName = u.user_metadata?.full_name || u.user_metadata?.name
+    if (!prof?.name && (pending?.name || metaName)) patch.name = String(pending?.name || metaName).slice(0, 80)
+    if (Object.keys(patch).length) await supabase.from('profiles').update(patch).eq('id', u.id)
+    localStorage.removeItem(PENDING_KEY)
+  } catch (e) {
+    console.warn('pending signup details skipped:', e?.message)
+  }
 }

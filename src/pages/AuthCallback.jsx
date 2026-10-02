@@ -1,9 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
-
-const navy = '#0F172A'
-const blue = '#2563EB'
+import { Screen, Btn, Dots, H1, Sub, Spacer } from '../components/ink/Ink'
 
 export default function AuthCallback() {
   const navigate = useNavigate()
@@ -34,52 +32,29 @@ export default function AuthCallback() {
   }, [])
 
   return (
-    <div
-      className="min-h-screen flex items-center justify-center px-4"
-      style={{ background: navy }}
-    >
-      <div
-        className="max-w-sm w-full text-center rounded-2xl p-10"
-        style={{ background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.10)' }}
-      >
+    <Screen pad="36px 30px 30px">
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
         {status === 'verifying' && (
-          <>
-            <div className="flex justify-center mb-5">
-              <div
-                className="w-10 h-10 rounded-full border-2 border-t-transparent animate-spin"
-                style={{ borderColor: `${blue} transparent ${blue} ${blue}` }}
-              />
-            </div>
-            <h2 className="text-white font-bold text-lg">Verifying your email…</h2>
-            <p className="text-sm mt-2" style={{ color: '#64748B' }}>Just a moment</p>
-          </>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 20 }}>
+            <Dots />
+            <H1 size={22} style={{ textAlign: 'center' }}>Signing you in</H1>
+          </div>
         )}
-
         {status === 'success' && (
-          <>
-            <div className="text-5xl mb-5">✅</div>
-            <h2 className="text-white font-bold text-lg">Email confirmed!</h2>
-            <p className="text-sm mt-2" style={{ color: '#64748B' }}>Taking you to your dashboard…</p>
-          </>
+          <div style={{ textAlign: 'center' }}>
+            <H1 size={24}>You are in.</H1>
+            <Sub>Taking you to Today.</Sub>
+          </div>
         )}
-
         {status === 'error' && (
           <>
-            <div className="text-5xl mb-5">⚠️</div>
-            <h2 className="text-white font-bold text-lg mb-2">Link expired or invalid</h2>
-            <p className="text-sm mb-6" style={{ color: '#94A3B8' }}>
-              {errorMsg || 'This confirmation link has already been used or has expired.'}
-            </p>
-            <button
-              onClick={() => navigate('/auth')}
-              className="w-full text-white font-semibold py-3 rounded-xl text-sm transition-all hover:opacity-90"
-              style={{ background: blue }}
-            >
-              Back to Sign In
-            </button>
+            <H1>That link has expired.</H1>
+            <Sub>{errorMsg || 'This link was already used, or it is too old. Ask for a new one.'}</Sub>
+            <Spacer />
+            <Btn onClick={() => navigate('/auth')}>Back to sign in</Btn>
           </>
         )}
       </div>
-    </div>
+    </Screen>
   )
 }

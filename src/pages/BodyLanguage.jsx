@@ -399,7 +399,7 @@ export default function BodyLanguage() {
   // ──────────────────────────────────────────────────────────────────────────
   if (phase === 'select') {
     return (
-      <div className="min-h-screen" style={{ background: '#060E1A' }}>
+      <div className="min-h-screen" style={{ background: '#0A0A0C' }}>
         <Navbar />
         <main className="max-w-4xl mx-auto px-4 py-8">
 
@@ -415,7 +415,7 @@ export default function BodyLanguage() {
               </div>
             </div>
             <h1 className="text-3xl font-black text-white mb-2">Speak. Move. Command the room.</h1>
-            <p className="max-w-xl text-sm leading-relaxed" style={{ color: '#6B8CAE' }}>
+            <p className="max-w-xl text-sm leading-relaxed" style={{ color: '#9A9AA8' }}>
               Turn on your camera, read a script aloud, and get AI coaching on your posture, eye contact,
               gestures, and facial expression. Your voice AND your presence — both analysed.
             </p>
@@ -427,11 +427,11 @@ export default function BodyLanguage() {
               style={{ background: 'rgba(245,158,11,0.06)', border: '1px solid rgba(245,158,11,0.25)' }}>
               <div className="text-3xl mb-3">📹</div>
               <h3 className="text-white font-black text-lg mb-2">Body Language coaching is a Vak Pro feature</h3>
-              <p className="text-sm mb-4" style={{ color: '#6B8CAE' }}>
+              <p className="text-sm mb-4" style={{ color: '#9A9AA8' }}>
                 Camera-based analysis, live coaching tips, and frame-by-frame body language feedback
                 are included in Vak Pro.
               </p>
-              <Link to="/pricing" className="btn-primary inline-block px-8 py-3">
+              <Link to="/pro" className="btn-primary inline-block px-8 py-3">
                 Upgrade to Pro →
               </Link>
             </div>
@@ -446,17 +446,17 @@ export default function BodyLanguage() {
               { icon: '🙌', label: 'Hand Gestures',  desc: 'Purposeful vs. stiff' },
             ].map(({ icon, label, desc }) => (
               <div key={label} className="rounded-2xl p-4 text-center"
-                style={{ background: 'linear-gradient(145deg,#0F1E35,#091522)', border: '1px solid rgba(0,196,154,0.15)' }}>
+                style={{ background: 'linear-gradient(145deg,#121218,#091522)', border: '1px solid rgba(0,196,154,0.15)' }}>
                 <div className="text-2xl mb-2">{icon}</div>
                 <div className="text-white font-bold text-xs mb-1">{label}</div>
-                <div className="text-xs" style={{ color: '#6B8CAE' }}>{desc}</div>
+                <div className="text-xs" style={{ color: '#9A9AA8' }}>{desc}</div>
               </div>
             ))}
           </div>
 
           {/* Custom script card */}
           <div className="mb-3 flex items-center gap-3">
-            <div className="text-xs font-bold uppercase tracking-widest" style={{ color: '#6B8CAE' }}>✍️ Your Script</div>
+            <div className="text-xs font-bold uppercase tracking-widest" style={{ color: '#9A9AA8' }}>✍️ Your Script</div>
             <div className="flex-1 h-px" style={{ background: 'rgba(255,255,255,0.07)' }} />
           </div>
 
@@ -475,7 +475,7 @@ export default function BodyLanguage() {
                 style={{ background: 'rgba(0,196,154,0.15)' }}>✍️</div>
               <div className="flex-1">
                 <div className="text-white font-black text-base mb-1">Practise My Own Script</div>
-                <div className="text-sm" style={{ color: '#6B8CAE' }}>
+                <div className="text-sm" style={{ color: '#9A9AA8' }}>
                   Paste your own presentation, speech, or pitch. Get full body language feedback on your delivery.
                 </div>
               </div>
@@ -485,7 +485,7 @@ export default function BodyLanguage() {
 
           {/* Built-in scripts */}
           <div className="mb-3 flex items-center gap-3">
-            <div className="text-xs font-bold uppercase tracking-widest" style={{ color: '#6B8CAE' }}>📜 Built-in Scripts</div>
+            <div className="text-xs font-bold uppercase tracking-widest" style={{ color: '#9A9AA8' }}>📜 Built-in Scripts</div>
             <div className="flex-1 h-px" style={{ background: 'rgba(255,255,255,0.07)' }} />
           </div>
 
@@ -499,7 +499,7 @@ export default function BodyLanguage() {
                   onClick={() => { setScript(s); setPhase('camera_setup') }}
                   className="text-left rounded-3xl p-5 transition-all relative overflow-hidden"
                   style={{
-                    background: 'linear-gradient(145deg,#0F1E35,#091522)',
+                    background: 'linear-gradient(145deg,#121218,#091522)',
                     border: locked ? '1px solid rgba(255,255,255,0.06)' : '1px solid rgba(0,196,154,0.2)',
                     opacity: locked ? 0.55 : 1,
                     cursor: locked ? 'not-allowed' : 'pointer',
@@ -509,20 +509,20 @@ export default function BodyLanguage() {
                 >
                   {locked && (
                     <div className="absolute inset-0 flex flex-col items-center justify-center gap-1"
-                      style={{ background: 'rgba(6,14,26,0.55)', backdropFilter: 'blur(2px)' }}>
+                      style={{ background: 'rgba(10,10,12,0.55)', backdropFilter: 'blur(2px)' }}>
                       <div className="text-2xl">🔒</div>
                       <div className="text-xs font-bold" style={{ color: '#F59E0B' }}>Pro only</div>
                     </div>
                   )}
                   <div className="text-3xl mb-3">{s.icon}</div>
                   <div className="font-black text-white text-sm mb-1 leading-tight">{s.title}</div>
-                  <div className="text-xs mb-3 leading-relaxed" style={{ color: '#6B8CAE' }}>{s.description}</div>
+                  <div className="text-xs mb-3 leading-relaxed" style={{ color: '#9A9AA8' }}>{s.description}</div>
                   <div className="flex items-center gap-2 flex-wrap">
                     <span className="text-xs px-2 py-0.5 rounded-full font-semibold"
                       style={{ background: 'rgba(0,196,154,0.12)', color: '#00C49A' }}>
                       {s.category}
                     </span>
-                    <span className="text-xs" style={{ color: '#6B8CAE' }}>{s.duration}</span>
+                    <span className="text-xs" style={{ color: '#9A9AA8' }}>{s.duration}</span>
                   </div>
                 </button>
               )
@@ -536,22 +536,22 @@ export default function BodyLanguage() {
   // ── CUSTOM INPUT ─────────────────────────────────────────────────────────────
   if (phase === 'custom_input') {
     return (
-      <div className="min-h-screen" style={{ background: '#060E1A' }}>
+      <div className="min-h-screen" style={{ background: '#0A0A0C' }}>
         <Navbar />
         <main className="max-w-2xl mx-auto px-4 py-8">
           <button onClick={() => setPhase('select')}
-            className="flex items-center gap-2 text-sm mb-6 hover:opacity-80" style={{ color: '#6B8CAE' }}>
+            className="flex items-center gap-2 text-sm mb-6 hover:opacity-80" style={{ color: '#9A9AA8' }}>
             ← Back
           </button>
           <div className="text-3xl mb-2">✍️</div>
           <h1 className="text-2xl font-black text-white mb-1">Paste Your Script</h1>
-          <p className="text-sm mb-6" style={{ color: '#6B8CAE' }}>
+          <p className="text-sm mb-6" style={{ color: '#9A9AA8' }}>
             Your presentation, pitch, speech — paste it below and practise with camera feedback.
           </p>
 
           <div className="mb-4">
             <label className="block text-sm font-semibold text-white mb-2">
-              Script title <span style={{ color: '#6B8CAE' }}>(optional)</span>
+              Script title <span style={{ color: '#9A9AA8' }}>(optional)</span>
             </label>
             <input className="input w-full" placeholder="e.g. My startup pitch, TEDx talk…" id="blTitle" />
           </div>
@@ -566,7 +566,7 @@ export default function BodyLanguage() {
               placeholder="Paste or type your script here…&#10;&#10;Tip: Use double line breaks between paragraphs — each becomes one teleprompter section."
               style={{ resize: 'vertical', minHeight: 240 }}
             />
-            <p className="text-xs mt-2" style={{ color: '#6B8CAE' }}>
+            <p className="text-xs mt-2" style={{ color: '#9A9AA8' }}>
               {customText.split(/\s+/).filter(Boolean).length} words ·{' '}
               ~{Math.round(customText.split(/\s+/).filter(Boolean).length / 130)} min
             </p>
@@ -591,17 +591,17 @@ export default function BodyLanguage() {
   // ── CAMERA SETUP ─────────────────────────────────────────────────────────────
   if (phase === 'camera_setup') {
     return (
-      <div className="min-h-screen" style={{ background: '#060E1A' }}>
+      <div className="min-h-screen" style={{ background: '#0A0A0C' }}>
         <Navbar />
         <main className="max-w-lg mx-auto px-4 py-8 text-center">
           <button onClick={() => setPhase('select')}
-            className="flex items-center gap-2 text-sm mb-8 hover:opacity-80 mx-auto" style={{ color: '#6B8CAE' }}>
+            className="flex items-center gap-2 text-sm mb-8 hover:opacity-80 mx-auto" style={{ color: '#9A9AA8' }}>
             ← Back
           </button>
 
           <VakMascot level={3} size={80} />
           <h1 className="text-2xl font-black text-white mt-4 mb-2">Set Up Your Camera</h1>
-          <p className="text-sm mb-8" style={{ color: '#6B8CAE' }}>
+          <p className="text-sm mb-8" style={{ color: '#9A9AA8' }}>
             Vak will watch your body language while you read <strong className="text-white">{script?.title}</strong>.
             Position yourself so your upper body is visible.
           </p>
@@ -616,7 +616,7 @@ export default function BodyLanguage() {
             ].map(({ icon, text }) => (
               <div key={text} className="flex items-start gap-3">
                 <span>{icon}</span>
-                <span className="text-sm" style={{ color: '#94A3B8' }}>{text}</span>
+                <span className="text-sm" style={{ color: '#C9C9D2' }}>{text}</span>
               </div>
             ))}
           </div>
@@ -624,7 +624,7 @@ export default function BodyLanguage() {
           <button onClick={requestCamera} className="btn-primary w-full py-4 text-base">
             📸 Allow Camera &amp; Mic Access →
           </button>
-          <p className="text-xs mt-3" style={{ color: '#6B8CAE' }}>
+          <p className="text-xs mt-3" style={{ color: '#9A9AA8' }}>
             Video never leaves your device — only frame analysis results are sent to Gemini.
           </p>
 
@@ -639,19 +639,19 @@ export default function BodyLanguage() {
   if (phase === 'countdown') {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center gap-6"
-        style={{ background: '#060E1A' }}>
+        style={{ background: '#0A0A0C' }}>
         {/* Live camera preview */}
         <video ref={videoRef} autoPlay muted playsInline
           className="w-40 h-40 rounded-2xl object-cover"
           style={{ transform: 'scaleX(-1)', border: '2px solid rgba(0,196,154,0.4)' }} />
-        <p className="text-sm font-semibold" style={{ color: '#6B8CAE' }}>
+        <p className="text-sm font-semibold" style={{ color: '#9A9AA8' }}>
           Starting: <span className="text-white">{script?.title}</span>
         </p>
         <div className="text-9xl font-black leading-none animate-bounce"
           style={{ color: '#00C49A', textShadow: '0 0 80px rgba(0,196,154,0.6)' }}>
           {countdown}
         </div>
-        <p style={{ color: '#6B8CAE' }}>Look at the camera · speak clearly · be yourself</p>
+        <p style={{ color: '#9A9AA8' }}>Look at the camera · speak clearly · be yourself</p>
         <p className="text-xs px-4 py-2 rounded-full"
           style={{ background: 'rgba(239,68,68,0.08)', color: '#F87171', border: '1px solid rgba(239,68,68,0.2)' }}>
           🔴 Camera + audio recording will start
@@ -665,20 +665,20 @@ export default function BodyLanguage() {
   // ── READING PHASE ─────────────────────────────────────────────────────────────
   if (phase === 'reading') {
     return (
-      <div className="flex flex-col" style={{ height: '100vh', overflow: 'hidden', background: '#060E1A' }}>
+      <div className="flex flex-col" style={{ height: '100vh', overflow: 'hidden', background: '#0A0A0C' }}>
 
         {/* Top stats bar */}
         <div className="shrink-0 px-4 py-2.5 flex items-center gap-4 flex-wrap"
-          style={{ background: 'rgba(6,14,26,0.97)', borderBottom: '1px solid rgba(255,255,255,0.07)', backdropFilter: 'blur(14px)' }}>
+          style={{ background: 'rgba(10,10,12,0.97)', borderBottom: '1px solid rgba(255,255,255,0.07)', backdropFilter: 'blur(14px)' }}>
 
           <div className="flex items-center gap-1.5">
-            <span className="text-xs" style={{ color: '#6B8CAE' }}>⏱</span>
+            <span className="text-xs" style={{ color: '#9A9AA8' }}>⏱</span>
             <span className="font-mono font-bold text-sm text-white">{fmt(seconds)}</span>
           </div>
           <div className="flex items-center gap-1.5">
-            <span className="text-xs" style={{ color: '#6B8CAE' }}>WPM</span>
+            <span className="text-xs" style={{ color: '#9A9AA8' }}>WPM</span>
             <span className="font-mono font-bold text-sm"
-              style={{ color: wpm > 0 ? (wpm < 100 || wpm > 180 ? '#F59E0B' : '#00C49A') : '#6B8CAE' }}>
+              style={{ color: wpm > 0 ? (wpm < 100 || wpm > 180 ? '#F59E0B' : '#00C49A') : '#9A9AA8' }}>
               {wpm || '—'}
             </span>
           </div>
@@ -690,7 +690,7 @@ export default function BodyLanguage() {
             }}>
             <span className="text-sm">{fillerFlash ? '⚡' : '💬'}</span>
             <span className="text-sm font-bold"
-              style={{ color: fillerCount > 5 ? '#F87171' : fillerCount > 0 ? '#F59E0B' : '#6B8CAE' }}>
+              style={{ color: fillerCount > 5 ? '#F87171' : fillerCount > 0 ? '#F59E0B' : '#9A9AA8' }}>
               {fillerCount} filler{fillerCount !== 1 ? 's' : ''}
             </span>
           </div>
@@ -698,13 +698,13 @@ export default function BodyLanguage() {
           {liveTip && !tipLoading && (
             <>
               <div className="flex items-center gap-1.5">
-                <span className="text-xs" style={{ color: '#6B8CAE' }}>Posture</span>
+                <span className="text-xs" style={{ color: '#9A9AA8' }}>Posture</span>
                 <span className="text-xs font-bold" style={{ color: scoreColor(liveTip.posture_score) }}>
                   {liveTip.posture_score}%
                 </span>
               </div>
               <div className="flex items-center gap-1.5">
-                <span className="text-xs" style={{ color: '#6B8CAE' }}>Eye</span>
+                <span className="text-xs" style={{ color: '#9A9AA8' }}>Eye</span>
                 <span className="text-xs font-bold" style={{ color: scoreColor(liveTip.eye_contact_score) }}>
                   {liveTip.eye_contact_score}%
                 </span>
@@ -712,7 +712,7 @@ export default function BodyLanguage() {
             </>
           )}
           {tipLoading && (
-            <span className="text-xs" style={{ color: '#6B8CAE' }}>👁 Vak is watching…</span>
+            <span className="text-xs" style={{ color: '#9A9AA8' }}>👁 Vak is watching…</span>
           )}
 
           <div className="flex items-center gap-1.5 ml-auto">
@@ -748,20 +748,20 @@ export default function BodyLanguage() {
             <div className="absolute bottom-0 left-0 right-0 p-4">
               {liveTip ? (
                 <div className="rounded-2xl px-4 py-3"
-                  style={{ background: 'rgba(6,14,26,0.88)', border: '1px solid rgba(0,196,154,0.3)', backdropFilter: 'blur(12px)' }}>
+                  style={{ background: 'rgba(10,10,12,0.88)', border: '1px solid rgba(0,196,154,0.3)', backdropFilter: 'blur(12px)' }}>
                   <div className="flex items-center gap-2 mb-1">
                     <span className="text-xs font-bold" style={{ color: '#00C49A' }}>🦢 Vak's live tip</span>
-                    <span className="text-xs" style={{ color: '#6B8CAE' }}>· updated every 30 s</span>
+                    <span className="text-xs" style={{ color: '#9A9AA8' }}>· updated every 30 s</span>
                   </div>
                   <p className="text-white text-sm font-semibold">{liveTip.instant_tip}</p>
                   {liveTip.observation && (
-                    <p className="text-xs mt-1" style={{ color: '#6B8CAE' }}>{liveTip.observation}</p>
+                    <p className="text-xs mt-1" style={{ color: '#9A9AA8' }}>{liveTip.observation}</p>
                   )}
                 </div>
               ) : (
                 <div className="rounded-2xl px-4 py-3"
-                  style={{ background: 'rgba(6,14,26,0.7)', border: '1px solid rgba(255,255,255,0.08)', backdropFilter: 'blur(12px)' }}>
-                  <p className="text-xs" style={{ color: '#6B8CAE' }}>
+                  style={{ background: 'rgba(10,10,12,0.7)', border: '1px solid rgba(255,255,255,0.08)', backdropFilter: 'blur(12px)' }}>
+                  <p className="text-xs" style={{ color: '#9A9AA8' }}>
                     📹 Vak is watching · live tip appears in ~30 s
                   </p>
                 </div>
@@ -807,9 +807,9 @@ export default function BodyLanguage() {
 
         {/* Bottom bar — live transcript */}
         <div className="shrink-0 px-4 py-2"
-          style={{ background: 'rgba(6,14,26,0.97)', borderTop: '1px solid rgba(255,255,255,0.07)' }}>
+          style={{ background: 'rgba(10,10,12,0.97)', borderTop: '1px solid rgba(255,255,255,0.07)' }}>
           <div className="min-h-[24px] text-sm"
-            style={{ color: liveText ? '#FF9D6F' : 'rgba(107,140,174,0.5)' }}>
+            style={{ color: liveText ? '#FF9D6F' : 'rgba(154,154,168,0.5)' }}>
             {liveText ? `🎤 ${liveText}` : 'Speak and your words appear here · audio always recorded'}
           </div>
         </div>
@@ -820,11 +820,11 @@ export default function BodyLanguage() {
   // ── ANALYZING ─────────────────────────────────────────────────────────────────
   if (phase === 'analyzing') {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center gap-6" style={{ background: '#060E1A' }}>
+      <div className="min-h-screen flex flex-col items-center justify-center gap-6" style={{ background: '#0A0A0C' }}>
         <div className="animate-float"><VakMascot level={4} size={100} /></div>
         <div className="text-center">
           <div className="text-white font-bold text-xl mb-2">Analysing your presence…</div>
-          <div style={{ color: '#6B8CAE' }}>Gemini is reviewing your frames and audio</div>
+          <div style={{ color: '#9A9AA8' }}>Gemini is reviewing your frames and audio</div>
         </div>
         <div className="flex gap-2">
           {[0,1,2].map(i => (
@@ -833,7 +833,7 @@ export default function BodyLanguage() {
           ))}
         </div>
         <p className="text-xs px-4 py-2 rounded-full"
-          style={{ background: 'rgba(0,196,154,0.06)', color: '#6B8CAE', border: '1px solid rgba(0,196,154,0.15)' }}>
+          style={{ background: 'rgba(0,196,154,0.06)', color: '#9A9AA8', border: '1px solid rgba(0,196,154,0.15)' }}>
           Reviewing posture · eye contact · expression · gestures
         </p>
       </div>
@@ -843,7 +843,7 @@ export default function BodyLanguage() {
   // ── REPORT ────────────────────────────────────────────────────────────────────
   if (phase === 'report' && report) {
     return (
-      <div className="min-h-screen" style={{ background: '#060E1A' }}>
+      <div className="min-h-screen" style={{ background: '#0A0A0C' }}>
         <Navbar />
         <main className="max-w-2xl mx-auto px-4 py-8 animate-slide-up">
 
@@ -853,7 +853,7 @@ export default function BodyLanguage() {
               <VakMascot level={report.overall_score >= 80 ? 5 : 4} size={90} />
             </div>
             <h2 className="text-white font-black text-2xl mb-1">Body Language Report</h2>
-            <p style={{ color: '#6B8CAE' }}>
+            <p style={{ color: '#9A9AA8' }}>
               {script?.title} · {fmt(seconds)} · {framesRef.current.length} frames analysed
             </p>
           </div>
@@ -864,7 +864,7 @@ export default function BodyLanguage() {
           {/* Overall presence */}
           <div className="rounded-3xl p-6 mb-5 text-center"
             style={{
-              background: 'linear-gradient(145deg,#0F1E35,#091522)',
+              background: 'linear-gradient(145deg,#121218,#091522)',
               border: `1px solid ${scoreColor(report.overall_score)}40`,
               boxShadow: `0 0 40px ${scoreColor(report.overall_score)}14`,
             }}>
@@ -872,7 +872,7 @@ export default function BodyLanguage() {
               {report.overall_score}%
             </div>
             <div className="text-white font-semibold mb-2">Overall Presence</div>
-            <p className="text-sm leading-relaxed" style={{ color: '#94A3B8' }}>{report.summary}</p>
+            <p className="text-sm leading-relaxed" style={{ color: '#C9C9D2' }}>{report.summary}</p>
           </div>
 
           {/* Score bars */}
@@ -900,7 +900,7 @@ export default function BodyLanguage() {
                     <div key={key} className="rounded-xl p-3"
                       style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}>
                       <div className="text-xs font-bold mb-1 text-white">{label}</div>
-                      <p className="text-sm leading-relaxed" style={{ color: '#94A3B8' }}>
+                      <p className="text-sm leading-relaxed" style={{ color: '#C9C9D2' }}>
                         {report.coaching_notes[key]}
                       </p>
                     </div>
@@ -924,7 +924,7 @@ export default function BodyLanguage() {
                   />
                 ))}
               </div>
-              <p className="text-xs mt-2" style={{ color: '#6B8CAE' }}>
+              <p className="text-xs mt-2" style={{ color: '#9A9AA8' }}>
                 These frames were used by Gemini to analyse your body language.
               </p>
             </div>
@@ -936,7 +936,7 @@ export default function BodyLanguage() {
               <h3 className="font-semibold text-sm mb-3" style={{ color: '#00C49A' }}>✅ What worked</h3>
               <ul className="space-y-2">
                 {report.strengths?.map((s, i) => (
-                  <li key={i} className="text-sm flex gap-2" style={{ color: '#94A3B8' }}>
+                  <li key={i} className="text-sm flex gap-2" style={{ color: '#C9C9D2' }}>
                     <span style={{ color: '#00C49A' }}>•</span> {s}
                   </li>
                 ))}
@@ -946,7 +946,7 @@ export default function BodyLanguage() {
               <h3 className="font-semibold text-sm mb-3" style={{ color: '#FF6B35' }}>↑ Work on this</h3>
               <ul className="space-y-2">
                 {report.improvements?.map((s, i) => (
-                  <li key={i} className="text-sm flex gap-2" style={{ color: '#94A3B8' }}>
+                  <li key={i} className="text-sm flex gap-2" style={{ color: '#C9C9D2' }}>
                     <span style={{ color: '#FF6B35' }}>•</span> {s}
                   </li>
                 ))}
@@ -982,7 +982,7 @@ export default function BodyLanguage() {
             </button>
             <Link to="/practice"
               className="flex-1 py-3 rounded-2xl font-bold text-sm text-white text-center transition-all hover:opacity-90"
-              style={{ background: 'linear-gradient(135deg,#7B5EA7,#9B7EC8)' }}>
+              style={{ background: '#7B5EA7' }}>
               🎭 More practice →
             </Link>
           </div>

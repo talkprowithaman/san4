@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useMemo } from 'react'
-import { Link }            from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { useAuth }         from '../hooks/useAuth'
 import { useProgress }     from '../hooks/useProgress'
 import { useSubscription }    from '../hooks/useSubscription'
@@ -98,6 +98,20 @@ export default function ScriptReading() {
   // phases: select | custom_input | countdown | reading | analyzing | report
   const [phase,       setPhase]       = useState('select')
   const [script,      setScript]      = useState(null)
+
+  // Deep link from Today / Library: /script-reading?script=cabin_crew opens
+  // that script straight away, if it's available to this user.
+  const [params] = useSearchParams()
+  const deepLinked = useRef(false)
+  useEffect(() => {
+    const wanted = SCRIPTS.find(s => s.id === params.get('script'))
+    if (!wanted || deepLinked.current || !VOICE_OK) return
+    const open = wanted.tier === 'free' || isPro || (wanted.tier === 'progression' && unlockedSet.has(wanted.unlockScenario))
+    if (!open) return
+    deepLinked.current = true
+    setScript(wanted)
+    setPhase('countdown')
+  }, [params, isPro, unlockedSet])
   const [customText,  setCustomText]  = useState('')
   const [countdown,   setCountdown]   = useState(3)
 
@@ -446,24 +460,24 @@ export default function ScriptReading() {
   // ── SELECT ────────────────────────────────────────────────────────────────
   if (phase === 'select') {
     return (
-      <div className="min-h-screen" style={{ background: '#050810' }}>
+      <div className="min-h-screen" style={{ background: '#0A0A0C' }}>
         <Navbar />
         <main className="max-w-4xl mx-auto px-4 py-8">
 
           <div className="mb-8 animate-fade-in">
             <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full mb-3 text-sm font-semibold"
-              style={{ background: 'rgba(139,92,246,0.12)', color: '#A78BFA', border: '1px solid rgba(139,92,246,0.25)' }}>
+              style={{ background: 'rgba(139,92,246,0.12)', color: '#A98CE0', border: '1px solid rgba(139,92,246,0.25)' }}>
               📜 Teleprompter Mode
             </div>
             <h1 className="text-3xl font-black text-white">Read. Practise. Improve.</h1>
-            <p className="mt-1 max-w-xl" style={{ color: '#6B8CAE' }}>
+            <p className="mt-1 max-w-xl" style={{ color: '#9A9AA8' }}>
               Pick a script or paste your own. Read it aloud. Vak records your voice and gives you
               detailed coaching on accuracy, fluency, pacing, and filler words.
             </p>
 
             {/* ── Language picker ── */}
             <div className="flex flex-wrap items-center gap-2 mt-4">
-              <span className="text-xs font-semibold" style={{ color: '#6B8CAE' }}>🌐 Reading in:</span>
+              <span className="text-xs font-semibold" style={{ color: '#9A9AA8' }}>🌐 Reading in:</span>
               {LANGUAGES.map(l => (
                 <button
                   key={l.code}
@@ -471,7 +485,7 @@ export default function ScriptReading() {
                   className="text-xs px-3 py-1.5 rounded-full transition-all font-semibold"
                   style={{
                     background: lang === l.code ? 'rgba(139,92,246,0.2)'   : 'rgba(255,255,255,0.05)',
-                    color:      lang === l.code ? '#A78BFA'                 : '#6B8CAE',
+                    color:      lang === l.code ? '#A98CE0'                 : '#9A9AA8',
                     border:     `1px solid ${lang === l.code ? 'rgba(139,92,246,0.5)' : 'rgba(255,255,255,0.1)'}`,
                   }}
                 >
@@ -490,7 +504,7 @@ export default function ScriptReading() {
 
           {/* ── "My Own Script" card — always first ── */}
           <div className="mb-3 flex items-center gap-3">
-            <div className="text-xs font-bold uppercase tracking-widest" style={{ color: '#6B8CAE' }}>
+            <div className="text-xs font-bold uppercase tracking-widest" style={{ color: '#9A9AA8' }}>
               ✍️ Your Script
             </div>
             <div className="flex-1 h-px" style={{ background: 'rgba(255,255,255,0.07)' }} />
@@ -514,18 +528,18 @@ export default function ScriptReading() {
               </div>
               <div className="flex-1">
                 <div className="text-white font-black text-base mb-1">Practise My Own Script</div>
-                <div className="text-sm" style={{ color: '#6B8CAE' }}>
+                <div className="text-sm" style={{ color: '#9A9AA8' }}>
                   Paste your own speech, presentation, pitch deck notes, or any text.
                   Get full coaching feedback on your delivery.
                 </div>
               </div>
-              <span style={{ color: '#A78BFA', fontSize: '1.3rem' }}>→</span>
+              <span style={{ color: '#A98CE0', fontSize: '1.3rem' }}>→</span>
             </div>
           </button>
 
           {/* ── Built-in scripts ── */}
           <div className="mb-3 flex items-center gap-3">
-            <div className="text-xs font-bold uppercase tracking-widest" style={{ color: '#6B8CAE' }}>
+            <div className="text-xs font-bold uppercase tracking-widest" style={{ color: '#9A9AA8' }}>
               📜 Built-in Scripts
             </div>
             <div className="flex-1 h-px" style={{ background: 'rgba(255,255,255,0.07)' }} />
@@ -547,7 +561,7 @@ export default function ScriptReading() {
                   onClick={() => { setScript(s); setPhase('countdown') }}
                   className="text-left rounded-3xl p-5 transition-all duration-200 relative overflow-hidden group"
                   style={{
-                    background: 'linear-gradient(160deg, #10192E 0%, #0B1220 100%)',
+                    background: 'linear-gradient(160deg, #121218 0%, #0C0C10 100%)',
                     border:  locked ? '1px solid rgba(255,255,255,0.06)' : '1px solid rgba(139,92,246,0.2)',
                     opacity: locked ? 0.65 : 1,
                     cursor:  locked ? 'not-allowed' : 'pointer',
@@ -557,7 +571,7 @@ export default function ScriptReading() {
                 >
                   {locked && (
                     <div className="absolute inset-0 flex flex-col items-center justify-center rounded-3xl gap-1.5 px-4 text-center"
-                      style={{ background: 'rgba(6,14,26,0.65)', backdropFilter: 'blur(2px)' }}>
+                      style={{ background: 'rgba(10,10,12,0.65)', backdropFilter: 'blur(2px)' }}>
                       <div className="text-2xl">🔒</div>
                       {s.tier === 'progression'
                         ? <div className="text-xs font-semibold leading-snug" style={{ color: '#00C49A' }}>{s.unlockLabel}</div>
@@ -567,14 +581,14 @@ export default function ScriptReading() {
                   )}
                   <div className="text-3xl mb-3">{s.icon}</div>
                   <div className="font-black text-white text-sm mb-1 leading-tight">{s.title}</div>
-                  <div className="text-xs mb-4 leading-relaxed" style={{ color: '#6B8CAE' }}>{s.description}</div>
+                  <div className="text-xs mb-4 leading-relaxed" style={{ color: '#9A9AA8' }}>{s.description}</div>
                   <div className="flex items-center gap-2 flex-wrap">
                     <span className="text-xs px-2 py-0.5 rounded-full font-semibold"
-                      style={{ background: 'rgba(139,92,246,0.12)', color: '#A78BFA' }}>
+                      style={{ background: 'rgba(139,92,246,0.12)', color: '#A98CE0' }}>
                       {s.category}
                     </span>
-                    <span className="text-xs" style={{ color: '#6B8CAE' }}>{s.duration}</span>
-                    <span className="text-xs tracking-wider" style={{ color: '#6B8CAE' }}>
+                    <span className="text-xs" style={{ color: '#9A9AA8' }}>{s.duration}</span>
+                    <span className="text-xs tracking-wider" style={{ color: '#9A9AA8' }}>
                       {'★'.repeat(s.difficulty)}{'☆'.repeat(3 - s.difficulty)}
                     </span>
                   </div>
@@ -587,7 +601,7 @@ export default function ScriptReading() {
             style={{ background: 'linear-gradient(135deg,rgba(245,158,11,0.06),rgba(139,92,246,0.04))', border: '1px solid rgba(245,158,11,0.18)' }}>
             <div className="flex-1 min-w-0">
               <p className="text-white font-semibold mb-2">🎯 How scripts unlock</p>
-              <div className="space-y-1 text-xs" style={{ color: '#6B8CAE' }}>
+              <div className="space-y-1 text-xs" style={{ color: '#9A9AA8' }}>
                 <p>✅ <strong className="text-white">Cabin Crew & News Anchor</strong> — Always free</p>
                 <p>🌲 <strong className="text-white">TED Talk</strong> — Free after clearing Level 3 (Daily Standup) with 68%+</p>
                 <p>⛰️ <strong className="text-white">Weather Forecast</strong> — Free after clearing Level 5 (Group Discussion) with 72%+</p>
@@ -595,7 +609,7 @@ export default function ScriptReading() {
               </div>
             </div>
             {!isPro && (
-              <Link to="/pricing" className="text-xs font-bold px-3 py-1.5 rounded-full whitespace-nowrap shrink-0"
+              <Link to="/pro" className="text-xs font-bold px-3 py-1.5 rounded-full whitespace-nowrap shrink-0"
                 style={{ background: 'rgba(245,158,11,0.15)', color: '#F59E0B', border: '1px solid rgba(245,158,11,0.3)' }}>
                 Upgrade →
               </Link>
@@ -609,14 +623,14 @@ export default function ScriptReading() {
   // ── CUSTOM SCRIPT INPUT ───────────────────────────────────────────────────
   if (phase === 'custom_input') {
     return (
-      <div className="min-h-screen" style={{ background: '#050810' }}>
+      <div className="min-h-screen" style={{ background: '#0A0A0C' }}>
         <Navbar />
         <main className="max-w-2xl mx-auto px-4 py-8">
 
           <button
             onClick={() => setPhase('select')}
             className="flex items-center gap-2 text-sm mb-6 transition-colors hover:opacity-80"
-            style={{ color: '#6B8CAE' }}
+            style={{ color: '#9A9AA8' }}
           >
             ← Back to scripts
           </button>
@@ -624,7 +638,7 @@ export default function ScriptReading() {
           <div className="mb-6">
             <div className="text-3xl mb-2">✍️</div>
             <h1 className="text-2xl font-black text-white mb-1">Practise Your Own Script</h1>
-            <p style={{ color: '#6B8CAE' }} className="text-sm">
+            <p style={{ color: '#9A9AA8' }} className="text-sm">
               Paste your speech, presentation, or any text below. You'll read it aloud and
               Vak will coach you on your delivery.
             </p>
@@ -632,7 +646,7 @@ export default function ScriptReading() {
 
           <div className="mb-4">
             <label className="block text-sm font-semibold text-white mb-2">
-              Script title <span style={{ color: '#6B8CAE' }}>(optional)</span>
+              Script title <span style={{ color: '#9A9AA8' }}>(optional)</span>
             </label>
             <input
               className="input w-full"
@@ -653,7 +667,7 @@ export default function ScriptReading() {
               placeholder="Paste or type your script here…&#10;&#10;Tip: Use double line breaks between paragraphs. Each paragraph becomes one section in the teleprompter."
               style={{ resize: 'vertical', minHeight: 240 }}
             />
-            <p className="text-xs mt-2" style={{ color: '#6B8CAE' }}>
+            <p className="text-xs mt-2" style={{ color: '#9A9AA8' }}>
               {customText.split(/\s+/).filter(Boolean).length} words
               · ~{Math.round(customText.split(/\s+/).filter(Boolean).length / 130)} min to read
             </p>
@@ -674,7 +688,7 @@ export default function ScriptReading() {
           </button>
 
           {customText.trim().length < 20 && customText.length > 0 && (
-            <p className="text-xs mt-2 text-center" style={{ color: '#6B8CAE' }}>
+            <p className="text-xs mt-2 text-center" style={{ color: '#9A9AA8' }}>
               Please enter at least 20 characters
             </p>
           )}
@@ -687,15 +701,15 @@ export default function ScriptReading() {
   if (phase === 'countdown') {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center gap-6"
-        style={{ background: '#050810' }}>
-        <p className="text-sm font-semibold" style={{ color: '#6B8CAE' }}>
+        style={{ background: '#0A0A0C' }}>
+        <p className="text-sm font-semibold" style={{ color: '#9A9AA8' }}>
           Get ready to read: <span className="text-white">{script?.title}</span>
         </p>
         <div className="text-9xl font-black leading-none animate-bounce"
-          style={{ color: '#A78BFA', textShadow: '0 0 80px rgba(139,92,246,0.55)' }}>
+          style={{ color: '#A98CE0', textShadow: '0 0 80px rgba(139,92,246,0.55)' }}>
           {countdown}
         </div>
-        <p style={{ color: '#6B8CAE' }}>Speak clearly · natural pace · no rushing</p>
+        <p style={{ color: '#9A9AA8' }}>Speak clearly · natural pace · no rushing</p>
         <p className="text-xs px-4 py-2 rounded-full" style={{ background: 'rgba(0,196,154,0.08)', color: '#00C49A', border: '1px solid rgba(0,196,154,0.2)' }}>
           🔴 Your voice will be recorded and analysed by Gemini
         </p>
@@ -706,21 +720,21 @@ export default function ScriptReading() {
   // ── READING (teleprompter) ────────────────────────────────────────────────
   if (phase === 'reading') {
     return (
-      <div className="flex flex-col" style={{ height: '100vh', overflow: 'hidden', background: '#050810' }}>
+      <div className="flex flex-col" style={{ height: '100vh', overflow: 'hidden', background: '#0A0A0C' }}>
 
         {/* ── Top stats bar ── */}
         <div className="shrink-0 px-4 py-3 flex items-center gap-4 flex-wrap"
-          style={{ background: 'rgba(6,14,26,0.97)', borderBottom: '1px solid rgba(255,255,255,0.07)', backdropFilter: 'blur(14px)' }}>
+          style={{ background: 'rgba(10,10,12,0.97)', borderBottom: '1px solid rgba(255,255,255,0.07)', backdropFilter: 'blur(14px)' }}>
 
           <div className="flex items-center gap-1.5">
-            <span className="text-xs" style={{ color: '#6B8CAE' }}>⏱</span>
+            <span className="text-xs" style={{ color: '#9A9AA8' }}>⏱</span>
             <span className="font-mono font-bold text-sm text-white">{fmt(seconds)}</span>
           </div>
 
           <div className="flex items-center gap-1.5">
-            <span className="text-xs" style={{ color: '#6B8CAE' }}>WPM</span>
+            <span className="text-xs" style={{ color: '#9A9AA8' }}>WPM</span>
             <span className="font-mono font-bold text-sm"
-              style={{ color: wpm > 0 && (wpm < 100 || wpm > 180) ? '#F59E0B' : wpm > 0 ? '#00C49A' : '#6B8CAE' }}>
+              style={{ color: wpm > 0 && (wpm < 100 || wpm > 180) ? '#F59E0B' : wpm > 0 ? '#00C49A' : '#9A9AA8' }}>
               {wpm || ','}
             </span>
           </div>
@@ -733,15 +747,15 @@ export default function ScriptReading() {
             }}>
             <span className="text-sm">{fillerFlash ? '⚡' : '💬'}</span>
             <span className="text-sm font-bold"
-              style={{ color: fillerCount > 5 ? '#F87171' : fillerCount > 0 ? '#F59E0B' : '#6B8CAE' }}>
+              style={{ color: fillerCount > 5 ? '#F87171' : fillerCount > 0 ? '#F59E0B' : '#9A9AA8' }}>
               {fillerCount} filler{fillerCount !== 1 ? 's' : ''}
             </span>
           </div>
 
           {pauseCount > 0 && (
             <div className="flex items-center gap-1.5">
-              <span className="text-xs" style={{ color: '#6B8CAE' }}>⏸</span>
-              <span className="text-xs font-bold" style={{ color: pauseCount > 3 ? '#F59E0B' : '#6B8CAE' }}>
+              <span className="text-xs" style={{ color: '#9A9AA8' }}>⏸</span>
+              <span className="text-xs font-bold" style={{ color: pauseCount > 3 ? '#F59E0B' : '#9A9AA8' }}>
                 {pauseCount} pause{pauseCount !== 1 ? 's' : ''}
               </span>
             </div>
@@ -756,7 +770,7 @@ export default function ScriptReading() {
             <span className="text-xs font-semibold" style={{ color: '#F87171' }}>REC</span>
           </div>
 
-          <span className="text-xs font-semibold truncate max-w-[140px]" style={{ color: '#6B8CAE' }}>
+          <span className="text-xs font-semibold truncate max-w-[140px]" style={{ color: '#9A9AA8' }}>
             {currentParaIdx + 1}/{paragraphs.length}
           </span>
         </div>
@@ -782,7 +796,7 @@ export default function ScriptReading() {
                                  : isCurrent ? '#FFFFFF'
                                  : isNext    ? 'rgba(255,255,255,0.45)'
                                  :             'rgba(255,255,255,0.18)',
-                    borderLeft:    isCurrent ? '4px solid #A78BFA' : '4px solid transparent',
+                    borderLeft:    isCurrent ? '4px solid #A98CE0' : '4px solid transparent',
                     paddingLeft:   '1.2rem',
                     paddingTop:    isCurrent ? '0.6rem' : '0',
                     paddingBottom: isCurrent ? '0.6rem' : '0',
@@ -800,7 +814,7 @@ export default function ScriptReading() {
 
         {/* ── Bottom bar ── */}
         <div className="shrink-0 px-4 pt-2 pb-3"
-          style={{ background: 'rgba(6,14,26,0.97)', borderTop: '1px solid rgba(255,255,255,0.07)', backdropFilter: 'blur(14px)' }}>
+          style={{ background: 'rgba(10,10,12,0.97)', borderTop: '1px solid rgba(255,255,255,0.07)', backdropFilter: 'blur(14px)' }}>
 
           {/* Live transcript — confirms voice is being captured */}
           <div className="mb-2 min-h-[28px] px-3 py-1 rounded-xl text-sm transition-all"
@@ -811,7 +825,7 @@ export default function ScriptReading() {
             {liveText ? (
               <span className="italic" style={{ color: '#FF9D6F' }}>🎤 {liveText}</span>
             ) : (
-              <span style={{ color: 'rgba(107,140,174,0.5)', fontSize: '0.8rem' }}>
+              <span style={{ color: 'rgba(154,154,168,0.5)', fontSize: '0.8rem' }}>
                 Speak and your words will appear here · audio is always recorded even if this is blank
               </span>
             )}
@@ -836,7 +850,7 @@ export default function ScriptReading() {
               style={{
                 background: 'rgba(139,92,246,0.12)',
                 border: '1px solid rgba(139,92,246,0.3)',
-                color: '#A78BFA',
+                color: '#A98CE0',
                 opacity: currentParaIdx >= paragraphs.length - 1 ? 0.4 : 1,
               }}
             >
@@ -846,7 +860,7 @@ export default function ScriptReading() {
             <button
               onClick={handleDone}
               className="px-5 py-2 rounded-2xl text-sm font-bold text-white transition-all hover:opacity-90 active:scale-95"
-              style={{ background: 'linear-gradient(135deg, #7B5EA7, #9B7EC8)', boxShadow: '0 4px 16px rgba(123,94,167,0.35)' }}
+              style={{ background: '#7B5EA7', boxShadow: '0 4px 16px rgba(123,94,167,0.35)' }}
             >
               Done →
             </button>
@@ -859,19 +873,19 @@ export default function ScriptReading() {
   // ── ANALYZING ─────────────────────────────────────────────────────────────
   if (phase === 'analyzing') {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center gap-6" style={{ background: '#050810' }}>
+      <div className="min-h-screen flex flex-col items-center justify-center gap-6" style={{ background: '#0A0A0C' }}>
         <div className="animate-float"><VakMascot level={3} size={100} /></div>
         <div className="text-center">
           <div className="text-white font-bold text-xl mb-2">Analysing your delivery…</div>
-          <div style={{ color: '#6B8CAE' }}>Gemini is listening to your recording</div>
+          <div style={{ color: '#9A9AA8' }}>Gemini is listening to your recording</div>
         </div>
         <div className="flex gap-2">
           {[0, 1, 2].map(i => (
             <div key={i} className="w-2 h-2 rounded-full animate-bounce"
-              style={{ background: '#A78BFA', animationDelay: `${i * 0.15}s` }} />
+              style={{ background: '#A98CE0', animationDelay: `${i * 0.15}s` }} />
           ))}
         </div>
-        <p className="text-xs px-4 py-2 rounded-full" style={{ background: 'rgba(0,196,154,0.06)', color: '#6B8CAE', border: '1px solid rgba(0,196,154,0.15)' }}>
+        <p className="text-xs px-4 py-2 rounded-full" style={{ background: 'rgba(0,196,154,0.06)', color: '#9A9AA8', border: '1px solid rgba(0,196,154,0.15)' }}>
           This may take 15–30 seconds for longer scripts
         </p>
       </div>
@@ -883,7 +897,7 @@ export default function ScriptReading() {
     const fc = report.filler_word_count ?? fillerCount
 
     return (
-      <div className="min-h-screen" style={{ background: '#050810' }}>
+      <div className="min-h-screen" style={{ background: '#0A0A0C' }}>
         <Navbar />
         <main className="max-w-2xl mx-auto px-4 py-8 animate-slide-up">
 
@@ -892,7 +906,7 @@ export default function ScriptReading() {
               <VakMascot level={report.overall_score >= 80 ? 4 : 3} size={90} />
             </div>
             <h2 className="text-white font-black text-2xl mb-1">Reading Complete!</h2>
-            <p style={{ color: '#6B8CAE' }}>
+            <p style={{ color: '#9A9AA8' }}>
               {script?.title} · {fmt(seconds)}{report.avgWpm > 0 ? ` · ${report.avgWpm} WPM` : ''}
             </p>
           </div>
@@ -909,27 +923,27 @@ export default function ScriptReading() {
               { label: 'Pacing',   value: report.pacing_score,   icon: '⚡' },
             ].map(({ label, value, icon }) => (
               <div key={label} className="rounded-2xl p-4 text-center"
-                style={{ background: 'linear-gradient(160deg, #10192E 0%, #0B1220 100%)', border: `1px solid ${scoreColor(value)}30` }}>
+                style={{ background: 'linear-gradient(160deg, #121218 0%, #0C0C10 100%)', border: `1px solid ${scoreColor(value)}30` }}>
                 <div className="text-lg mb-1">{icon}</div>
                 <div className="text-2xl font-black" style={{ color: scoreColor(value) }}>{value}</div>
-                <div className="text-xs mt-0.5" style={{ color: '#6B8CAE' }}>{label}</div>
+                <div className="text-xs mt-0.5" style={{ color: '#9A9AA8' }}>{label}</div>
               </div>
             ))}
           </div>
 
           {/* Score legend */}
           <div className="rounded-2xl px-4 py-3 mb-5 text-xs leading-relaxed space-y-1"
-            style={{ background: 'linear-gradient(160deg, #10192E 0%, #0B1220 100%)', border: '1px solid rgba(255,255,255,0.07)' }}>
-            <p style={{ color: '#6B8CAE' }}><span className="text-white font-semibold">Accuracy</span>: how closely your words matched the script</p>
-            <p style={{ color: '#6B8CAE' }}><span className="text-white font-semibold">Fluency</span>: smooth delivery without unnatural hesitations</p>
-            <p style={{ color: '#6B8CAE' }}><span className="text-white font-semibold">Pacing</span>: speaking speed (ideal: 120–150 WPM for most scripts)</p>
+            style={{ background: 'linear-gradient(160deg, #121218 0%, #0C0C10 100%)', border: '1px solid rgba(255,255,255,0.07)' }}>
+            <p style={{ color: '#9A9AA8' }}><span className="text-white font-semibold">Accuracy</span>: how closely your words matched the script</p>
+            <p style={{ color: '#9A9AA8' }}><span className="text-white font-semibold">Fluency</span>: smooth delivery without unnatural hesitations</p>
+            <p style={{ color: '#9A9AA8' }}><span className="text-white font-semibold">Pacing</span>: speaking speed (ideal: 120–150 WPM for most scripts)</p>
           </div>
 
           {/* Vak's coaching summary */}
           <div className="card mb-4" style={{ background: 'rgba(139,92,246,0.08)', borderColor: 'rgba(139,92,246,0.2)' }}>
             <div className="flex gap-3">
               <span className="text-xl shrink-0">🦢</span>
-              <p className="text-sm leading-relaxed" style={{ color: '#E2E8F0' }}>{report.summary}</p>
+              <p className="text-sm leading-relaxed" style={{ color: '#E6E6EA' }}>{report.summary}</p>
             </div>
           </div>
 
@@ -940,10 +954,10 @@ export default function ScriptReading() {
                 <span className="text-xl shrink-0">📝</span>
                 <div className="flex-1">
                   <h3 className="text-white font-semibold text-sm mb-2">What Vak heard</h3>
-                  <p className="text-sm leading-relaxed italic" style={{ color: '#94A3B8' }}>
+                  <p className="text-sm leading-relaxed italic" style={{ color: '#C9C9D2' }}>
                     "{report.transcript}"
                   </p>
-                  <p className="text-xs mt-2" style={{ color: '#6B8CAE' }}>
+                  <p className="text-xs mt-2" style={{ color: '#9A9AA8' }}>
                     Gemini's transcription of your reading, the basis for accuracy and fluency scores.
                   </p>
                 </div>
@@ -971,7 +985,7 @@ export default function ScriptReading() {
                 ))}
               </div>
             ) : (
-              <p className="text-xs mt-1" style={{ color: '#6B8CAE' }}>
+              <p className="text-xs mt-1" style={{ color: '#9A9AA8' }}>
                 {fc === 0 ? '🎉 No filler words detected. Great control!' : 'Replace fillers with a deliberate 1-second pause.'}
               </p>
             )}
@@ -988,7 +1002,7 @@ export default function ScriptReading() {
               </div>
             </div>
             {report.pause_note && (
-              <p className="text-sm mt-2" style={{ color: '#6B8CAE' }}>{report.pause_note}</p>
+              <p className="text-sm mt-2" style={{ color: '#9A9AA8' }}>{report.pause_note}</p>
             )}
           </div>
 
@@ -997,7 +1011,7 @@ export default function ScriptReading() {
             <div className="card mb-4" style={{ background: 'rgba(59,130,246,0.06)', borderColor: 'rgba(59,130,246,0.2)' }}>
               <div className="flex gap-3">
                 <span className="text-xl shrink-0">🎙️</span>
-                <p className="text-sm" style={{ color: '#E2E8F0' }}>{report.pacing_note}</p>
+                <p className="text-sm" style={{ color: '#E6E6EA' }}>{report.pacing_note}</p>
               </div>
             </div>
           )}
@@ -1013,10 +1027,10 @@ export default function ScriptReading() {
                   </div>
                   <ul className="space-y-1.5">
                     {report.missed_phrases.map((ph, i) => (
-                      <li key={i} className="text-sm italic" style={{ color: '#E2E8F0' }}>"…{ph}…"</li>
+                      <li key={i} className="text-sm italic" style={{ color: '#E6E6EA' }}>"…{ph}…"</li>
                     ))}
                   </ul>
-                  <p className="text-xs mt-2" style={{ color: '#6B8CAE' }}>
+                  <p className="text-xs mt-2" style={{ color: '#9A9AA8' }}>
                     Practise these phrases separately before your next read-through.
                   </p>
                 </div>
@@ -1030,7 +1044,7 @@ export default function ScriptReading() {
               <div className="text-sm font-semibold mb-3" style={{ color: '#00C49A' }}>✅ What worked</div>
               <ul className="space-y-2">
                 {report.strengths?.map((s, i) => (
-                  <li key={i} className="text-sm flex gap-2" style={{ color: '#E2E8F0' }}>
+                  <li key={i} className="text-sm flex gap-2" style={{ color: '#E6E6EA' }}>
                     <span style={{ color: '#00C49A' }}>•</span>{s}
                   </li>
                 ))}
@@ -1040,7 +1054,7 @@ export default function ScriptReading() {
               <div className="text-sm font-semibold mb-3" style={{ color: '#7B5EA7' }}>🔧 Work on this</div>
               <ul className="space-y-2">
                 {report.improvements?.map((s, i) => (
-                  <li key={i} className="text-sm flex gap-2" style={{ color: '#E2E8F0' }}>
+                  <li key={i} className="text-sm flex gap-2" style={{ color: '#E6E6EA' }}>
                     <span style={{ color: '#7B5EA7' }}>•</span>{s}
                   </li>
                 ))}
@@ -1055,7 +1069,7 @@ export default function ScriptReading() {
                 <span className="text-xl shrink-0">🎯</span>
                 <div>
                   <div className="text-sm font-semibold mb-1" style={{ color: '#7B5EA7' }}>Your action item</div>
-                  <p className="text-sm" style={{ color: '#E2E8F0' }}>{report.action_item}</p>
+                  <p className="text-sm" style={{ color: '#E6E6EA' }}>{report.action_item}</p>
                 </div>
               </div>
             </div>
@@ -1064,12 +1078,12 @@ export default function ScriptReading() {
           <div className="flex gap-3">
             <button onClick={resetForReread}
               className="flex-1 py-3 rounded-2xl font-bold text-sm transition-all hover:opacity-90"
-              style={{ background: 'rgba(139,92,246,0.12)', border: '1px solid rgba(139,92,246,0.3)', color: '#A78BFA' }}>
+              style={{ background: 'rgba(139,92,246,0.12)', border: '1px solid rgba(139,92,246,0.3)', color: '#A98CE0' }}>
               🔁 Read again
             </button>
             <button onClick={fullReset}
               className="flex-1 py-3 rounded-2xl font-bold text-sm text-white transition-all hover:opacity-90"
-              style={{ background: 'linear-gradient(135deg, #7B5EA7, #9B7EC8)' }}>
+              style={{ background: '#7B5EA7' }}>
               📜 New script →
             </button>
           </div>

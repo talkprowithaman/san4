@@ -3,7 +3,7 @@ import { create }    from 'zustand'
 import { supabase }  from '../lib/supabase'
 import { useAuthStore } from './useAuth'
 import { calcXP, calcStreak, getLevelInfo, levelFromXP } from '../lib/gamification'
-import { getFreezes, earnFreeze, consumeFreeze, missedExactlyOneDay } from '../lib/streakFreeze'
+import { getFreezes, earnFreeze, consumeFreeze, missedExactlyOneDay, recordFrozenDay } from '../lib/streakFreeze'
 
 // ── Zustand store (shared across all components) ─────────────────────────────
 export const useProgressStore = create((set) => ({
@@ -67,6 +67,7 @@ export function useProgress() {
     let freezeUsed = false
     if (brokeStreak && missedExactlyOneDay(cur.last_practice_date) && getFreezes(user.id) > 0) {
       consumeFreeze(user.id)
+      recordFrozenDay(user.id, Date.now() - 86_400_000) // the freeze covered yesterday
       streak = (cur.streak_count || 0) + 1
       brokeStreak = false
       freezeUsed = true

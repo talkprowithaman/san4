@@ -173,16 +173,16 @@ export default function DailyChallenge() {
   // ── Already done today ────────────────────────────────────────────────────
   if (alreadyDone && phase === 'prompt') {
     return (
-      <div className="min-h-screen" style={{ background: '#050810' }}>
+      <div className="min-h-screen" style={{ background: '#0A0A0C' }}>
         <Navbar />
         <main className="max-w-lg mx-auto px-4 py-16 text-center">
           <div className="flex justify-center mb-4 animate-float"><VakMascot level={4} size={90} /></div>
           <h2 className="text-white font-black text-2xl mb-2">You've done today's challenge! ✅</h2>
-          <p className="mb-6" style={{ color: '#6B8CAE' }}>Come back tomorrow for a fresh situation.</p>
+          <p className="mb-6" style={{ color: '#9A9AA8' }}>Come back tomorrow for a fresh situation.</p>
           <div className="rounded-2xl p-4 mb-6 text-left"
             style={{ background: 'rgba(0,196,154,0.08)', border: '1px solid rgba(0,196,154,0.2)' }}>
             <p className="text-xs font-bold mb-2" style={{ color: '#00C49A' }}>Today's situation</p>
-            <p className="text-sm" style={{ color: '#E2E8F0' }}>{situation.text}</p>
+            <p className="text-sm" style={{ color: '#E6E6EA' }}>{situation.text}</p>
           </div>
           <Link to="/dashboard" className="btn-primary">← Back to Dashboard</Link>
         </main>
@@ -193,7 +193,7 @@ export default function DailyChallenge() {
   // ── Phase: prompt ─────────────────────────────────────────────────────────
   if (phase === 'prompt') {
     return (
-      <div className="min-h-screen" style={{ background: '#050810' }}>
+      <div className="min-h-screen" style={{ background: '#0A0A0C' }}>
         <Navbar />
         <main className="max-w-lg mx-auto px-4 py-8 animate-fade-in">
 
@@ -205,7 +205,7 @@ export default function DailyChallenge() {
             >
               🔥 Daily Challenge: {situation.category}
             </div>
-            <p className="text-sm" style={{ color: '#6B8CAE' }}>
+            <p className="text-sm" style={{ color: '#9A9AA8' }}>
               One real situation. 90 seconds. Respond like you mean it.
             </p>
           </div>
@@ -214,7 +214,7 @@ export default function DailyChallenge() {
           <div
             className="rounded-3xl p-7 mb-6"
             style={{
-              background: 'linear-gradient(160deg, #10192E 0%, #0B1220 100%)',
+              background: 'linear-gradient(160deg, #121218 0%, #0C0C10 100%)',
               border: '1px solid rgba(123,94,167,0.25)',
               boxShadow: '0 0 40px rgba(123,94,167,0.08)',
             }}
@@ -231,7 +231,7 @@ export default function DailyChallenge() {
             style={{ background: 'rgba(0,196,154,0.07)', border: '1px solid rgba(0,196,154,0.2)' }}
           >
             <span className="text-lg shrink-0">💡</span>
-            <p className="text-sm" style={{ color: '#6B8CAE' }}>
+            <p className="text-sm" style={{ color: '#9A9AA8' }}>
               <span className="font-semibold" style={{ color: '#00C49A' }}>Tip: </span>
               {situation.tip}
             </p>
@@ -243,7 +243,7 @@ export default function DailyChallenge() {
               onClick={startRecording}
               className="w-full py-4 rounded-2xl font-black text-white text-base transition-all hover:opacity-90 active:scale-95"
               style={{
-                background: 'linear-gradient(135deg, #7B5EA7, #9B7EC8)',
+                background: '#7B5EA7',
                 boxShadow: '0 6px 24px rgba(123,94,167,0.4)',
               }}
             >
@@ -255,7 +255,7 @@ export default function DailyChallenge() {
             </div>
           )}
 
-          <p className="text-center text-xs mt-3" style={{ color: '#6B8CAE' }}>
+          <p className="text-center text-xs mt-3" style={{ color: '#9A9AA8' }}>
             You have up to 90 seconds · Stop anytime when you're done
           </p>
         </main>
@@ -267,13 +267,13 @@ export default function DailyChallenge() {
   if (phase === 'recording') {
     const pct = Math.min(100, (seconds / MAX_SEC) * 100)
     return (
-      <div className="min-h-screen flex flex-col" style={{ background: '#050810' }}>
+      <div className="min-h-screen flex flex-col" style={{ background: '#0A0A0C' }}>
         <Navbar />
         <main className="max-w-lg mx-auto px-4 py-8 flex-1 flex flex-col">
 
           {/* Situation reminder */}
-          <div className="rounded-2xl p-4 mb-6" style={{ background: 'linear-gradient(160deg, #10192E 0%, #0B1220 100%)', border: '1px solid rgba(255,255,255,0.06)' }}>
-            <p className="text-sm leading-relaxed" style={{ color: '#6B8CAE' }}>{situation.text}</p>
+          <div className="rounded-2xl p-4 mb-6" style={{ background: 'linear-gradient(160deg, #121218 0%, #0C0C10 100%)', border: '1px solid rgba(255,255,255,0.06)' }}>
+            <p className="text-sm leading-relaxed" style={{ color: '#9A9AA8' }}>{situation.text}</p>
           </div>
 
           {/* Mic pulse animation */}
@@ -285,7 +285,7 @@ export default function DailyChallenge() {
               />
               <div
                 className="relative w-24 h-24 rounded-full flex items-center justify-center text-4xl"
-                style={{ background: 'linear-gradient(135deg, #7B5EA7, #9B7EC8)', boxShadow: '0 0 40px rgba(123,94,167,0.4)' }}
+                style={{ background: '#7B5EA7', boxShadow: '0 0 40px rgba(123,94,167,0.4)' }}
               >
                 🎤
               </div>
@@ -295,17 +295,17 @@ export default function DailyChallenge() {
 
           {/* Live transcript */}
           {(transcript || liveText) && (
-            <div className="rounded-2xl p-4 mb-5 min-h-20" style={{ background: 'linear-gradient(160deg, #10192E 0%, #0B1220 100%)', border: '1px solid rgba(255,255,255,0.06)' }}>
-              <p className="text-sm" style={{ color: '#E2E8F0' }}>
+            <div className="rounded-2xl p-4 mb-5 min-h-20" style={{ background: 'linear-gradient(160deg, #121218 0%, #0C0C10 100%)', border: '1px solid rgba(255,255,255,0.06)' }}>
+              <p className="text-sm" style={{ color: '#E6E6EA' }}>
                 {transcript}
-                {liveText && <span style={{ color: '#6B8CAE' }}> {liveText}</span>}
+                {liveText && <span style={{ color: '#9A9AA8' }}> {liveText}</span>}
               </p>
             </div>
           )}
 
           {/* Timer progress bar */}
           <div className="mb-4">
-            <div className="flex justify-between text-xs mb-1.5" style={{ color: '#6B8CAE' }}>
+            <div className="flex justify-between text-xs mb-1.5" style={{ color: '#9A9AA8' }}>
               <span>{fmt(seconds)}</span>
               <span>{fmt(MAX_SEC - seconds)} left</span>
             </div>
@@ -337,11 +337,11 @@ export default function DailyChallenge() {
   // ── Phase: analyzing ──────────────────────────────────────────────────────
   if (phase === 'analyzing') {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center gap-6" style={{ background: '#050810' }}>
+      <div className="min-h-screen flex flex-col items-center justify-center gap-6" style={{ background: '#0A0A0C' }}>
         <div className="animate-float"><VakMascot level={3} size={90} /></div>
         <div className="text-center">
           <div className="text-white font-bold text-xl mb-2">Reviewing your response…</div>
-          <div style={{ color: '#6B8CAE' }}>Vak is analysing clarity, confidence, and structure</div>
+          <div style={{ color: '#9A9AA8' }}>Vak is analysing clarity, confidence, and structure</div>
         </div>
         <div className="flex gap-2">
           {[0, 1, 2].map(i => (
@@ -356,7 +356,7 @@ export default function DailyChallenge() {
   // ── Phase: report ─────────────────────────────────────────────────────────
   if (phase === 'report' && report) {
     return (
-      <div className="min-h-screen" style={{ background: '#050810' }}>
+      <div className="min-h-screen" style={{ background: '#0A0A0C' }}>
         <Navbar />
         <main className="max-w-lg mx-auto px-4 py-8 animate-slide-up">
 
@@ -366,7 +366,7 @@ export default function DailyChallenge() {
               <VakMascot level={report.score >= 80 ? 4 : 3} size={80} />
             </div>
             <h2 className="text-white font-black text-2xl mb-1">Challenge Complete! 🎯</h2>
-            <p style={{ color: '#6B8CAE' }}>{situation.category} · {fmt(seconds)}</p>
+            <p style={{ color: '#9A9AA8' }}>{situation.category} · {fmt(seconds)}</p>
           </div>
 
           {/* Score trio */}
@@ -377,10 +377,10 @@ export default function DailyChallenge() {
               { label: 'Confidence', value: report.confidence, icon: '💪' },
             ].map(({ label, value, icon }) => (
               <div key={label} className="rounded-2xl p-4 text-center"
-                style={{ background: 'linear-gradient(160deg, #10192E 0%, #0B1220 100%)', border: `1px solid ${scoreColor(value)}30` }}>
+                style={{ background: 'linear-gradient(160deg, #121218 0%, #0C0C10 100%)', border: `1px solid ${scoreColor(value)}30` }}>
                 <div className="text-lg mb-1">{icon}</div>
                 <div className="text-2xl font-black" style={{ color: scoreColor(value) }}>{value}</div>
-                <div className="text-xs mt-0.5" style={{ color: '#6B8CAE' }}>{label}</div>
+                <div className="text-xs mt-0.5" style={{ color: '#9A9AA8' }}>{label}</div>
               </div>
             ))}
           </div>
@@ -392,7 +392,7 @@ export default function DailyChallenge() {
                 <span className="text-xl">⭐</span>
                 <div>
                   <div className="text-sm font-semibold mb-1" style={{ color: '#00C49A' }}>Best moment</div>
-                  <p className="text-sm italic" style={{ color: '#E2E8F0' }}>"{report.best_moment}"</p>
+                  <p className="text-sm italic" style={{ color: '#E6E6EA' }}>"{report.best_moment}"</p>
                 </div>
               </div>
             </div>
@@ -404,7 +404,7 @@ export default function DailyChallenge() {
               <span className="text-xl">🔧</span>
               <div>
                 <div className="text-sm font-semibold mb-1" style={{ color: '#7B5EA7' }}>One thing to fix</div>
-                <p className="text-sm" style={{ color: '#E2E8F0' }}>{report.one_fix}</p>
+                <p className="text-sm" style={{ color: '#E6E6EA' }}>{report.one_fix}</p>
               </div>
             </div>
           </div>
@@ -413,7 +413,7 @@ export default function DailyChallenge() {
           <div className="card mb-8" style={{ background: 'rgba(139,92,246,0.07)', borderColor: 'rgba(139,92,246,0.2)' }}>
             <div className="flex gap-3">
               <span className="text-xl">🦢</span>
-              <p className="text-sm" style={{ color: '#E2E8F0' }}>{report.encouragement}</p>
+              <p className="text-sm" style={{ color: '#E6E6EA' }}>{report.encouragement}</p>
             </div>
           </div>
 

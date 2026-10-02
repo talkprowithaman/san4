@@ -56,7 +56,7 @@ function Sparkline({ data, color = '#00C49A', width = 140, height = 44, invert =
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 function scoreColor(s) {
-  if (!s) return '#6B8CAE'
+  if (!s) return '#9A9AA8'
   if (s >= 80) return '#00C49A'
   if (s >= 60) return '#FF6B35'
   return '#F87171'
@@ -143,14 +143,14 @@ export default function Progress() {
   // ── Free tier: show teaser ────────────────────────────────────────────────
   if (!isPro && !loading && sessions.length < 3) {
     return (
-      <div className="min-h-screen" style={{ background: '#050810' }}>
+      <div className="min-h-screen" style={{ background: '#0A0A0C' }}>
         <Navbar />
         <main className="max-w-2xl mx-auto px-4 py-16 text-center">
           <div className="flex justify-center mb-4 animate-float">
             <VakMascot level={3} size={90} />
           </div>
           <h2 className="text-white font-black text-2xl mb-3">Your Progress Dashboard</h2>
-          <p className="mb-8" style={{ color: '#6B8CAE' }}>
+          <p className="mb-8" style={{ color: '#9A9AA8' }}>
             Complete at least 3 sessions to unlock your trend charts and performance breakdown.
           </p>
           <Link to="/practice" className="btn-primary">Start Practising →</Link>
@@ -161,12 +161,12 @@ export default function Progress() {
 
   if (!isPro) {
     return (
-      <div className="min-h-screen" style={{ background: '#050810' }}>
+      <div className="min-h-screen" style={{ background: '#0A0A0C' }}>
         <Navbar />
         <main className="max-w-2xl mx-auto px-4 py-8">
           <div className="mb-8">
             <h1 className="text-3xl font-black text-white mb-1">Progress</h1>
-            <p style={{ color: '#6B8CAE' }}>Track your improvement over time</p>
+            <p style={{ color: '#9A9AA8' }}>Track your improvement over time</p>
           </div>
 
           {/* Blurred teaser */}
@@ -176,22 +176,22 @@ export default function Progress() {
               <div className="grid grid-cols-3 gap-3 mb-6">
                 {['Score Trend', 'Filler Trend', 'Weekly Sessions'].map(l => (
                   <div key={l} className="rounded-2xl p-4 text-center"
-                    style={{ background: '#0F1E35' }}>
+                    style={{ background: '#121218' }}>
                     <div className="h-11 mb-2 bg-white/10 rounded" />
-                    <div className="text-xs" style={{ color: '#6B8CAE' }}>{l}</div>
+                    <div className="text-xs" style={{ color: '#9A9AA8' }}>{l}</div>
                   </div>
                 ))}
               </div>
-              <div className="h-32 rounded-2xl" style={{ background: '#0F1E35' }} />
+              <div className="h-32 rounded-2xl" style={{ background: '#121218' }} />
             </div>
             <div className="absolute inset-0 flex flex-col items-center justify-center gap-4"
-              style={{ background: 'rgba(6,14,26,0.8)', backdropFilter: 'blur(4px)' }}>
+              style={{ background: 'rgba(10,10,12,0.8)', backdropFilter: 'blur(4px)' }}>
               <div className="text-4xl">📊</div>
               <h3 className="text-white font-black text-xl">Unlock with Vak Pro</h3>
-              <p className="text-sm text-center max-w-xs" style={{ color: '#6B8CAE' }}>
+              <p className="text-sm text-center max-w-xs" style={{ color: '#9A9AA8' }}>
                 See your score trend, filler word improvement, weekly consistency, and top scenarios.
               </p>
-              <Link to="/pricing" className="btn-primary text-sm">Upgrade to Pro · ₹299/month →</Link>
+              <Link to="/pro" className="btn-primary text-sm">Upgrade to Pro · ₹299/month →</Link>
             </div>
           </div>
 
@@ -202,10 +202,10 @@ export default function Progress() {
               { label: 'Best Score', value: bestScore ? `${bestScore}%` : 'n/a', icon: '🏆' },
             ].map(({ label, value, icon }) => (
               <div key={label} className="rounded-2xl p-4 text-center"
-                style={{ background: 'linear-gradient(160deg, #10192E 0%, #0B1220 100%)', border: '1px solid rgba(255,255,255,0.06)' }}>
+                style={{ background: 'linear-gradient(160deg, #121218 0%, #0C0C10 100%)', border: '1px solid rgba(255,255,255,0.06)' }}>
                 <div className="text-2xl mb-1">{icon}</div>
                 <div className="text-2xl font-black text-white">{value}</div>
-                <div className="text-xs mt-0.5" style={{ color: '#6B8CAE' }}>{label}</div>
+                <div className="text-xs mt-0.5" style={{ color: '#9A9AA8' }}>{label}</div>
               </div>
             ))}
           </div>
@@ -216,7 +216,7 @@ export default function Progress() {
 
   // ── FULL PRO DASHBOARD ────────────────────────────────────────────────────
   return (
-    <div className="min-h-screen" style={{ background: '#050810' }}>
+    <div className="min-h-screen" style={{ background: '#0A0A0C' }}>
       <Navbar />
       <main className="max-w-3xl mx-auto px-4 py-8">
 
@@ -227,18 +227,18 @@ export default function Progress() {
             📊 Progress Dashboard
           </div>
           <h1 className="text-3xl font-black text-white">Your Communication Journey</h1>
-          <p style={{ color: '#6B8CAE' }}>
+          <p style={{ color: '#9A9AA8' }}>
             {totalSessions} session{totalSessions !== 1 ? 's' : ''} · {totalMinutes} minutes practised
           </p>
         </div>
 
         {loading ? (
-          <div className="text-center py-16" style={{ color: '#6B8CAE' }}>Loading your data…</div>
+          <div className="text-center py-16" style={{ color: '#9A9AA8' }}>Loading your data…</div>
         ) : sessions.length === 0 ? (
           <div className="text-center py-16">
             <div className="text-4xl mb-4">🎯</div>
             <p className="text-white font-semibold mb-2">No sessions yet</p>
-            <p className="text-sm mb-6" style={{ color: '#6B8CAE' }}>Complete your first session to see progress charts.</p>
+            <p className="text-sm mb-6" style={{ color: '#9A9AA8' }}>Complete your first session to see progress charts.</p>
             <Link to="/practice" className="btn-primary">Start Practising →</Link>
           </div>
         ) : (
@@ -252,10 +252,10 @@ export default function Progress() {
                 { label: 'Avg Fillers',  value: avgFillers,            icon: '💬', color: avgFillers > 5 ? '#F87171' : '#00C49A' },
               ].map(({ label, value, icon, color }) => (
                 <div key={label} className="rounded-2xl p-4 text-center"
-                  style={{ background: 'linear-gradient(160deg, #10192E 0%, #0B1220 100%)', border: `1px solid ${color}25` }}>
+                  style={{ background: 'linear-gradient(160deg, #121218 0%, #0C0C10 100%)', border: `1px solid ${color}25` }}>
                   <div className="text-lg mb-1">{icon}</div>
                   <div className="text-2xl font-black" style={{ color }}>{value}</div>
-                  <div className="text-xs mt-0.5" style={{ color: '#6B8CAE' }}>{label}</div>
+                  <div className="text-xs mt-0.5" style={{ color: '#9A9AA8' }}>{label}</div>
                 </div>
               ))}
             </div>
@@ -274,7 +274,7 @@ export default function Progress() {
                       ? `Your score improved by ${improvement} points in recent sessions!`
                       : `Your recent scores are down ${Math.abs(improvement)} points. Push a little harder.`}
                   </div>
-                  <div className="text-xs mt-0.5" style={{ color: '#6B8CAE' }}>
+                  <div className="text-xs mt-0.5" style={{ color: '#9A9AA8' }}>
                     First half avg: {firstAvg}% → Recent avg: {secondAvg}%
                   </div>
                 </div>
@@ -286,9 +286,9 @@ export default function Progress() {
 
               {/* Score trend */}
               <div className="rounded-2xl p-4"
-                style={{ background: 'linear-gradient(160deg, #10192E 0%, #0B1220 100%)', border: '1px solid rgba(0,196,154,0.2)' }}>
+                style={{ background: 'linear-gradient(160deg, #121218 0%, #0C0C10 100%)', border: '1px solid rgba(0,196,154,0.2)' }}>
                 <div className="text-xs font-bold mb-1" style={{ color: '#00C49A' }}>SCORE TREND</div>
-                <div className="text-xs mb-3" style={{ color: '#6B8CAE' }}>Last {recentScores.length} sessions</div>
+                <div className="text-xs mb-3" style={{ color: '#9A9AA8' }}>Last {recentScores.length} sessions</div>
                 <Sparkline data={recentScores} color="#00C49A" />
                 {recentScores.length > 1 && (
                   <div className="mt-2 text-xs font-bold" style={{ color: scoreColor(recentScores[recentScores.length - 1]) }}>
@@ -299,9 +299,9 @@ export default function Progress() {
 
               {/* Filler trend */}
               <div className="rounded-2xl p-4"
-                style={{ background: 'linear-gradient(160deg, #10192E 0%, #0B1220 100%)', border: '1px solid rgba(239,68,68,0.2)' }}>
+                style={{ background: 'linear-gradient(160deg, #121218 0%, #0C0C10 100%)', border: '1px solid rgba(239,68,68,0.2)' }}>
                 <div className="text-xs font-bold mb-1" style={{ color: '#F87171' }}>FILLER WORDS</div>
-                <div className="text-xs mb-3" style={{ color: '#6B8CAE' }}>Going down = improving</div>
+                <div className="text-xs mb-3" style={{ color: '#9A9AA8' }}>Going down = improving</div>
                 <Sparkline data={recentFillers} color="#F87171" invert />
                 {recentFillers.length > 1 && (
                   <div className="mt-2 text-xs font-bold" style={{ color: recentFillers[recentFillers.length - 1] < avgFillers ? '#00C49A' : '#F87171' }}>
@@ -312,9 +312,9 @@ export default function Progress() {
 
               {/* Weekly sessions */}
               <div className="rounded-2xl p-4"
-                style={{ background: 'linear-gradient(160deg, #10192E 0%, #0B1220 100%)', border: '1px solid rgba(99,102,241,0.2)' }}>
+                style={{ background: 'linear-gradient(160deg, #121218 0%, #0C0C10 100%)', border: '1px solid rgba(99,102,241,0.2)' }}>
                 <div className="text-xs font-bold mb-1" style={{ color: '#818CF8' }}>SESSIONS / WEEK</div>
-                <div className="text-xs mb-3" style={{ color: '#6B8CAE' }}>Last 8 weeks</div>
+                <div className="text-xs mb-3" style={{ color: '#9A9AA8' }}>Last 8 weeks</div>
                 {weeklyCounts.length > 0 ? (
                   <div className="flex items-end gap-1 h-11">
                     {weeklyCounts.map((c, i) => (
@@ -326,7 +326,7 @@ export default function Progress() {
                     ))}
                   </div>
                 ) : (
-                  <div className="h-11 flex items-center justify-center text-xs" style={{ color: '#6B8CAE' }}>No data yet</div>
+                  <div className="h-11 flex items-center justify-center text-xs" style={{ color: '#9A9AA8' }}>No data yet</div>
                 )}
                 <div className="mt-2 text-xs font-bold" style={{ color: '#818CF8' }}>
                   This week: {weeklyCounts[weeklyCounts.length - 1] ?? 0} session{(weeklyCounts[weeklyCounts.length - 1] ?? 0) !== 1 ? 's' : ''}
@@ -338,25 +338,25 @@ export default function Progress() {
             {progress && (
               <div className="grid grid-cols-2 gap-4 mb-6">
                 <div className="rounded-2xl p-4"
-                  style={{ background: 'linear-gradient(160deg, #10192E 0%, #0B1220 100%)', border: '1px solid rgba(123,94,167,0.2)' }}>
+                  style={{ background: 'linear-gradient(160deg, #121218 0%, #0C0C10 100%)', border: '1px solid rgba(123,94,167,0.2)' }}>
                   <div className="flex items-center gap-2 mb-2">
                     <span className="text-xl">🔥</span>
                     <span className="text-xs font-bold uppercase tracking-widest" style={{ color: '#7B5EA7' }}>Streak</span>
                   </div>
                   <div className="text-3xl font-black text-white">{progress.streak_count || 0}<span className="text-lg"> days</span></div>
-                  <div className="text-xs mt-1" style={{ color: '#6B8CAE' }}>
+                  <div className="text-xs mt-1" style={{ color: '#9A9AA8' }}>
                     Best: {progress.longest_streak || 0} days
                   </div>
                 </div>
                 <div className="rounded-2xl p-4"
-                  style={{ background: 'linear-gradient(160deg, #10192E 0%, #0B1220 100%)', border: '1px solid rgba(245,158,11,0.2)' }}>
+                  style={{ background: 'linear-gradient(160deg, #121218 0%, #0C0C10 100%)', border: '1px solid rgba(245,158,11,0.2)' }}>
                   <div className="flex items-center gap-2 mb-2">
                     <span className="text-xl">⭐</span>
                     <span className="text-xs font-bold uppercase tracking-widest" style={{ color: '#F59E0B' }}>Total XP</span>
                   </div>
                   <div className="text-3xl font-black text-white">{progress.total_xp || 0}</div>
                   {levelInfo && (
-                    <div className="text-xs mt-1" style={{ color: '#6B8CAE' }}>
+                    <div className="text-xs mt-1" style={{ color: '#9A9AA8' }}>
                       Level {levelInfo.current.level}: {levelInfo.current.name}
                     </div>
                   )}
@@ -367,14 +367,14 @@ export default function Progress() {
             {/* ── Scenario breakdown ── */}
             {topScenarios.length > 0 && (
               <div className="rounded-2xl p-5 mb-6"
-                style={{ background: 'linear-gradient(160deg, #10192E 0%, #0B1220 100%)', border: '1px solid rgba(255,255,255,0.07)' }}>
+                style={{ background: 'linear-gradient(160deg, #121218 0%, #0C0C10 100%)', border: '1px solid rgba(255,255,255,0.07)' }}>
                 <div className="text-sm font-bold text-white mb-4">🎭 Most Practised Scenarios</div>
                 <div className="space-y-3">
                   {topScenarios.map(([title, count]) => (
                     <div key={title}>
                       <div className="flex items-center justify-between mb-1">
                         <span className="text-sm text-white truncate max-w-48">{title}</span>
-                        <span className="text-xs font-bold ml-2 shrink-0" style={{ color: '#6B8CAE' }}>
+                        <span className="text-xs font-bold ml-2 shrink-0" style={{ color: '#9A9AA8' }}>
                           {count} session{count !== 1 ? 's' : ''}
                         </span>
                       </div>
@@ -397,11 +397,11 @@ export default function Progress() {
               <div className="space-y-2">
                 {[...sessions].reverse().slice(0, 10).map(s => (
                   <div key={s.id} className="flex items-center gap-3 px-4 py-3 rounded-2xl"
-                    style={{ background: 'linear-gradient(160deg, #10192E 0%, #0B1220 100%)', border: '1px solid rgba(255,255,255,0.05)' }}>
+                    style={{ background: 'linear-gradient(160deg, #121218 0%, #0C0C10 100%)', border: '1px solid rgba(255,255,255,0.05)' }}>
                     <span className="text-lg">🎭</span>
                     <div className="flex-1 min-w-0">
                       <div className="text-white text-sm font-medium truncate">{s.scenario_title}</div>
-                      <div className="text-xs" style={{ color: '#6B8CAE' }}>
+                      <div className="text-xs" style={{ color: '#9A9AA8' }}>
                         {new Date(s.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}
                         {s.duration_seconds > 0 && ` · ${Math.round(s.duration_seconds / 60)}m`}
                         {s.filler_word_count > 0 && ` · ${s.filler_word_count} fillers`}

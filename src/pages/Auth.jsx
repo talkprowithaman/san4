@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useSearchParams, Link } from 'react-router-dom'
 import { useAuth, useAuthStore } from '../hooks/useAuth'
-import VakMascot from '../components/VakMascot'
+import { C, F } from '../lib/ink'
+import { Screen, Back, Btn, TextBtn, H1, Sub, Spacer, ConsentTick, ErrorNote } from '../components/ink/Ink'
 import { PRIVACY_POLICY_VERSION } from '../lib/consent'
 import { isDisposableEmail, DISPOSABLE_MESSAGE } from '../lib/disposableEmails'
 import { friendlyAuthError, isRateLimited } from '../lib/authErrors'
@@ -78,345 +79,134 @@ export default function Auth() {
     setMode('reset-sent')
   }
 
-  // ── Magic-link screens ──────────────────────────────────────────────────────
+  // ── Shared pieces ──────────────────────────────────────────────────────────
+  const backToSignin = () => { setMode('signin'); setError('') }
+  const Label = ({ children }) => (
+    <div style={{ font: `500 10px ${F.mono}`, letterSpacing: '.16em', color: C.dim, margin: '0 0 8px' }}>{children}</div>
+  )
+  const Sent = ({ title, children, note }) => (
+    <Screen pad="36px 30px 30px">
+      <Back onClick={backToSignin} mb={26} />
+      <H1>{title}</H1>
+      <Sub>{children}</Sub>
+      {note && <p style={{ margin: 0, fontSize: 12, color: C.dim }}>{note}</p>}
+      <Spacer />
+      <Btn onClick={backToSignin}>Back to sign in</Btn>
+    </Screen>
+  )
+
+  // ── Magic link ─────────────────────────────────────────────────────────────
   if (mode === 'magic') return (
-    <div className="min-h-screen flex items-center justify-center px-4" style={{ background: '#0a0a0f' }}>
-      <div className="max-w-md w-full rounded-3xl p-9 text-center"
-        style={{ background: 'linear-gradient(160deg,#10192E,#0B1220)', border: '1px solid rgba(255,255,255,0.08)' }}>
-        <div className="flex justify-center mb-4"><VakMascot level={3} size={78} mood="encouraging" /></div>
-        <h2 className="text-white font-black text-xl mb-1">No password needed</h2>
-        <p className="text-sm mb-6" style={{ color: '#6B8CAE' }}>
-          We will email you a link. One tap and you are in.
-        </p>
-
-        {error && (
-          <div className="rounded-2xl px-4 py-3 mb-4 text-sm text-left"
-            style={{ background: 'rgba(239,68,68,0.1)', color: '#FCA5A5', border: '1px solid rgba(239,68,68,0.3)' }}>
-            {error}
-          </div>
-        )}
-
-        <form onSubmit={sendMagicLink} className="space-y-3 text-left">
-          <input className="input" type="email" autoComplete="email" placeholder="you@email.com"
-            value={form.email} onChange={e => update('email', e.target.value)} required />
-          <button type="submit" disabled={loading} className="btn-play mt-1 w-full">
-            {loading ? '\u2026' : 'Email me a link \u2192'}
-          </button>
-        </form>
-
-        <button onClick={() => { setMode('signin'); setError('') }}
-          className="mt-5 text-sm transition-colors hover:text-white" style={{ color: '#6B8CAE' }}>
-          ← Use my password instead
-        </button>
-      </div>
-    </div>
+    <Screen pad="36px 30px 30px">
+      <Back onClick={backToSignin} mb={26} />
+      <H1>No password needed.</H1>
+      <Sub>We email you a link. One tap and you are in.</Sub>
+      <form onSubmit={sendMagicLink} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+        <input className="input" type="email" autoComplete="email" placeholder="you@email.com"
+          value={form.email} onChange={e => update('email', e.target.value)} required />
+        <ErrorNote>{error}</ErrorNote>
+        <Btn kind="purple" type="submit" disabled={loading}>{loading ? '…' : 'Email me a link'}</Btn>
+      </form>
+      <Spacer />
+      <TextBtn onClick={backToSignin}>Use my password instead</TextBtn>
+    </Screen>
   )
 
   if (mode === 'magic-sent') return (
-    <div className="min-h-screen flex items-center justify-center px-4" style={{ background: '#0a0a0f' }}>
-      <div className="max-w-md w-full text-center rounded-3xl p-10"
-        style={{ background: 'linear-gradient(160deg,#10192E,#0B1220)', border: '1px solid rgba(255,255,255,0.08)' }}>
-        <div className="text-5xl mb-5">🔑</div>
-        <h2 className="text-white font-black text-xl mb-3">Check your inbox</h2>
-        <p className="text-sm leading-relaxed mb-2" style={{ color: '#6B8CAE' }}>
-          If an account exists for{' '}
-          <span className="text-white font-semibold">{form.email}</span>, your sign-in link is on its way.
-        </p>
-        <p className="text-xs" style={{ color: '#475F7B' }}>The link works once and expires in an hour.</p>
-        <button onClick={() => { setMode('signin'); setError('') }}
-          className="mt-6 text-sm transition-colors hover:text-white" style={{ color: '#6B8CAE' }}>
-          ← Back to sign in
-        </button>
-      </div>
-    </div>
+    <Sent title="Check your inbox." note="The link works once and expires in an hour.">
+      If an account exists for <span style={{ color: C.paper }}>{form.email}</span>, your sign-in link is on its way.
+    </Sent>
   )
 
-  // ── Forgot-password screens ─────────────────────────────────────────────────
+  // ── Forgot password ────────────────────────────────────────────────────────
   if (mode === 'forgot') return (
-    <div className="min-h-screen flex items-center justify-center px-4" style={{ background: '#0a0a0f' }}>
-      <div className="max-w-md w-full rounded-3xl p-9 text-center"
-        style={{ background: 'linear-gradient(160deg,#10192E,#0B1220)', border: '1px solid rgba(255,255,255,0.08)' }}>
-        <div className="flex justify-center mb-4"><VakMascot level={3} size={78} mood="encouraging" /></div>
-        <h2 className="text-white font-black text-xl mb-1">Forgot your password?</h2>
-        <p className="text-sm mb-6" style={{ color: '#6B8CAE' }}>
-          Enter your email and we will send you a link to set a new one.
-        </p>
-
-        {error && (
-          <div className="rounded-2xl px-4 py-3 mb-4 text-sm text-left"
-            style={{ background: 'rgba(239,68,68,0.1)', color: '#FCA5A5', border: '1px solid rgba(239,68,68,0.3)' }}>
-            {error}
-          </div>
-        )}
-
-        <form onSubmit={sendReset} className="space-y-3 text-left">
-          <input className="input" type="email" autoComplete="email" placeholder="you@email.com"
-            value={form.email} onChange={e => update('email', e.target.value)} required />
-          <button type="submit" disabled={loading} className="btn-play mt-1 w-full">
-            {loading ? '…' : 'Send reset link →'}
-          </button>
-        </form>
-
-        <button onClick={() => { setMode('signin'); setError('') }}
-          className="mt-5 text-sm transition-colors hover:text-white" style={{ color: '#6B8CAE' }}>
-          ← Back to sign in
-        </button>
-      </div>
-    </div>
+    <Screen pad="36px 30px 30px">
+      <Back onClick={backToSignin} mb={26} />
+      <H1>Forgot your password?</H1>
+      <Sub>Enter your email and we will send you a link to set a new one.</Sub>
+      <form onSubmit={sendReset} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+        <input className="input" type="email" autoComplete="email" placeholder="you@email.com"
+          value={form.email} onChange={e => update('email', e.target.value)} required />
+        <ErrorNote>{error}</ErrorNote>
+        <Btn kind="purple" type="submit" disabled={loading}>{loading ? '…' : 'Send reset link'}</Btn>
+      </form>
+    </Screen>
   )
 
   if (mode === 'reset-sent') return (
-    <div className="min-h-screen flex items-center justify-center px-4" style={{ background: '#0a0a0f' }}>
-      <div className="max-w-md w-full text-center rounded-3xl p-10"
-        style={{ background: 'linear-gradient(160deg,#10192E,#0B1220)', border: '1px solid rgba(255,255,255,0.08)' }}>
-        <div className="text-5xl mb-5">📧</div>
-        <h2 className="text-white font-black text-xl mb-3">Check your inbox</h2>
-        <p className="text-sm leading-relaxed mb-2" style={{ color: '#6B8CAE' }}>
-          If an account exists for{' '}
-          <span className="text-white font-semibold">{form.email}</span>, we have sent a link to reset your password.
-        </p>
-        <p className="text-xs" style={{ color: '#475F7B' }}>The link expires shortly and can only be used once.</p>
-        <button onClick={() => { setMode('signin'); setError('') }}
-          className="mt-6 text-sm transition-colors hover:text-white" style={{ color: '#6B8CAE' }}>
-          ← Back to sign in
-        </button>
-      </div>
-    </div>
+    <Sent title="Check your inbox." note="The link expires shortly and can only be used once.">
+      If an account exists for <span style={{ color: C.paper }}>{form.email}</span>, we have sent a link to reset your password.
+    </Sent>
   )
 
-  // ── Check-email screen ───────────────────────────────────────────────────────
   if (mode === 'check-email') return (
-    <div className="min-h-screen flex items-center justify-center px-4"
-      style={{ background: '#0a0a0f' }}>
-      <div className="max-w-md w-full text-center rounded-3xl p-10"
-        style={{ background: 'linear-gradient(160deg, #10192E 0%, #0B1220 100%)', border: '1px solid rgba(255,255,255,0.08)' }}>
-        <div className="text-5xl mb-5">📧</div>
-        <h2 className="text-white font-black text-xl mb-3">Check your inbox</h2>
-        <p className="text-sm leading-relaxed" style={{ color: '#6B8CAE' }}>
-          We sent a confirmation link to{' '}
-          <span className="text-white font-semibold">{form.email}</span>.
-          Click it to activate your account and start earning XP.
-        </p>
-        <button
-          onClick={() => setMode('signin')}
-          className="mt-6 text-sm transition-colors hover:text-white"
-          style={{ color: '#6B8CAE' }}
-        >
-          ← Back to sign in
-        </button>
-      </div>
-    </div>
+    <Sent title="One more step.">
+      We sent a confirmation link to <span style={{ color: C.paper }}>{form.email}</span>. Tap it to activate your account.
+    </Sent>
   )
 
-  // ── Sign-in / Sign-up screen ─────────────────────────────────────────────────
+  // ── Sign in / sign up with email ───────────────────────────────────────────
+  const signup = mode === 'signup'
   return (
-    <div
-      className="min-h-screen flex items-center justify-center px-4 py-8 relative overflow-hidden"
-      style={{ background: '#0a0a0f' }}
-    >
-      {/* Background glows */}
-      <div className="fixed inset-0 pointer-events-none overflow-hidden">
-        <div style={{
-          position: 'absolute', top: '-100px', right: '-80px',
-          width: '500px', height: '500px', borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(99,102,241,0.1) 0%, transparent 70%)',
-        }} />
-        <div style={{
-          position: 'absolute', bottom: '-100px', left: '-80px',
-          width: '400px', height: '400px', borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(123,94,167,0.07) 0%, transparent 70%)',
-        }} />
-      </div>
+    <Screen pad="36px 30px 30px">
+      <Back onClick={() => navigate(-1)} mb={26} />
+      <H1 size={28}>{signup ? 'Create your account.' : 'Welcome back.'}</H1>
+      <Sub>{signup ? 'Your score, streak and credential, saved to one account.' : 'Pick up the streak where you left it.'}</Sub>
 
-      <div className="w-full max-w-sm relative z-10">
-
-        {/* Vak + Logo */}
-        <div className="text-center mb-8 animate-fade-in">
-          <div className="flex justify-center mb-3 animate-float">
-            <VakMascot level={2} size={100} />
+      <form onSubmit={submit} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+        {signup && (
+          <div>
+            <Label>YOUR NAME</Label>
+            <input className="input" placeholder="Ananya Raghavan" autoComplete="name"
+              value={form.name} onChange={e => update('name', e.target.value)} required />
           </div>
-          <Link to="/" className="inline-block">
-            <span className="text-3xl font-black text-white tracking-tight" style={{ fontFamily: 'Outfit, sans-serif' }}>
-              SAN<span style={{ color: '#7B5EA7' }}>4</span>
-            </span>
-          </Link>
-          <p className="mt-1 text-sm font-medium" style={{ color: '#6B8CAE' }}>
-            Communicate with Confidence
-          </p>
+        )}
+        <div>
+          <Label>EMAIL</Label>
+          <input className="input" type="email" placeholder="you@email.com" autoComplete="email"
+            value={form.email} onChange={e => update('email', e.target.value)} required />
         </div>
-
-        {/* Card */}
-        <div
-          className="rounded-3xl p-6 sm:p-8 animate-slide-up"
-          style={{
-            background: 'linear-gradient(160deg, #10192E 0%, #0B1220 100%)',
-            border: '1px solid rgba(255,255,255,0.08)',
-          }}
-        >
-          {/* Tab toggle */}
-          <div
-            className="flex rounded-2xl p-1 mb-7"
-            style={{ background: 'linear-gradient(160deg, #10192E 0%, #0B1220 100%)' }}
-          >
-            {['signin', 'signup'].map(m => (
-              <button
-                key={m}
-                onClick={() => { setMode(m); setError('') }}
-                className="flex-1 py-2.5 rounded-xl text-sm font-bold transition-all"
-                style={{
-                  background: mode === m
-                    ? 'linear-gradient(135deg, #7B5EA7, #9B7EC8)'
-                    : 'transparent',
-                  color: mode === m ? 'white' : '#6B8CAE',
-                  boxShadow: mode === m ? '0 4px 14px rgba(123,94,167,0.3)' : 'none',
-                }}
-              >
-                {m === 'signin' ? 'Sign In' : 'Join Free'}
-              </button>
-            ))}
-          </div>
-
-          <form onSubmit={submit} className="space-y-4">
-
-            {mode === 'signup' && (
-              <div>
-                <label className="block text-xs font-bold uppercase tracking-widest mb-2"
-                  style={{ color: '#6B8CAE' }}>Your name</label>
-                <input className="input" placeholder="Ravi Kumar"
-                  value={form.name} onChange={e => update('name', e.target.value)} required />
-              </div>
-            )}
-
-            <div>
-              <label className="block text-xs font-bold uppercase tracking-widest mb-2"
-                style={{ color: '#6B8CAE' }}>Email</label>
-              <input className="input" type="email" placeholder="you@email.com"
-                value={form.email} onChange={e => update('email', e.target.value)} required />
-            </div>
-
-            <div>
-              <label className="block text-xs font-bold uppercase tracking-widest mb-2"
-                style={{ color: '#6B8CAE' }}>Password</label>
-              <input className="input" type="password"
-                placeholder={mode === 'signup' ? 'Min 8 characters' : '••••••••'}
-                value={form.password} onChange={e => update('password', e.target.value)}
-                minLength={8} required />
-            </div>
-
-            {mode === 'signin' && (
-              <div className="text-right -mt-1">
-                <button type="button" onClick={() => { setMode('forgot'); setError('') }}
-                  className="text-xs font-semibold transition-colors hover:text-white"
-                  style={{ color: '#7B5EA7' }}>
-                  Forgot password?
-                </button>
-              </div>
-            )}
-
-            {mode === 'signup' && (
-              <label className="flex items-start gap-2.5 text-xs leading-relaxed cursor-pointer select-none"
-                style={{ color: '#6B8CAE' }}>
-                <input
-                  type="checkbox"
-                  checked={consented}
-                  onChange={e => { setConsented(e.target.checked); setError('') }}
-                  className="mt-0.5 shrink-0"
-                  style={{ accentColor: '#7B5EA7' }}
-                  required
-                />
-                <span>
-                  I agree to the{' '}
-                  <Link to="/privacy" target="_blank" className="font-semibold hover:text-white transition-colors"
-                    style={{ color: '#7B5EA7' }}>Privacy Policy</Link>.
-                  {' '}I understand San4 records and processes my voice and practice sessions with AI to give me feedback.
-                </span>
-              </label>
-            )}
-
-            {error && (
-              <div
-                className="text-sm px-4 py-3 rounded-2xl"
-                style={{
-                  background: 'rgba(239,68,68,0.1)',
-                  border: '1px solid rgba(239,68,68,0.2)',
-                  color: '#FCA5A5',
-                }}
-              >
-                {error}
-              </div>
-            )}
-
-            <button
-              type="submit"
-              disabled={loading || (mode === 'signup' && !consented)}
-              className="btn-play mt-1"
-              style={mode === 'signup' && !consented ? { opacity: 0.5, cursor: 'not-allowed' } : undefined}
-            >
-              {loading
-                ? '…'
-                : mode === 'signin'
-                  ? '🎮 Sign In →'
-                  : '🚀 Create Account →'}
-            </button>
-          </form>
-
-          {mode === 'signin' && (
-            <>
-              <div className="flex items-center gap-3 my-4">
-                <div className="h-px flex-1" style={{ background: 'rgba(255,255,255,0.1)' }} />
-                <span className="text-xs" style={{ color: '#475F7B' }}>or</span>
-                <div className="h-px flex-1" style={{ background: 'rgba(255,255,255,0.1)' }} />
-              </div>
-              <button
-                type="button"
-                onClick={() => { setMode('magic'); setError('') }}
-                className="w-full py-3 rounded-2xl text-sm font-semibold transition-all hover:opacity-90"
-                style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.12)', color: '#cbd5e1' }}
-              >
-                ✉️ Email me a link instead
-              </button>
-            </>
-          )}
-
-          {mode === 'signup' && (
-            <div
-              className="mt-4 rounded-2xl px-4 py-3 text-xs text-center"
-              style={{
-                background: 'rgba(245,158,11,0.08)',
-                border: '1px solid rgba(245,158,11,0.15)',
-                color: '#F59E0B',
-              }}
-            >
-              ⭐ 3 free sessions included · No card needed
-            </div>
-          )}
-
-          {/* Switch mode */}
-          <p className="text-center mt-5 text-sm" style={{ color: '#6B8CAE' }}>
-            {mode === 'signin' ? (
-              <>No account?{' '}
-                <button onClick={() => { setMode('signup'); setError('') }}
-                  className="font-bold hover:text-white transition-colors"
-                  style={{ color: '#7B5EA7' }}>
-                  Join free →
-                </button>
-              </>
-            ) : (
-              <>Already in?{' '}
-                <button onClick={() => { setMode('signin'); setError('') }}
-                  className="font-bold hover:text-white transition-colors"
-                  style={{ color: '#7B5EA7' }}>
-                  Sign in
-                </button>
-              </>
-            )}
-          </p>
+        <div>
+          <Label>PASSWORD</Label>
+          <input className="input" type="password" autoComplete={signup ? 'new-password' : 'current-password'}
+            placeholder={signup ? 'At least 8 characters' : '••••••••'}
+            value={form.password} onChange={e => update('password', e.target.value)} minLength={8} required />
         </div>
+        {!signup && (
+          <button type="button" onClick={() => { setMode('forgot'); setError('') }}
+            style={{ alignSelf: 'flex-end', border: 'none', background: 'none', cursor: 'pointer', color: C.lilac, font: `500 12px ${F.sans}`, marginTop: -4 }}>
+            Forgot password?
+          </button>
+        )}
+        {signup && (
+          <ConsentTick checked={consented} onChange={v => { setConsented(v); setError('') }}>
+            I agree to the <Link to="/privacy" target="_blank" style={{ color: C.lilac }}>Privacy Policy</Link>. I understand San4 records and processes my voice and practice sessions with AI to give me feedback.
+          </ConsentTick>
+        )}
+        <ErrorNote>{error}</ErrorNote>
+        <Btn kind={signup ? 'purple' : 'paper'} type="submit" disabled={loading || (signup && !consented)}>
+          {loading ? '…' : signup ? 'Create account' : 'Sign in'}
+        </Btn>
+      </form>
 
-        <p className="text-center mt-5 text-xs" style={{ color: '#243D5F' }}>
-          <Link to="/" className="hover:text-muted transition-colors">← Back to San4</Link>
-        </p>
-      </div>
-    </div>
+      {!signup && <>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, margin: '22px 0' }}>
+          <span style={{ flex: 1, height: 1, background: 'rgba(255,255,255,.1)' }} />
+          <span style={{ font: `500 10px ${F.mono}`, color: C.dim }}>OR</span>
+          <span style={{ flex: 1, height: 1, background: 'rgba(255,255,255,.1)' }} />
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          <Btn kind="outline" to="/signup" style={{ padding: 16, borderRadius: 15 }}>Phone number or Google</Btn>
+          <Btn kind="outline" onClick={() => { setMode('magic'); setError('') }} style={{ padding: 16, borderRadius: 15 }}>Email me a link instead</Btn>
+        </div>
+      </>}
+
+      <Spacer min={24} />
+      <p style={{ margin: 0, textAlign: 'center', fontSize: 12.5, color: C.dim }}>
+        {signup
+          ? <>Already in? <TextBtn onClick={() => { setMode('signin'); setError('') }} color={C.lilac}>Sign in</TextBtn></>
+          : <>New here? <TextBtn to="/start" color={C.lilac} style={{ display: 'inline' }}>Get your score first</TextBtn></>}
+      </p>
+    </Screen>
   )
 }
