@@ -11,9 +11,9 @@ import { friendlyAuthError } from '../lib/authErrors'
 // — on phones that closes the keyboard, which is exactly what users reported.
 function Shell({ children }) {
   return (
-    <div className="min-h-screen flex items-center justify-center px-4" style={{ background: '#0a0a0f' }}>
+    <div className="min-h-screen flex items-center justify-center px-4" style={{ background: '#0A0A0C' }}>
       <div className="max-w-md w-full rounded-3xl p-9 text-center"
-        style={{ background: 'linear-gradient(160deg,#10192E,#0B1220)', border: '1px solid rgba(255,255,255,0.08)' }}>
+        style={{ background: 'linear-gradient(160deg,#121218,#0C0C10)', border: '1px solid rgba(255,255,255,0.08)' }}>
         {children}
       </div>
     </div>
@@ -82,7 +82,7 @@ export default function ResetPassword() {
     <Shell>
       <div className="text-5xl mb-4">⚠️</div>
       <h2 className="text-white font-black text-xl mb-2">This link has expired</h2>
-      <p className="text-sm mb-6" style={{ color: '#94A3B8' }}>
+      <p className="text-sm mb-6" style={{ color: '#C9C9D2' }}>
         Password reset links can only be used once, and expire after a short while. Request a fresh one and it will work.
       </p>
       <Link to="/auth?reset=1" className="btn-primary inline-block px-7 py-3">Send a new link →</Link>
@@ -93,7 +93,7 @@ export default function ResetPassword() {
     <Shell>
       <div className="flex justify-center mb-4"><VakMascot level={5} size={82} mood="celebrating" /></div>
       <h2 className="text-white font-black text-xl mb-2">Password updated</h2>
-      <p className="text-sm" style={{ color: '#6B8CAE' }}>Signing you in…</p>
+      <p className="text-sm" style={{ color: '#9A9AA8' }}>Signing you in…</p>
     </Shell>
   )
 
@@ -101,7 +101,7 @@ export default function ResetPassword() {
     <Shell>
       <div className="flex justify-center mb-4"><VakMascot level={3} size={78} mood="encouraging" /></div>
       <h2 className="text-white font-black text-xl mb-1">Set a new password</h2>
-      <p className="text-sm mb-6" style={{ color: '#6B8CAE' }}>Make it something you will remember.</p>
+      <p className="text-sm mb-6" style={{ color: '#9A9AA8' }}>Make it something you will remember.</p>
 
       {error && (
         <div className="rounded-2xl px-4 py-3 mb-4 text-sm text-left"

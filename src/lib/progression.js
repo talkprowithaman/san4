@@ -205,3 +205,11 @@ export const ZONES = [
     isPro: true,
   },
 ]
+
+// The next level worth playing: the lowest unlocked level not yet passed
+// (falls back to the free-tier summit once everything free is cleared).
+export function nextLevel(unlockedSet, bestScores = {}) {
+  const free = SCENARIOS.filter(s => s.tier !== 'pro')
+  return free.find(s => (s.tier === 'always_free' || unlockedSet.has(s.id)) && (bestScores[s.id] || 0) < (s.passScore || 0))
+    || free[free.length - 1]
+}

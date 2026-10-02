@@ -164,6 +164,23 @@ async function runScoredJson(model, parts) {
   return null
 }
 
+// Fields every scored take returns so the report can lead with ONE
+// instruction and the user's own words rewritten (design: "the one fix").
+const REP_EXTRA_FIELDS = `  "clarity": <integer 0-100, how easy it was to follow>,
+  "structure": <integer 0-100, did it lead with the point and land an ending>,
+  "better_opening": "<their own opening sentence rewritten the better way, in their voice, one or two sentences, no quotes>"`
+
+const SESSION_EXTRA_FIELDS = `  "clarity_score": <integer 0-100, how easy the user was to follow>,
+  "structure_score": <integer 0-100, did answers lead with the point and land>,
+  "better_opening": "One of the user's own weaker sentences, rewritten the better way in their voice. No quotes.",
+  "line_notes": [{ "said": "<a sentence the user actually said, verbatim>", "better": "<the same idea said better, in their voice>" }]`
+
+// Job post context for Pro interview mode (scored against a real JD).
+function jobPostNote(jobPost) {
+  if (!jobPost) return ''
+  return `\n\nINTERVIEW MODE: The user is preparing for this specific job post. Score how well their answers fit what this role asks for, and mention the job post in your feedback where it matters.\nJOB POST:\n${String(jobPost).slice(0, 4000)}`
+}
+
 // ── Daily Rep — instant feedback on one 60-second spoken answer ──────────────
 // The atomic loop: must be FAST (flash-lite, one call) and tiny (one score,
 // one win, one fix). Returns null after retries fail. Callers show a retry
@@ -195,7 +212,8 @@ Return JSON only:
   "filler_count": <integer, fillers you actually heard>,
   "energy": "<one or two words on vocal energy, e.g. 'confident', 'flat', 'rushed', 'warm'>",
   "pace_note": "<one short sentence on their pace and tone>",
-  "transcript": "<what they said, faithfully, including fillers>"
+  "transcript": "<what they said, faithfully, including fillers>",
+${REP_EXTRA_FIELDS}
 }`
 
   const parts = [
@@ -216,6 +234,49 @@ Return JSON only:
       console.warn('Daily rep: unparseable response, attempt', attempt + 1)
     } catch (err) {
       console.error('Daily rep analysis failed, attempt', attempt + 1, err)
+    }
+    await new Promise(r => setTimeout(r, 700))
+  }
+  return null
+}
+
+// ── Daily Rep, typed ──────────────────────────────────────────────────────────
+// "Type it" mode: silent, works on one bar of signal. Scores structure and
+// clarity only (there is no voice to judge), with the same fields as speech.
+export async function analyzeDailyRepText(rep, text) {
+  const prompt = `You are Vak, San4's warm but honest communication coach for Indian professionals. The user was given this speaking challenge and chose to TYPE their answer instead of speaking it (no signal, or somewhere they can't talk):
+
+SITUATION: ${rep.situation}
+CHALLENGE: ${rep.prompt}
+WHAT GOOD LOOKS LIKE: ${rep.focus}
+
+THEIR TYPED ANSWER:
+${String(text).slice(0, 3000)}
+
+Judge it as if they had said it out loud: did they meet the challenge, lead with the point, stay brief, sound assured? Do not judge spelling or typing. Indian English and Hinglish are completely fine.
+
+${HUMAN_STYLE}
+
+${CALIBRATION}
+
+Return JSON only:
+{
+  "score": <integer 0-100, honest, 80+ means genuinely strong>,
+  "win": "<ONE specific thing they did well, quoting their words>",
+  "fix": "<ONE specific, actionable thing to do better next time>",
+  "filler_count": 0,
+  "energy": null,
+  "pace_note": null,
+  "transcript": ${JSON.stringify('<their answer, unchanged>')},
+${REP_EXTRA_FIELDS}
+}`
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      const out = await geminiGenerate(MODEL, prompt, { generationConfig: { responseMimeType: 'application/json' } })
+      const parsed = extractJson(out)
+      if (parsed && typeof parsed.score === 'number') return { ...parsed, transcript: text }
+    } catch (err) {
+      console.error('Typed rep analysis failed, attempt', attempt + 1, err)
     }
     await new Promise(r => setTimeout(r, 700))
   }
@@ -323,21 +384,22 @@ When the user says "end session", write: [SESSION_ENDED]`,
 // These mirror the 'Start with: "…"' instruction in each scenario prompt, so
 // the model believes it already delivered them when the conversation continues.
 export const OPENING_LINES = {
-  hr_interview:           "Thanks for coming in — please, have a seat. Let's get started. Tell me about yourself.",
-  social_conversation:    "Hey! Haven't seen you here before. I'm Rahul. What do you do?",
-  team_meeting:           "Morning! Let's keep it quick — what are you working on today and are there any blockers?",
+  hr_interview:           "Thanks for coming in. Please, have a seat. Let's get started. Tell me about yourself.",
+  social_conversation:    "Hey! Haven't seen you here before. What do you do?",
+  team_meeting:           "Morning! Let's keep it quick. What are you working on today, and are there any blockers?",
   client_presentation:    "Alright, you have 15 minutes. What have you got for us?",
   performance_review:     "Thanks for coming in. How do you feel this year went overall?",
   salary_negotiation:     "So I understand you wanted to discuss your compensation. What's on your mind?",
   gd_round:               "Welcome everyone. Today's GD topic is: 'Should India prioritise economic growth over environmental sustainability?' Please begin.",
   first_date:             "Hi! It's nice to finally meet in person. How was the commute?",
-  say_no_professionally:  "I need this done by tonight — drop everything else.",
-  leadership_update:      "Okay — you've got two minutes. What's the situation and what do you need from me?",
-  pitch_skeptic:          "I'll be honest — I'm not convinced we need this. We're already stretched thin. What have you got?",
-  cold_networking:        "Hi — I don't think we've met. Are you enjoying the event?",
+  say_no_professionally:  "I need this done by tonight. Drop everything else.",
+  leadership_update:      "Okay, you've got two minutes. What's the situation and what do you need from me?",
+  pitch_skeptic:          "I'll be honest, I'm not convinced we need this. We're already stretched thin. What have you got?",
+  cold_networking:        "Hi, I don't think we've met. Are you enjoying the event?",
   conflict_mediation:     "I'm glad you called this meeting. Rahul keeps presenting my work as his own and I've had enough.",
-  sensitive_conversation: "Hey — you mentioned you wanted to talk about something? What's up?",
+  sensitive_conversation: "Hey, you mentioned you wanted to talk about something? What's up?",
 }
+
 
 // ── Main chat function ────────────────────────────────────────────────────────
 // options: { eslMode: false }
@@ -381,7 +443,7 @@ export async function analyzeSession(scenarioTitle, messages, voiceMeta = null, 
     : ''
 
   const prompt = `You are a professional communication coach analysing a spoken practice session.
-${eslNote}
+${eslNote}${jobPostNote(options.jobPost)}
 Scenario: "${scenarioTitle}"
 ${pacingNote}
 
@@ -409,7 +471,8 @@ Return JSON only (no markdown, no code fences):
   "strengths": ["specific strength with example from transcript", "another specific strength"],
   "improvements": ["specific improvement with example", "another improvement"],
   "action_item": "One precise, actionable drill for next session",
-  "summary": "2-sentence honest assessment — be specific, not generic"${voiceMeta ? `,
+  "summary": "2-sentence honest assessment — be specific, not generic",
+${SESSION_EXTRA_FIELDS}${voiceMeta ? `,
   "pacing_note": "One sentence on their speaking pace and what to do about it"` : ''}
 }`
 
@@ -693,10 +756,10 @@ Return JSON only (no markdown, no code fences):
 // ── Audio-based session analysis ─────────────────────────────────────────────
 // Gemini receives raw audio, transcribes + coaches in one call.
 // Uses gemini-1.5-flash (NOT the gemini-flash-latest alias) — confirmed audio support.
-export async function analyzeSessionFromAudio(scenarioTitle, audioBase64, mimeType = 'audio/webm', lang = 'en-US') {
+export async function analyzeSessionFromAudio(scenarioTitle, audioBase64, mimeType = 'audio/webm', lang = 'en-US', options = {}) {
   const prompt = `You are a professional communication coach.
 Listen to this audio recording from a "${scenarioTitle}" practice session.
-Focus only on the human speaker. Ignore any AI/TTS voice you may hear.${langNote(lang)}
+Focus only on the human speaker. Ignore any AI/TTS voice you may hear.${langNote(lang)}${jobPostNote(options.jobPost)}
 
 First, transcribe exactly what the human speaker said.
 Then analyse their spoken communication quality.
@@ -717,7 +780,8 @@ Return JSON only (no markdown, no code fences):
   "improvements": ["specific improvement with an example from what they said"],
   "action_item": "One precise, actionable drill for their next session",
   "summary": "2-sentence honest coaching assessment — cite something specific they said",
-  "pacing_note": "One sentence on their speaking pace and what to adjust"
+  "pacing_note": "One sentence on their speaking pace and what to adjust",
+${SESSION_EXTRA_FIELDS}
 }`
 
   try {

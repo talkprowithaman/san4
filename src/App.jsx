@@ -31,8 +31,17 @@ import WhyItMatters   from './pages/WhyItMatters'
 import Terms          from './pages/Terms'
 import ResponsibleAI  from './pages/ResponsibleAI'
 import ResumeBuilder  from './pages/ResumeBuilder'
+import Welcome        from './pages/Welcome'
+import Signup         from './pages/Signup'
+import Streak         from './pages/Streak'
+import Me             from './pages/Me'
+import Credential     from './pages/Credential'
+import Pro            from './pages/Pro'
+import PracticeMode   from './pages/PracticeMode'
+import WhoYouFace     from './pages/WhoYouFace'
+import WarmUp         from './pages/WarmUp'
 import ReminderScheduler from './components/ReminderScheduler'
-import { useAuth } from './hooks/useAuth'
+import { useAuth, useAuthStore } from './hooks/useAuth'
 import { initAnalytics, trackPageview } from './lib/analytics'
 
 // SPA pageviews: the router changes the URL without a reload, so PostHog's own
@@ -41,6 +50,26 @@ function PageviewTracker() {
   const location = useLocation()
   useEffect(() => { trackPageview(location.pathname) }, [location.pathname])
   return null
+}
+
+// The marketing site keeps its own look. Every other route is the app, and
+// gets body.ink so older tool pages pick up the Ink design system too.
+const MARKETING = new Set(['/', '/how-it-works', '/privacy', '/extension', '/san4-score', '/why-it-matters', '/terms', '/responsible-ai', '/pricing'])
+function ThemeScope() {
+  const { pathname } = useLocation()
+  useEffect(() => {
+    document.body.classList.toggle('ink', !MARKETING.has(pathname))
+  }, [pathname])
+  return null
+}
+
+// "/" is the marketing page on the web. In the native app there is no
+// marketing page: signed-in users land on Today, everyone else on Welcome.
+function Home() {
+  const { user, loading } = useAuthStore()
+  if (!Capacitor.isNativePlatform()) return <Landing />
+  if (loading) return null
+  return <Navigate to={user ? '/today' : '/start'} replace />
 }
 
 // In the native Android/iOS shell there is no SPA server fallback, so deep
@@ -71,10 +100,15 @@ export default function App() {
   return (
     <Router>
       <PageviewTracker />
+      <ThemeScope />
       <ReminderScheduler />
       <Routes>
         {/* Public */}
-        <Route path="/"              element={<Landing />} />
+        <Route path="/"              element={<Home />} />
+        <Route path="/start"         element={<Welcome />} />
+        <Route path="/signup"        element={<Signup />} />
+        <Route path="/a/:code"       element={<Credential />} />
+        <Route path="/pro"           element={<Pro />} />
         <Route path="/auth"          element={<Auth />} />
         <Route path="/auth/callback" element={<AuthCallback />} />
         <Route path="/auth/reset"    element={<ResetPassword />} />
@@ -93,6 +127,11 @@ export default function App() {
 
         {/* Protected */}
         <Route path="/today"     element={<ProtectedRoute><Today /></ProtectedRoute>} />
+        <Route path="/streak"    element={<ProtectedRoute><Streak /></ProtectedRoute>} />
+        <Route path="/me"        element={<ProtectedRoute><Me /></ProtectedRoute>} />
+        <Route path="/session/mode" element={<ProtectedRoute><PracticeMode /></ProtectedRoute>} />
+        <Route path="/session/who"  element={<ProtectedRoute><WhoYouFace /></ProtectedRoute>} />
+        <Route path="/warm-up"   element={<ProtectedRoute><WarmUp /></ProtectedRoute>} />
         <Route path="/daily-rep/:repId" element={<ProtectedRoute><DailyRep /></ProtectedRoute>} />
         <Route path="/library"   element={<ProtectedRoute><Library /></ProtectedRoute>} />
         <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />

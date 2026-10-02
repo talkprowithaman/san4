@@ -29,7 +29,7 @@ export default function SituationOfTheDay() {
               {done ? '✓ Done today' : '🔥 Daily Challenge'}
             </span>
           </div>
-          <div className="text-xs" style={{ color: '#6B8CAE' }}>{situation.category}</div>
+          <div className="text-xs" style={{ color: '#9A9AA8' }}>{situation.category}</div>
         </div>
         {!done && (
           <div
@@ -44,7 +44,7 @@ export default function SituationOfTheDay() {
       {/* Situation text */}
       <p
         className="text-sm leading-relaxed mb-4"
-        style={{ color: done ? '#6B8CAE' : '#E2E8F0' }}
+        style={{ color: done ? '#9A9AA8' : '#E6E6EA' }}
       >
         {situation.text}
       </p>
@@ -60,7 +60,7 @@ export default function SituationOfTheDay() {
           to="/daily-challenge"
           className="inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl text-sm font-bold transition-all hover:opacity-90"
           style={{
-            background: 'linear-gradient(135deg, #7B5EA7, #9B7EC8)',
+            background: '#7B5EA7',
             color: 'white',
             boxShadow: '0 4px 14px rgba(123,94,167,0.3)',
           }}

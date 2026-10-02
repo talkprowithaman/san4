@@ -1,6 +1,12 @@
 // ─────────────────────────────────────────────────────────────────────────────
 // Daily Reps — the atomic loop. One situation, 60 seconds of speaking, instant
-// feedback. Three reps a day keeps the streak alive.
+// feedback. One rep a day keeps the streak alive.
+//
+// Cold start (Duolingo principle): day one is ONE rep. The second unlocks on
+// day two of a streak and the third on day three, so the habit forms before
+// the ask grows. Rep 1 is the shared "challenge of the day" (same for
+// everyone); reps 2 and 3 are drawn from the categories that fit the user's
+// onboarding goal.
 //
 // DRAFT prompt bank written in Aman's coaching voice — Aman refines/replaces.
 // Format per rep: situation (context line), prompt (what Vak says aloud),
@@ -115,30 +121,74 @@ function hashString(s) {
   return h
 }
 
-export function getTodaysReps(date = new Date()) {
-  const seed = hashString(dayKey(date))
-  const n = DAILY_REPS.length
+// Onboarding goal → the rep categories that serve it best.
+export const GOAL_CATEGORIES = {
+  placement: ['Interview', 'Money'],
+  gd:        ['Assertiveness', 'Charm'],
+  client:    ['Workplace', 'Assertiveness'],
+  daily:     ['Charm', 'Workplace'],
+}
+
+// Deterministic stride walk over `pool`, seeded by `seedKey`.
+function strideWalk(pool, seedKey, count, exclude = new Set()) {
+  const n = pool.length
+  if (n === 0) return []
+  const seed = hashString(seedKey)
   const start = seed % n
-  const step = 1 + (seed % (n - 1))
+  const step = n > 1 ? 1 + (seed % (n - 1)) : 1
   const picks = []
   const seen = new Set()
-  // Bounded walk: a stride sharing a factor with n cycles over < 3 distinct
-  // indices, so cap at n hops…
-  for (let j = 0; j < n && picks.length < REPS_PER_DAY; j++) {
+  // Bounded walk: a stride sharing a factor with n cycles over fewer indices,
+  // so cap at n hops…
+  for (let j = 0; j < n && picks.length < count; j++) {
     const idx = (start + j * step) % n
-    if (!seen.has(idx)) {
-      seen.add(idx)
-      picks.push(DAILY_REPS[idx])
-    }
+    if (!seen.has(idx) && !exclude.has(pool[idx].id)) { seen.add(idx); picks.push(pool[idx]) }
   }
   // …then fill any remainder linearly (deterministic, can't loop forever).
-  for (let idx = 0; idx < n && picks.length < REPS_PER_DAY; idx++) {
-    if (!seen.has(idx)) {
-      seen.add(idx)
-      picks.push(DAILY_REPS[idx])
-    }
+  for (let idx = 0; idx < n && picks.length < count; idx++) {
+    if (!seen.has(idx) && !exclude.has(pool[idx].id)) { seen.add(idx); picks.push(pool[idx]) }
   }
   return picks
+}
+
+// The challenge of the day: everyone gets the same one (talkable, like Wordle).
+export function getDailyChallenge(date = new Date()) {
+  return strideWalk(DAILY_REPS, dayKey(date), 1)[0]
+}
+
+// Today's reps. Rep 1 is shared; reps 2 and 3 follow the user's goal.
+export function getTodaysReps(date = new Date(), goal = getGoal()) {
+  const first = getDailyChallenge(date)
+  const cats = GOAL_CATEGORIES[goal]
+  const pool = cats ? DAILY_REPS.filter(r => cats.includes(r.category)) : DAILY_REPS
+  const rest = strideWalk(pool, `${dayKey(date)}:${goal || 'any'}`, REPS_PER_DAY - 1, new Set([first.id]))
+  if (rest.length < REPS_PER_DAY - 1) {
+    const taken = new Set([first.id, ...rest.map(r => r.id)])
+    rest.push(...strideWalk(DAILY_REPS, `${dayKey(date)}:fill`, REPS_PER_DAY - 1 - rest.length, taken))
+  }
+  return [first, ...rest]
+}
+
+// How many of today's reps are open. Streak days completed BEFORE today
+// decide it: 0 → 1 rep, 1 → 2 reps, 2+ → all 3.
+export function repsUnlockedToday(progress, date = new Date()) {
+  const streak = progress?.streak_count || 0
+  const last = (progress?.last_practice_date || '').slice(0, 10)
+  const today = dayKey(date)
+  const yesterday = dayKey(new Date(date.getTime() - 86_400_000))
+  let before = 0
+  if (last === today) before = Math.max(0, streak - 1)
+  else if (last === yesterday) before = streak
+  return Math.min(REPS_PER_DAY, before + 1)
+}
+
+// ── Onboarding goal (placement | gd | client | daily) ───────────────────────
+const GOAL_KEY = 'san4_goal'
+export function getGoal() {
+  try { return localStorage.getItem(GOAL_KEY) || null } catch { return null }
+}
+export function setGoal(goal) {
+  try { localStorage.setItem(GOAL_KEY, goal) } catch { /* ignore */ }
 }
 
 // ── Completion tracking (localStorage, per user per day) ─────────────────────
@@ -146,19 +196,19 @@ function completionKey(userId, date = new Date()) {
   return `san4_reps_${userId || 'guest'}_${dayKey(date)}`
 }
 
-export function getRepCompletions(userId) {
+export function getRepCompletions(userId, date = new Date()) {
   try {
-    return JSON.parse(localStorage.getItem(completionKey(userId)) || '[]')
+    return JSON.parse(localStorage.getItem(completionKey(userId, date)) || '[]')
   } catch {
     return []
   }
 }
 
-export function saveRepCompletion(userId, repId, score) {
-  const done = getRepCompletions(userId).filter(c => c.id !== repId)
+export function saveRepCompletion(userId, repId, score, date = new Date()) {
+  const done = getRepCompletions(userId, date).filter(c => c.id !== repId)
   done.push({ id: repId, score, at: Date.now() })
   try {
-    localStorage.setItem(completionKey(userId), JSON.stringify(done))
+    localStorage.setItem(completionKey(userId, date), JSON.stringify(done))
   } catch { /* ignore */ }
   return done
 }

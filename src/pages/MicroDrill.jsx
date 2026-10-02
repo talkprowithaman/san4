@@ -223,7 +223,7 @@ export default function MicroDrill() {
   // ── PHASE: select ─────────────────────────────────────────────────────────
   if (phase === 'select') {
     return (
-      <div className="min-h-screen" style={{ background: '#050810' }}>
+      <div className="min-h-screen" style={{ background: '#0A0A0C' }}>
         <Navbar />
         <main className="max-w-2xl mx-auto px-4 py-8 animate-fade-in">
 
@@ -235,7 +235,7 @@ export default function MicroDrill() {
               ⚡ Micro-Drills
             </div>
             <h1 className="text-3xl font-black text-white">60-second skill sharpeners</h1>
-            <p className="mt-1" style={{ color: '#6B8CAE' }}>
+            <p className="mt-1" style={{ color: '#9A9AA8' }}>
               No scenario setup. No warmup. Respond on the spot.
             </p>
           </div>
@@ -255,28 +255,28 @@ export default function MicroDrill() {
                 onClick={() => pickDrill(type)}
                 className="text-left rounded-3xl p-6 transition-all hover:brightness-110 disabled:opacity-50"
                 style={{
-                  background: 'linear-gradient(160deg, #10192E 0%, #0B1220 100%)',
+                  background: 'linear-gradient(160deg, #121218 0%, #0C0C10 100%)',
                   border: `1px solid ${m.colorBorder}`,
                   boxShadow: `0 0 30px ${m.colorAlpha}`,
                 }}
               >
                 <div className="text-4xl mb-3">{m.icon}</div>
                 <div className="font-black text-white text-lg mb-2">{m.name}</div>
-                <p className="text-sm mb-4" style={{ color: '#6B8CAE' }}>{m.description}</p>
+                <p className="text-sm mb-4" style={{ color: '#9A9AA8' }}>{m.description}</p>
                 <div className="flex items-center gap-2">
                   <span className="text-xs px-2 py-0.5 rounded-full font-semibold"
                     style={{ background: m.colorAlpha, color: m.color }}>
                     {m.timeLabel}
                   </span>
-                  <span className="text-xs" style={{ color: '#6B8CAE' }}>Auto-submit at end</span>
+                  <span className="text-xs" style={{ color: '#9A9AA8' }}>Auto-submit at end</span>
                 </div>
               </button>
             ))}
           </div>
 
           <div className="mt-6 rounded-2xl p-4"
-            style={{ background: 'linear-gradient(160deg, #10192E 0%, #0B1220 100%)', border: '1px solid rgba(255,255,255,0.06)' }}>
-            <p className="text-sm" style={{ color: '#6B8CAE' }}>
+            style={{ background: 'linear-gradient(160deg, #121218 0%, #0C0C10 100%)', border: '1px solid rgba(255,255,255,0.06)' }}>
+            <p className="text-sm" style={{ color: '#9A9AA8' }}>
               💡 <span className="text-white font-semibold">How drills work:</span> A random prompt appears.
               You have 5 seconds to read it, then recording starts automatically. Speak until time runs out
               or tap Done. Vak analyses and gives you one targeted fix.
@@ -291,7 +291,7 @@ export default function MicroDrill() {
   if (phase === 'ready') {
     const promptText = drillType === 'bluf' ? prompt.situation : prompt.question
     return (
-      <div className="min-h-screen flex flex-col" style={{ background: '#050810' }}>
+      <div className="min-h-screen flex flex-col" style={{ background: '#0A0A0C' }}>
         <Navbar />
         <main className="max-w-lg mx-auto px-4 py-8 flex-1 flex flex-col justify-center">
 
@@ -309,7 +309,7 @@ export default function MicroDrill() {
           <div
             className="rounded-3xl p-6 mb-6"
             style={{
-              background: 'linear-gradient(160deg, #10192E 0%, #0B1220 100%)',
+              background: 'linear-gradient(160deg, #121218 0%, #0C0C10 100%)',
               border: `1px solid ${meta.colorBorder}`,
             }}
           >
@@ -335,7 +335,7 @@ export default function MicroDrill() {
 
           {/* Countdown */}
           <div className="text-center">
-            <p className="text-sm mb-2" style={{ color: '#6B8CAE' }}>Recording starts in</p>
+            <p className="text-sm mb-2" style={{ color: '#9A9AA8' }}>Recording starts in</p>
             <div
               className="text-7xl font-black"
               style={{ color: meta.color, textShadow: `0 0 40px ${meta.colorAlpha}` }}
@@ -353,14 +353,14 @@ export default function MicroDrill() {
     const pct = Math.min(100, (seconds / maxSec) * 100)
     const promptText = drillType === 'bluf' ? prompt.situation : prompt.question
     return (
-      <div className="min-h-screen flex flex-col" style={{ background: '#050810' }}>
+      <div className="min-h-screen flex flex-col" style={{ background: '#0A0A0C' }}>
         <Navbar />
         <main className="max-w-lg mx-auto px-4 py-6 flex-1 flex flex-col">
 
           {/* Prompt reminder */}
           <div className="rounded-2xl p-4 mb-4"
-            style={{ background: 'linear-gradient(160deg, #10192E 0%, #0B1220 100%)', border: '1px solid rgba(255,255,255,0.06)' }}>
-            <p className="text-sm" style={{ color: '#6B8CAE' }}>{promptText}</p>
+            style={{ background: 'linear-gradient(160deg, #121218 0%, #0C0C10 100%)', border: '1px solid rgba(255,255,255,0.06)' }}>
+            <p className="text-sm" style={{ color: '#9A9AA8' }}>{promptText}</p>
           </div>
 
           {/* Mic animation */}
@@ -379,17 +379,17 @@ export default function MicroDrill() {
           {/* Live transcript */}
           {(transcript || liveText) && (
             <div className="rounded-2xl p-4 mb-4 max-h-32 overflow-y-auto"
-              style={{ background: 'linear-gradient(160deg, #10192E 0%, #0B1220 100%)', border: '1px solid rgba(255,255,255,0.06)' }}>
-              <p className="text-sm" style={{ color: '#E2E8F0' }}>
+              style={{ background: 'linear-gradient(160deg, #121218 0%, #0C0C10 100%)', border: '1px solid rgba(255,255,255,0.06)' }}>
+              <p className="text-sm" style={{ color: '#E6E6EA' }}>
                 {transcript}
-                {liveText && <span style={{ color: '#6B8CAE' }}> {liveText}</span>}
+                {liveText && <span style={{ color: '#9A9AA8' }}> {liveText}</span>}
               </p>
             </div>
           )}
 
           {/* Timer bar */}
           <div className="mb-4">
-            <div className="flex justify-between text-xs mb-1.5" style={{ color: '#6B8CAE' }}>
+            <div className="flex justify-between text-xs mb-1.5" style={{ color: '#9A9AA8' }}>
               <span>{fmt(seconds)}</span>
               <span>{fmt(maxSec - seconds)} left</span>
             </div>
@@ -418,11 +418,11 @@ export default function MicroDrill() {
   // ── PHASE: analyzing ──────────────────────────────────────────────────────
   if (phase === 'analyzing') {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center gap-6" style={{ background: '#050810' }}>
+      <div className="min-h-screen flex flex-col items-center justify-center gap-6" style={{ background: '#0A0A0C' }}>
         <div className="animate-float"><VakMascot level={3} size={90} /></div>
         <div className="text-center">
           <div className="text-white font-bold text-xl mb-2">Analysing your response…</div>
-          <div style={{ color: '#6B8CAE' }}>One fix coming up</div>
+          <div style={{ color: '#9A9AA8' }}>One fix coming up</div>
         </div>
         <div className="flex gap-2">
           {[0, 1, 2].map(i => (
@@ -438,7 +438,7 @@ export default function MicroDrill() {
   if (phase === 'report' && report) {
     const promptText = drillType === 'bluf' ? prompt.situation : prompt.question
     return (
-      <div className="min-h-screen" style={{ background: '#050810' }}>
+      <div className="min-h-screen" style={{ background: '#0A0A0C' }}>
         <Navbar />
         <main className="max-w-lg mx-auto px-4 py-8 animate-slide-up">
 
@@ -451,7 +451,7 @@ export default function MicroDrill() {
               style={{ background: meta.colorAlpha, color: meta.color }}>
               {meta.icon} {meta.name}
             </span>
-            <p style={{ color: '#6B8CAE' }}>{fmt(seconds)}</p>
+            <p style={{ color: '#9A9AA8' }}>{fmt(seconds)}</p>
           </div>
 
           {/* Scores */}
@@ -462,10 +462,10 @@ export default function MicroDrill() {
               { label: 'Confidence', value: report.confidence, icon: '💪' },
             ].map(({ label, value, icon }) => (
               <div key={label} className="rounded-2xl p-4 text-center"
-                style={{ background: 'linear-gradient(160deg, #10192E 0%, #0B1220 100%)', border: `1px solid ${scoreColor(value)}30` }}>
+                style={{ background: 'linear-gradient(160deg, #121218 0%, #0C0C10 100%)', border: `1px solid ${scoreColor(value)}30` }}>
                 <div className="text-lg mb-1">{icon}</div>
                 <div className="text-2xl font-black" style={{ color: scoreColor(value) }}>{value}</div>
-                <div className="text-xs mt-0.5" style={{ color: '#6B8CAE' }}>{label}</div>
+                <div className="text-xs mt-0.5" style={{ color: '#9A9AA8' }}>{label}</div>
               </div>
             ))}
           </div>
@@ -483,7 +483,7 @@ export default function MicroDrill() {
                     {report.led_with_point ? 'Led with the bottom line ✓' : 'Did NOT lead with the bottom line'}
                   </div>
                   {!report.led_with_point && (
-                    <p className="text-xs mt-0.5" style={{ color: '#6B8CAE' }}>Start with your conclusion, then explain why.</p>
+                    <p className="text-xs mt-0.5" style={{ color: '#9A9AA8' }}>Start with your conclusion, then explain why.</p>
                   )}
                 </div>
               </div>
@@ -497,7 +497,7 @@ export default function MicroDrill() {
                 <span className="text-xl">⭐</span>
                 <div>
                   <div className="text-sm font-semibold mb-1" style={{ color: '#00C49A' }}>Best moment</div>
-                  <p className="text-sm italic" style={{ color: '#E2E8F0' }}>"{report.best_moment}"</p>
+                  <p className="text-sm italic" style={{ color: '#E6E6EA' }}>"{report.best_moment}"</p>
                 </div>
               </div>
             </div>
@@ -509,7 +509,7 @@ export default function MicroDrill() {
               <span className="text-xl">🔧</span>
               <div>
                 <div className="text-sm font-semibold mb-1" style={{ color: '#7B5EA7' }}>The one fix</div>
-                <p className="text-sm" style={{ color: '#E2E8F0' }}>{report.one_fix}</p>
+                <p className="text-sm" style={{ color: '#E6E6EA' }}>{report.one_fix}</p>
               </div>
             </div>
           </div>
@@ -518,7 +518,7 @@ export default function MicroDrill() {
           <div className="card mb-6" style={{ background: `${meta.colorAlpha}`, borderColor: meta.colorBorder }}>
             <div className="flex gap-3">
               <span className="text-xl">🦢</span>
-              <p className="text-sm" style={{ color: '#E2E8F0' }}>{report.encouragement}</p>
+              <p className="text-sm" style={{ color: '#E6E6EA' }}>{report.encouragement}</p>
             </div>
           </div>
 
@@ -534,7 +534,7 @@ export default function MicroDrill() {
             <button
               onClick={() => setPhase('select')}
               className="flex-1 py-3 rounded-2xl font-bold text-sm text-white transition-all hover:opacity-90"
-              style={{ background: 'linear-gradient(135deg, #7B5EA7, #9B7EC8)' }}
+              style={{ background: '#7B5EA7' }}
             >
               Switch drill →
             </button>

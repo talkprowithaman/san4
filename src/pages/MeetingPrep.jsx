@@ -85,7 +85,7 @@ export default function MeetingPrep() {
   }
 
   return (
-    <div className="min-h-screen" style={{ background: '#050810' }}>
+    <div className="min-h-screen" style={{ background: '#0A0A0C' }}>
       <Navbar />
 
       <main className="max-w-3xl mx-auto px-4 py-8">
@@ -95,7 +95,7 @@ export default function MeetingPrep() {
             📋 Meeting Prep
           </div>
           <h1 className="text-3xl font-black text-white">Prep smarter, speak better</h1>
-          <p className="mt-1" style={{ color: '#6B8CAE' }}>Paste your agenda. Get AI talking points in 90 seconds.</p>
+          <p className="mt-1" style={{ color: '#9A9AA8' }}>Paste your agenda. Get AI talking points in 90 seconds.</p>
 
           {/* Weekly prep limit (free users) */}
           {!isPro && (
@@ -116,7 +116,7 @@ export default function MeetingPrep() {
               </div>
               {!canStartPrep && (
                 <Link
-                  to="/pricing"
+                  to="/pro"
                   className="text-xs font-bold px-3 py-1.5 rounded-full hover:opacity-90 transition-all"
                   style={{ background: '#7B5EA7', color: 'white' }}
                 >
@@ -132,13 +132,13 @@ export default function MeetingPrep() {
           <div
             className="rounded-3xl p-8 text-center animate-fade-in"
             style={{
-              background: 'linear-gradient(160deg, #10192E 0%, #0B1220 100%)',
+              background: 'linear-gradient(160deg, #121218 0%, #0C0C10 100%)',
               border: '1px solid rgba(123,94,167,0.25)',
             }}
           >
             <div className="text-4xl mb-4">🔒</div>
             <h3 className="text-white font-black text-xl mb-3">Weekly prep limit reached</h3>
-            <p className="text-sm mb-6 max-w-xs mx-auto" style={{ color: '#6B8CAE' }}>
+            <p className="text-sm mb-6 max-w-xs mx-auto" style={{ color: '#9A9AA8' }}>
               Free tier includes 1 meeting prep per week. Upgrade to Vak Pro for unlimited prep sessions.
             </p>
             <div
@@ -155,7 +155,7 @@ export default function MeetingPrep() {
                 </div>
               ))}
             </div>
-            <Link to="/pricing" className="btn-primary text-sm">
+            <Link to="/pro" className="btn-primary text-sm">
               See plans →
             </Link>
           </div>

@@ -17,14 +17,14 @@ export default function Reminders() {
   const streak = progress?.streak_count || 0
 
   return (
-    <div className="min-h-screen" style={{ background: '#060E1A' }}>
+    <div className="min-h-screen" style={{ background: '#0A0A0C' }}>
       <Navbar />
       <main className="max-w-lg mx-auto px-4 py-8">
 
         <div className="text-center mb-6">
           <div className="flex justify-center mb-3 animate-float"><VakMascot level={3} size={72} /></div>
           <h1 className="text-2xl font-black text-white mb-1">Daily practice reminder</h1>
-          <p className="text-sm" style={{ color: '#6B8CAE' }}>
+          <p className="text-sm" style={{ color: '#9A9AA8' }}>
             One small rep a day builds the habit. Vak will nudge you at your chosen time.
           </p>
           {streak > 0 && (
@@ -44,10 +44,10 @@ export default function Reminders() {
 
         {/* Enable toggle */}
         <div className="rounded-2xl p-5 mb-4 flex items-center justify-between"
-          style={{ background: 'linear-gradient(160deg,#10192E,#0B1220)', border: '1px solid rgba(255,255,255,0.08)' }}>
+          style={{ background: 'linear-gradient(160deg,#121218,#0C0C10)', border: '1px solid rgba(255,255,255,0.08)' }}>
           <div>
             <div className="text-white font-bold text-sm">Daily reminder</div>
-            <div className="text-xs mt-0.5" style={{ color: '#6B8CAE' }}>
+            <div className="text-xs mt-0.5" style={{ color: '#9A9AA8' }}>
               {enabled ? `On — ${pretty(time)} every day` : 'Off'}
             </div>
           </div>
@@ -70,15 +70,15 @@ export default function Reminders() {
 
         {/* Time picker */}
         <div className="rounded-2xl p-5 mb-4"
-          style={{ background: 'linear-gradient(160deg,#10192E,#0B1220)', border: '1px solid rgba(255,255,255,0.08)', opacity: enabled ? 1 : 0.5 }}>
-          <div className="text-xs font-bold uppercase tracking-widest mb-3" style={{ color: '#6B8CAE' }}>⏰ Reminder time</div>
+          style={{ background: 'linear-gradient(160deg,#121218,#0C0C10)', border: '1px solid rgba(255,255,255,0.08)', opacity: enabled ? 1 : 0.5 }}>
+          <div className="text-xs font-bold uppercase tracking-widest mb-3" style={{ color: '#9A9AA8' }}>⏰ Reminder time</div>
           <div className="flex flex-wrap gap-2 mb-3">
             {PRESETS.map(p => (
               <button key={p} onClick={() => setTime(p)} disabled={!enabled}
                 className="text-sm px-3 py-2 rounded-xl font-semibold transition-all"
                 style={{
                   background: time === p ? 'rgba(0,196,154,0.18)' : 'rgba(255,255,255,0.05)',
-                  color:      time === p ? '#00C49A' : '#6B8CAE',
+                  color:      time === p ? '#00C49A' : '#9A9AA8',
                   border:     `1px solid ${time === p ? 'rgba(0,196,154,0.45)' : 'rgba(255,255,255,0.1)'}`,
                 }}>
                 {pretty(p)}
@@ -86,7 +86,7 @@ export default function Reminders() {
             ))}
           </div>
           <div className="flex items-center gap-3">
-            <span className="text-xs" style={{ color: '#6B8CAE' }}>Or pick a custom time:</span>
+            <span className="text-xs" style={{ color: '#9A9AA8' }}>Or pick a custom time:</span>
             <input type="time" value={time} onChange={e => setTime(e.target.value)} disabled={!enabled}
               className="input" style={{ width: 130, padding: '8px 12px' }} />
           </div>
@@ -99,20 +99,20 @@ export default function Reminders() {
             <span className="text-xl">🦢</span>
             <div>
               <div className="text-white font-bold text-sm">Vak is ready for your practice</div>
-              <div className="text-xs mt-0.5" style={{ color: '#94A3B8' }}>
+              <div className="text-xs mt-0.5" style={{ color: '#C9C9D2' }}>
                 Two minutes today keeps your streak alive. Tap to begin.
               </div>
             </div>
           </div>
           <button onClick={sendTest} disabled={permission !== 'granted'}
             className="text-xs font-bold px-4 py-2 rounded-full transition-all"
-            style={{ background: 'rgba(139,92,246,0.15)', color: '#A78BFA', border: '1px solid rgba(139,92,246,0.3)',
+            style={{ background: 'rgba(139,92,246,0.15)', color: '#A98CE0', border: '1px solid rgba(139,92,246,0.3)',
                      opacity: permission === 'granted' ? 1 : 0.5 }}>
             🔔 Send a test notification
           </button>
         </div>
 
-        <p className="text-xs text-center" style={{ color: '#6B8CAE' }}>
+        <p className="text-xs text-center" style={{ color: '#9A9AA8' }}>
           Reminders fire while San4 is open in a tab. Background reminders (closed tab) are coming with the mobile app.
         </p>
       </main>

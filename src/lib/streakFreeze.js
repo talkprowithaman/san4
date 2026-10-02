@@ -48,3 +48,25 @@ export function missedExactlyOneDay(lastPracticeDateRaw) {
     : toLocal(lastPracticeDateRaw)
   return last === dayBeforeYesterday
 }
+
+// ── Which days a freeze covered (for the streak calendar) ────────────────────
+// A freeze burns on the day after the miss, covering "yesterday". We keep the
+// covered dates (YYYY-MM-DD, local) so the streak screen can show them as
+// frozen rather than missed. Last 60 entries only.
+const frozenKey = (userId) => `san4_frozen_days_${userId || 'guest'}`
+
+export function getFrozenDays(userId) {
+  try {
+    const list = JSON.parse(localStorage.getItem(frozenKey(userId)) || '[]')
+    return Array.isArray(list) ? list : []
+  } catch {
+    return []
+  }
+}
+
+export function recordFrozenDay(userId, date) {
+  const day = new Date(date).toLocaleDateString('en-CA')
+  const list = getFrozenDays(userId).filter(d => d !== day)
+  list.push(day)
+  try { localStorage.setItem(frozenKey(userId), JSON.stringify(list.slice(-60))) } catch { /* ignore */ }
+}

@@ -71,7 +71,7 @@ export default function DailyMissions() {
       {/* Mission rows */}
       <div
         className="rounded-2xl overflow-hidden"
-        style={{ background: 'linear-gradient(135deg, #0F1E35, #0A1628)', border: '1px solid rgba(255,255,255,0.07)' }}
+        style={{ background: 'linear-gradient(135deg, #121218, #0A1628)', border: '1px solid rgba(255,255,255,0.07)' }}
       >
         {loading ? (
           <div className="p-4 text-center text-muted text-sm">Loading missions…</div>
@@ -132,7 +132,7 @@ export default function DailyMissions() {
 
       {/* Resets at midnight note */}
       {!allDone && !loading && (
-        <p className="text-xs text-center mt-2" style={{ color: 'rgba(107,140,174,0.6)' }}>
+        <p className="text-xs text-center mt-2" style={{ color: 'rgba(154,154,168,0.6)' }}>
           Resets at midnight · Complete practice sessions to unlock
         </p>
       )}

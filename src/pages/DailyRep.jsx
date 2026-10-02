@@ -1,18 +1,18 @@
 import { useState, useEffect, useRef } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
+import { Link, Navigate, useParams, useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth }     from '../hooks/useAuth'
 import { useProgress } from '../hooks/useProgress'
-import { supabase }    from '../lib/supabase'
-import { analyzeDailyRep, synthesizeSpeech } from '../lib/gemini'
-import { track, EV } from '../lib/analytics'
+import { analyzeDailyRep, analyzeDailyRepText, synthesizeSpeech } from '../lib/gemini'
 import { playPcmBase64, stopPlayback, primeAudio } from '../lib/voicePlayer'
+import { getRep, getTodaysReps, getRepCompletions, repsUnlockedToday, REP_MAX_SECONDS } from '../lib/dailyReps'
+import { keepRep } from '../lib/repScoring'
+import { queueTake } from '../lib/offlineQueue'
+import { fmtDelta } from '../lib/san4Score'
+import { C, F, mono } from '../lib/ink'
 import {
-  getRep, getTodaysReps, getRepCompletions, saveRepCompletion, REPS_PER_DAY, REP_MAX_SECONDS,
-} from '../lib/dailyReps'
-import { generateShareCard, shareCard } from '../lib/shareCard'
-import VakMascot from '../components/VakMascot'
+  Screen, Back, Btn, TextBtn, H1, Sub, Spacer, Rows, PrivatePill, Waveform, MicButton, Working, ConsentTick, ErrorNote, Notice,
+} from '../components/ink/Ink'
 
-// ── Helpers (same house patterns as Assessment.jsx) ──────────────────────────
 function arrayBufferToBase64(buf) {
   const bytes = new Uint8Array(buf); let bin = ''; const c = 8192
   for (let i = 0; i < bytes.length; i += c) bin += String.fromCharCode(...bytes.subarray(i, i + c))
@@ -22,28 +22,29 @@ function pickMime() {
   return ['audio/webm;codecs=opus', 'audio/webm', 'audio/ogg;codecs=opus', 'audio/ogg']
     .find(t => MediaRecorder.isTypeSupported(t)) || 'audio/webm'
 }
-function scoreColor(v) {
-  if (v >= 80) return '#00C49A'
-  if (v >= 60) return '#F59E0B'
-  return '#F87171'
-}
 
-// ── The 60-second rep: ready → recording → analyzing → feedback ──────────────
+// ── The 60-second rep ─────────────────────────────────────────────────────────
+// speak:   ready → recording → review (keep or retry) → analysing → report
+// type:    ready (textarea) → review → analysing → report
+// offline: ready → recording → saved on the phone, scored later on wifi
 export default function DailyRep() {
-  const { repId }   = useParams()
-  const { user, profile } = useAuth()
+  const { repId } = useParams()
+  const [params]  = useSearchParams()
+  const { user, profile, recordVoiceConsent } = useAuth()
   const { awardXP, progress } = useProgress()
-  const navigate    = useNavigate()
+  const navigate  = useNavigate()
 
-  const rep = getRep(repId)
+  const rep  = getRep(repId)
+  const mode = ['type', 'offline'].includes(params.get('mode')) ? params.get('mode') : 'speak'
 
-  const [phase,    setPhase]    = useState('ready') // ready | recording | analyzing | feedback | failed
+  const [phase,    setPhase]    = useState('ready') // ready | recording | review | analyzing | report | saved | failed
   const [left,     setLeft]     = useState(REP_MAX_SECONDS)
   const [result,   setResult]   = useState(null)
-  const [xpGained, setXpGained] = useState(0)
   const [micError, setMicError] = useState(null)
-  const [liveText, setLiveText] = useState('') // live transcript while speaking
-  const [captionsDead, setCaptionsDead] = useState(false) // live captions unavailable
+  const [liveText, setLiveText] = useState('')
+  const [typedText, setTypedText] = useState('')
+  const needsConsent = mode !== 'type' && !profile?.voice_consent_at
+  const [consented, setConsented] = useState(false)
 
   const mediaRecRef    = useRef(null)
   const audioChunksRef = useRef([])
@@ -52,12 +53,13 @@ export default function DailyRep() {
   const timerRef       = useRef(null)
   const startedAtRef   = useRef(null)
   const stoppingRef    = useRef(false)
-  const sttRef         = useRef(null) // browser SpeechRecognition (best-effort live captions)
-  const recordingRef   = useRef(false) // lets the caption restart loop know when to stop
+  const sttRef         = useRef(null) // best-effort live captions
+  const recordingRef   = useRef(false)
+  const takeRef        = useRef(null) // the held take: { blob, seconds } or { text }
 
-  // Vak reads the challenge aloud on entry.
+  // Vak reads the challenge aloud on entry (speaking modes only).
   useEffect(() => {
-    if (!rep) return
+    if (!rep || mode === 'type') return
     let cancelled = false
     ;(async () => {
       try {
@@ -74,32 +76,19 @@ export default function DailyRep() {
     try { sttRef.current?.abort() } catch { /* ignore */ }
   }, [])
 
-  if (!rep) {
-    navigate('/today', { replace: true })
-    return null
-  }
+  if (!rep) return <Navigate to="/today" replace />
 
-  // Best-effort live captions so users SEE what they're saying as they speak.
-  // The recording is still the source of truth for scoring; if the browser's
-  // STT can't keep up (e.g. Hinglish), the rep still works fine.
-  // Chrome quirk: the recognizer often ends itself after a few seconds (or
-  // when it thinks there's silence). Without a restart loop the captions die
-  // quietly, so we restart while the rep is still recording, and if it keeps
-  // dying we tell the user captions are off rather than showing a dead box.
+  // Live captions so users SEE what they're saying. The recording is still the
+  // source of truth; if the browser's STT can't keep up, the rep still works.
   function startLiveCaptions() {
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition
-    if (!SR) { setCaptionsDead(true); return }
+    if (!SR) return
     try {
       const stt = new SR()
-      stt.lang = 'en-IN'
-      stt.continuous = true
-      stt.interimResults = true
+      stt.lang = 'en-IN'; stt.continuous = true; stt.interimResults = true
       let finals = ''
-      let gotAnything = false
       let restarts = 0
-
       stt.onresult = (e) => {
-        gotAnything = true
         let interim = ''
         for (let i = e.resultIndex; i < e.results.length; i++) {
           const t = e.results[i][0].transcript
@@ -108,48 +97,27 @@ export default function DailyRep() {
         }
         setLiveText((finals + ' ' + interim).trim())
       }
-
-      stt.onerror = (e) => {
-        // Hard failures mean captions can't work this session. Cosmetic only.
-        if (['not-allowed', 'service-not-allowed', 'audio-capture'].includes(e.error)) {
-          setCaptionsDead(true)
-          sttRef.current = null
-        }
-      }
-
-      // The recognizer self-terminates constantly; keep reviving it while the
-      // user is still recording.
+      stt.onerror = (e) => { if (['not-allowed', 'service-not-allowed', 'audio-capture'].includes(e.error)) sttRef.current = null }
+      // The recognizer self-terminates constantly; revive it while recording.
       stt.onend = () => {
-        if (sttRef.current !== stt) return           // we stopped it on purpose
-        if (!recordingRef.current) return            // rep is over
-        if (!gotAnything && restarts >= 2) {         // it's just not working
-          setCaptionsDead(true)
-          sttRef.current = null
-          return
-        }
+        if (sttRef.current !== stt || !recordingRef.current || restarts > 20) return
         restarts++
-        setTimeout(() => {
-          if (sttRef.current === stt && recordingRef.current) {
-            try { stt.start() } catch { setCaptionsDead(true); sttRef.current = null }
-          }
-        }, 150)
+        setTimeout(() => { if (sttRef.current === stt && recordingRef.current) { try { stt.start() } catch { sttRef.current = null } } }, 150)
       }
-
       stt.start()
       sttRef.current = stt
-    } catch { setCaptionsDead(true) }
+    } catch { /* captions are cosmetic */ }
   }
-
   function stopLiveCaptions() {
     const stt = sttRef.current
-    sttRef.current = null // mark as intentional before abort so onend exits
+    sttRef.current = null
     try { stt?.abort() } catch { /* ignore */ }
   }
 
   async function startRecording() {
-    setMicError(null)
-    setLiveText('')
-    stopPlayback()
+    if (needsConsent && !consented) { setMicError('Tick the consent box first.'); return }
+    if (needsConsent && user) recordVoiceConsent(user.id)
+    setMicError(null); setLiveText(''); stopPlayback()
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
       audioStreamRef.current = stream
@@ -163,7 +131,6 @@ export default function DailyRep() {
       startedAtRef.current = Date.now()
       stoppingRef.current = false
       recordingRef.current = true
-      setCaptionsDead(false)
       setLeft(REP_MAX_SECONDS)
       setPhase('recording')
       startLiveCaptions()
@@ -174,7 +141,7 @@ export default function DailyRep() {
         })
       }, 1000)
     } catch {
-      setMicError('Mic access needed. Click the 🔒 lock icon in the address bar, allow the microphone, then try again.')
+      setMicError('Mic access needed. Allow the microphone for this site, then tap the mic again.')
     }
   }
 
@@ -184,9 +151,7 @@ export default function DailyRep() {
     recordingRef.current = false
     clearInterval(timerRef.current)
     stopLiveCaptions()
-
     const spokeSeconds = (Date.now() - startedAtRef.current) / 1000
-    setPhase('analyzing')
 
     await new Promise(resolve => {
       const recorder = mediaRecRef.current
@@ -196,256 +161,205 @@ export default function DailyRep() {
     audioStreamRef.current?.getTracks().forEach(t => t.stop())
 
     if (spokeSeconds < 3 || audioChunksRef.current.length === 0) {
-      setMicError("That was too short. Take a breath and give it a real go.")
+      setMicError('That was too short. Take a breath and give it a real go.')
       setPhase('ready')
       return
     }
-
     const blob = new Blob(audioChunksRef.current, { type: audioMimeRef.current })
-    const buf  = await blob.arrayBuffer()
-    const analysis = await analyzeDailyRep(
-      rep, arrayBufferToBase64(buf), audioMimeRef.current.split(';')[0]
-    )
+    audioChunksRef.current = []
 
-    if (!analysis) { setPhase('failed'); return }
-
-    // Persist: local completion + streak/XP + session history. Final rep of the
-    // day gets a completion bonus.
-    track(EV.REP_COMPLETED, { score: analysis.score, filler_count: analysis.filler_count ?? 0 })
-
-    const done = saveRepCompletion(user?.id, rep.id, analysis.score)
-    const todays = getTodaysReps()
-    const isDayComplete = todays.every(r => done.some(c => c.id === r.id))
-    const xp = isDayComplete ? 35 : 20
-    setXpGained(xp)
-    awardXP(analysis.score, { fixedXP: xp })
-
-    if (user) {
-      supabase.from('practice_sessions').insert({
-        user_id:           user.id,
-        scenario_id:       'daily_rep',
-        scenario_title:    `⚡ Daily Rep · ${rep.category}`,
-        overall_score:     analysis.score,
-        confidence_score:  analysis.score,
-        pacing_score:      analysis.score,
-        filler_word_count: analysis.filler_count ?? 0,
-        duration_seconds:  Math.round(spokeSeconds),
-        feedback:          analysis.win,
-        action_item:       analysis.fix,
-        messages:          [],
-      }).then(() => {}, () => {})
+    if (mode === 'offline') {
+      try {
+        await queueTake({ userId: user?.id, repId: rep.id, blob, mimeType: audioMimeRef.current.split(';')[0], seconds: spokeSeconds })
+        setPhase('saved')
+      } catch {
+        setMicError('Could not save the take on this phone. Try "Speak it" instead.')
+        setPhase('ready')
+      }
+      return
     }
-
-    // Deterministic pace: words actually spoken / seconds actually recorded.
-    const words = (analysis.transcript || '').split(/\s+/).filter(Boolean).length
-    const wpm = spokeSeconds >= 5 && words >= 5
-      ? Math.round(words / (spokeSeconds / 60))
-      : null
-    const paceVerdict = wpm == null ? null
-      : wpm < 100 ? 'slow'
-      : wpm <= 160 ? 'good pace'
-      : 'fast'
-
-    setResult({ ...analysis, isDayComplete, wpm, paceVerdict })
-    setPhase('feedback')
+    takeRef.current = { blob, seconds: spokeSeconds }
+    setPhase('review')
   }
 
-  function goNext() {
+  function submitTyped() {
+    if (typedText.trim().split(/\s+/).length < 8) { setMicError('Give it a few full sentences, the way you would say it.'); return }
+    setMicError(null)
+    takeRef.current = { text: typedText.trim(), seconds: 0 }
+    setPhase('review')
+  }
+
+  function retry() {
+    takeRef.current = null
+    setResult(null); setMicError(null); setLiveText('')
+    setPhase('ready')
+  }
+
+  async function keep() {
+    const take = takeRef.current
+    if (!take) return
+    setPhase('analyzing')
+    let analysis = null
+    if (take.text) {
+      analysis = await analyzeDailyRepText(rep, take.text)
+    } else {
+      const buf = await take.blob.arrayBuffer()
+      analysis = await analyzeDailyRep(rep, arrayBufferToBase64(buf), take.blob.type.split(';')[0] || 'audio/webm')
+    }
+    if (!analysis) { setPhase('failed'); return }
+    takeRef.current = null // the audio is gone once scored
+    const kept = await keepRep({ user, rep, analysis, seconds: take.seconds, awardXP })
+    setResult({ ...analysis, ...kept })
+    setPhase('report')
+  }
+
+  function nextRep() {
     const done = getRepCompletions(user?.id)
-    const next = getTodaysReps().find(r => !done.some(c => c.id === r.id))
-    if (next) navigate(`/daily-rep/${next.id}`, { replace: true })
-    else navigate('/today')
-    setPhase('ready'); setResult(null); setMicError(null)
+    const open = getTodaysReps().slice(0, repsUnlockedToday(progress))
+    return open.find(r => !done.some(c => c.id === r.id)) || null
   }
 
-  // ── ANALYZING ───────────────────────────────────────────────────────────────
-  if (phase === 'analyzing') return (
-    <div className="min-h-screen flex flex-col items-center justify-center gap-5" style={{ background: '#050810' }}>
-      <div className="animate-float"><VakMascot level={3} size={90} mood="thinking" /></div>
-      <p className="text-white font-bold">Vak is listening back…</p>
-      <div className="flex gap-2">
-        {[0,1,2].map(i => (
-          <div key={i} className="w-2 h-2 rounded-full animate-bounce"
-            style={{ background: '#7B5EA7', animationDelay: `${i * 0.15}s` }} />
-        ))}
-      </div>
-    </div>
-  )
+  // ── Analysing / failed ────────────────────────────────────────────────────
+  if (phase === 'analyzing') return <Working title="Scoring how you communicate" sub="One instruction coming up" />
 
-  // ── FAILED (honest, no fabricated score) ────────────────────────────────────
   if (phase === 'failed') return (
-    <div className="min-h-screen flex items-center justify-center px-4" style={{ background: '#050810' }}>
-      <div className="text-center max-w-sm">
-        <div className="text-5xl mb-4">😕</div>
-        <h2 className="text-white font-black text-xl mb-2">Couldn't score that one</h2>
-        <p className="text-sm mb-6" style={{ color: '#6B8CAE' }}>
-          Something went wrong while analysing. Your streak isn't affected, so just try the rep again.
-        </p>
-        <div className="flex gap-3 justify-center">
-          <button onClick={() => { setPhase('ready'); setMicError(null) }} className="btn-primary px-5">Try again</button>
-          <button onClick={() => navigate('/today')} className="btn-secondary px-5">Back to Today</button>
-        </div>
-      </div>
-    </div>
+    <Screen>
+      <H1 size={28} style={{ marginTop: 24 }}>We could not score that one.</H1>
+      <Sub>Something went wrong while analysing. Nothing was saved and your streak is untouched, so just try the rep again.</Sub>
+      <Spacer />
+      <Btn onClick={retry}>Try again</Btn>
+      <TextBtn to="/today" style={{ marginTop: 10 }}>Back to Today</TextBtn>
+    </Screen>
   )
 
-  // ── FEEDBACK — one score, one win, one fix ──────────────────────────────────
-  if (phase === 'feedback' && result) return (
-    <div className="min-h-screen" style={{ background: '#050810' }}>
-      <main className="max-w-md mx-auto px-4 py-10 animate-slide-up text-center">
-        <div className="flex justify-center mb-3 animate-float">
-          <VakMascot level={result.score >= 80 ? 5 : result.score >= 60 ? 4 : 3} size={80}
-            mood={result.score >= 80 ? 'celebrating' : result.score >= 60 ? 'encouraging' : 'neutral'} />
-        </div>
+  // ── Saved for later (offline) ─────────────────────────────────────────────
+  if (phase === 'saved') return (
+    <Screen>
+      <PrivatePill />
+      <H1 size={28} style={{ margin: '24px 0 14px' }}>Saved on your phone.</H1>
+      <Sub size={14}>We score it the next time you open San4 on wifi. Until then it never leaves this phone, and it is deleted once it is scored.</Sub>
+      <Spacer />
+      <Btn to="/today">Back to Today</Btn>
+    </Screen>
+  )
 
-        <div className="text-6xl font-black mb-1" style={{ color: scoreColor(result.score) }}>
-          {result.score}%
-        </div>
-        <div className="inline-block text-xs font-bold px-3 py-1 rounded-full mb-4"
-          style={{ background: 'rgba(245,158,11,0.12)', color: '#F59E0B', border: '1px solid rgba(245,158,11,0.3)' }}>
-          +{xpGained} XP {result.isDayComplete && '· daily goal complete! 🎉'}
-        </div>
-
-        {/* Delivery chips: pace, energy, fillers */}
-        <div className="flex flex-wrap justify-center gap-2 mb-5">
-          {result.wpm != null && (
-            <span className="text-xs font-bold px-3 py-1.5 rounded-full"
-              style={{
-                background: 'rgba(0,196,154,0.1)', border: '1px solid rgba(0,196,154,0.3)',
-                color: result.paceVerdict === 'good pace' ? '#00C49A' : '#F59E0B',
-              }}>
-              ⏱️ {result.wpm} wpm · {result.paceVerdict}
-            </span>
-          )}
-          {result.energy && (
-            <span className="text-xs font-bold px-3 py-1.5 rounded-full"
-              style={{ background: 'rgba(139,92,246,0.1)', border: '1px solid rgba(139,92,246,0.3)', color: '#A78BFA' }}>
-              🎙️ {result.energy}
-            </span>
-          )}
-          <span className="text-xs font-bold px-3 py-1.5 rounded-full"
-            style={{
-              background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.25)',
-              color: (result.filler_count ?? 0) > 3 ? '#F87171' : '#00C49A',
-            }}>
-            🗣️ {result.filler_count ?? 0} filler{(result.filler_count ?? 0) === 1 ? '' : 's'}
-          </span>
-        </div>
-        {result.pace_note && (
-          <p className="text-xs mb-5 -mt-2" style={{ color: '#6B8CAE' }}>{result.pace_note}</p>
-        )}
-
-        <div className="card text-left mb-3">
-          <div className="text-xs font-bold uppercase tracking-widest mb-1" style={{ color: '#00C49A' }}>✓ What worked</div>
-          <p className="text-white text-sm leading-relaxed">{result.win}</p>
-        </div>
-        <div className="card text-left mb-3">
-          <div className="text-xs font-bold uppercase tracking-widest mb-1" style={{ color: '#7B5EA7' }}>↑ Next time</div>
-          <p className="text-white text-sm leading-relaxed">{result.fix}</p>
-        </div>
-        {result.transcript && (
-          <div className="card text-left mb-6" style={{ background: 'rgba(255,255,255,0.02)' }}>
-            <div className="text-xs font-bold uppercase tracking-widest mb-1" style={{ color: '#6B8CAE' }}>📝 What Vak heard</div>
-            <p className="text-sm italic leading-relaxed" style={{ color: '#94A3B8' }}>"{result.transcript}"</p>
+  // ── 17 · Keep or retry ────────────────────────────────────────────────────
+  if (phase === 'review') return (
+    <Screen pad="30px 28px 26px">
+      <PrivatePill />
+      <H1 size={28} style={{ margin: '24px 0 14px' }}>Take as many goes as you want.</H1>
+      <Sub mb={22} size={14}>Only the take you keep is scored. Attempts are not counted, not stored, and never shown to anyone.</Sub>
+      <Rows radius={18}>
+        {[
+          'Audio goes to the scorer and is deleted the same minute',
+          'No leaderboard, no classmates, no public profile unless you publish it',
+          'Mixing Hindi into an English answer is not a mistake here',
+        ].map((t, i) => (
+          <div key={i} style={{ padding: '14px 17px', background: C.panel, display: 'flex', gap: 13, alignItems: 'flex-start' }}>
+            <span style={{ ...mono(11, C.teal, 0), paddingTop: 2 }}>0{i + 1}</span>
+            <span style={{ fontSize: 13, lineHeight: 1.5, color: C.soft }}>{t}</span>
           </div>
-        )}
-
-        <button onClick={goNext} className="btn-primary w-full py-4 text-base mb-3">
-          {result.isDayComplete ? 'Done for today 🎉' : 'Next rep →'}
-        </button>
-        <button
-          onClick={async () => {
-            const blob = await generateShareCard({
-              big: `${result.score}%`,
-              bigColor: scoreColor(result.score),
-              label: 'Daily Rep score',
-              sub: `"${rep.prompt}"`,
-              streak: progress?.streak_count ?? 0,
-              name: profile?.name || '',
-            })
-            shareCard(blob, `I scored ${result.score}% on today's San4 speaking rep 🎤 Same challenge, same day. Can you beat it? san4.vercel.app`)
-          }}
-          className="w-full py-3 rounded-2xl font-bold text-sm text-white mb-3 transition-all hover:opacity-90"
-          style={{ background: 'linear-gradient(135deg,#7B5EA7,#9B7EC8)' }}
-        >
-          📲 Share this score
-        </button>
-        <button onClick={() => navigate('/today')} className="text-sm" style={{ color: '#6B8CAE' }}>
-          Back to Today
-        </button>
-      </main>
-    </div>
+        ))}
+      </Rows>
+      <Spacer min={24} />
+      <div style={{ display: 'flex', gap: 10, marginBottom: 14 }}>
+        <Btn kind="quiet" onClick={retry} style={{ padding: 15, borderRadius: 15 }}>Try again, free</Btn>
+        <Btn kind="teal" onClick={keep} style={{ padding: 15, borderRadius: 15 }}>Keep this take</Btn>
+      </div>
+      <TextBtn onClick={() => { takeRef.current = null; navigate('/today') }}>Delete and start over</TextBtn>
+    </Screen>
   )
 
-  // ── READY / RECORDING ───────────────────────────────────────────────────────
+  // ── 18 · The one instruction ──────────────────────────────────────────────
+  if (phase === 'report' && result) {
+    const delta = fmtDelta(result.scoreAfter, result.scoreBefore)
+    const points = delta == null ? '' : delta === '±0' ? ' · SCORE HELD' : ` · ${delta} POINT${Math.abs(result.scoreAfter - result.scoreBefore) === 1 ? '' : 'S'}`
+    const next = nextRep()
+    const tiles = [
+      ['CLARITY', result.metrics?.clarity, result.prevMetrics?.clarity],
+      ['STRUCTURE', result.metrics?.structure, result.prevMetrics?.structure],
+    ].filter(([, v]) => Number.isFinite(v))
+    return (
+      <Screen pad="28px 28px 24px">
+        <div style={mono(10, C.dim, '.18em')}>AFTER THE REP{points} · +{result.xp} XP</div>
+        <div style={{ margin: '20px 0 0', padding: '24px 22px', borderRadius: 22, background: C.cardHi, border: '1px solid rgba(169,140,224,.35)' }}>
+          <div style={{ ...mono(10, C.lilac), marginBottom: 14 }}>DO THIS NEXT TIME</div>
+          <p style={{ margin: 0, fontFamily: F.display, fontWeight: 300, fontSize: 24, lineHeight: 1.32, letterSpacing: '-.01em' }}>{result.fix}</p>
+          {result.better_opening && <>
+            <div style={{ height: 1, background: 'rgba(255,255,255,.1)', margin: '20px 0 14px' }} />
+            <div style={{ ...mono(10, C.teal, '.14em'), marginBottom: 8 }}>INSTEAD OF YOUR OPENING</div>
+            <p style={{ margin: 0, fontSize: 13, lineHeight: 1.6, color: C.soft }}>"{result.better_opening}"</p>
+          </>}
+        </div>
+        <div style={{ display: 'flex', gap: 10, marginTop: 16 }}>
+          {(tiles.length ? tiles : [['SCORE', result.score, null]]).map(([label, v, prev]) => {
+            const d = fmtDelta(v, prev)
+            return (
+              <div key={label} style={{ flex: 1, padding: '15px 17px', borderRadius: 16, border: `1px solid ${C.line}` }}>
+                <div style={mono(9.5, C.dim, '.14em')}>{label}</div>
+                <div style={{ fontFamily: F.display, fontWeight: 400, fontSize: 26, marginTop: 5 }}>{v}</div>
+                {d && <div style={{ ...mono(11, d.startsWith('-') ? C.amber : C.teal, 0), marginTop: 3 }}>{d}</div>}
+              </div>
+            )
+          })}
+        </div>
+        {result.win && (
+          <p style={{ margin: '14px 0 0', fontSize: 12.5, lineHeight: 1.55, color: C.dim }}>
+            <span style={mono(9.5, C.teal, '.14em')}>WHAT WORKED · </span>{result.win}
+          </p>
+        )}
+        <div style={{ flex: 1, minHeight: 14 }} />
+        <Btn onClick={retry} style={{ padding: 16, borderRadius: 15, fontSize: 14.5, marginTop: 14 }}>Redo it with that one change</Btn>
+        {next
+          ? <TextBtn onClick={() => navigate(`/session/mode?rep=${next.id}`)} style={{ marginTop: 10 }}>Next rep</TextBtn>
+          : <TextBtn to="/today" style={{ marginTop: 10 }}>Back to Today</TextBtn>}
+      </Screen>
+    )
+  }
+
+  // ── Ready / recording / typing ────────────────────────────────────────────
   const recording = phase === 'recording'
   return (
-    <div className="min-h-screen flex flex-col" style={{ background: '#050810' }}>
-      <div className="px-4 py-4 flex items-center justify-between">
-        <button onClick={() => navigate('/today')} className="text-sm" style={{ color: '#6B8CAE' }}>← Today</button>
-        <span className="text-xs font-bold uppercase tracking-widest" style={{ color: '#7B5EA7' }}>
-          {rep.category} · Daily Rep
-        </span>
-        <span className="w-12" />
-      </div>
+    <Screen pad="30px 30px 30px">
+      <Back to="/today" mb={22} />
+      <div style={{ ...mono(11, C.dim), marginBottom: 16 }}>DAILY REP · {rep.category.toUpperCase()}{mode === 'offline' ? ' · SCORED LATER' : ''}</div>
+      <p style={{ margin: '0 0 8px', fontSize: 13.5, lineHeight: 1.55, color: C.dim }}>{rep.situation}</p>
+      <p style={{ margin: '0 0 24px', fontFamily: F.display, fontWeight: 300, fontSize: 24, lineHeight: 1.4, letterSpacing: '-.01em' }}>{rep.prompt}</p>
 
-      <main className="flex-1 flex flex-col items-center justify-center px-6 max-w-md mx-auto w-full text-center">
-        <div className="text-5xl mb-4">{rep.emoji}</div>
-        <p className="text-sm mb-2" style={{ color: '#6B8CAE' }}>{rep.situation}</p>
-        <h1 className="text-xl font-black text-white leading-snug mb-8">"{rep.prompt}"</h1>
-
-        {micError && (
-          <div className="rounded-2xl px-4 py-3 mb-5 text-sm text-left w-full"
-            style={{ background: 'rgba(239,68,68,0.1)', color: '#FCA5A5', border: '1px solid rgba(239,68,68,0.3)' }}>
-            {micError}
-          </div>
-        )}
-
-        {recording && (
-          <div className="text-4xl font-black mb-4 tabular-nums"
-            style={{ color: left <= 10 ? '#F87171' : '#00C49A' }}>
-            0:{String(left).padStart(2, '0')}
-          </div>
-        )}
-
-        {/* Live transcript: see what you're actually saying, as you say it */}
-        {recording && (
-          <div className="w-full rounded-2xl px-4 py-3 mb-5 min-h-[64px] max-h-32 overflow-y-auto text-left"
-            style={{
-              background: liveText ? 'rgba(123,94,167,0.08)' : 'rgba(255,255,255,0.03)',
-              border: `1px solid ${liveText ? 'rgba(123,94,167,0.3)' : 'rgba(255,255,255,0.07)'}`,
-            }}>
-            {liveText ? (
-              <p className="text-white text-sm italic leading-relaxed">{liveText}</p>
-            ) : (
-              <p className="text-sm italic" style={{ color: 'rgba(107,140,174,0.6)' }}>
-                {captionsDead
-                  ? "Live captions aren't available right now, but Vak hears every word. Keep going!"
-                  : 'Speak up, your words will appear here as you talk…'}
-              </p>
+      {mode === 'type' ? (
+        <>
+          <textarea className="input" rows={7} value={typedText} onChange={e => { setTypedText(e.target.value); setMicError(null) }}
+            placeholder="Write it the way you would say it out loud" style={{ resize: 'vertical', fontSize: 14.5, lineHeight: 1.55 }} />
+          <ErrorNote style={{ marginTop: 12 }}>{micError}</ErrorNote>
+          <Spacer min={20} />
+          <Btn kind="purple" onClick={submitTyped}>Done</Btn>
+          <p style={{ margin: '12px 0 0', textAlign: 'center', fontSize: 11.5, color: C.dim }}>Scored on structure and clarity. No voice needed.</p>
+        </>
+      ) : (
+        <>
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 22, minHeight: 250 }}>
+            <Waveform active={recording} color={C.purple} />
+            <MicButton listening={recording} live={C.purple} stopSquare disabled={!recording && needsConsent && !consented}
+              onClick={() => { primeAudio(); recording ? finishRecording() : startRecording() }} />
+            <div style={{ ...mono(12, recording && left <= 10 ? C.amber : C.dim, 0), textAlign: 'center' }}>
+              {recording ? `0:${String(left).padStart(2, '0')} · tap when you are done` : 'Tap the mic and just speak. Sixty seconds.'}
+            </div>
+            {recording && liveText && (
+              <p style={{ margin: 0, maxHeight: 90, overflowY: 'auto', fontSize: 13, lineHeight: 1.55, color: C.soft, textAlign: 'center' }}>{liveText}</p>
             )}
+            <ErrorNote style={{ width: '100%' }}>{micError}</ErrorNote>
           </div>
-        )}
-
-        <button
-          onClick={() => { primeAudio(); recording ? finishRecording() : startRecording() }}
-          className="relative flex items-center justify-center rounded-full transition-all active:scale-95 mb-3"
-          style={{
-            width: 88, height: 88,
-            background: recording
-              ? 'linear-gradient(135deg, #F87171, #EF4444)'
-              : 'linear-gradient(135deg, #7B5EA7, #9B7EC8)',
-            boxShadow: recording ? '0 0 40px rgba(239,68,68,0.4)' : '0 0 30px rgba(123,94,167,0.4)',
-          }}
-        >
-          {recording && <span className="absolute inset-0 rounded-full animate-ping" style={{ background: 'rgba(239,68,68,0.25)' }} />}
-          <span className="relative" style={{ fontSize: 36 }}>{recording ? '⏹' : '🎤'}</span>
-        </button>
-        <p className="text-xs" style={{ color: '#6B8CAE' }}>
-          {recording ? 'Tap when you\'re done, or let the timer run out' : 'Tap the mic and just speak. 60 seconds, one take.'}
-        </p>
-      </main>
-      <div className="h-10" />
-    </div>
+          {needsConsent && !recording && (
+            <ConsentTick checked={consented} onChange={v => { setConsented(v); setMicError(null) }}>
+              I consent to San4 recording my voice for this rep and sending it to our AI processor (Google Gemini) to score it.{' '}
+              <Link to="/privacy" target="_blank" style={{ color: C.lilac }}>Privacy Policy</Link>
+            </ConsentTick>
+          )}
+          {mode === 'offline' && !recording && (
+            <Notice style={{ marginTop: 12 }}>The take stays on this phone and is scored the next time you open San4 on wifi.</Notice>
+          )}
+        </>
+      )}
+    </Screen>
   )
 }

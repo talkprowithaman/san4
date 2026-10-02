@@ -39,7 +39,7 @@ export default function Dashboard() {
   const firstName  = profile?.name?.split(' ')[0] || 'there'
   const level      = levelInfo?.current.level     || 1
   const levelName  = levelInfo?.current.name      || 'Hesitant'
-  const levelColor = levelInfo?.current.color     || '#6B8CAE'
+  const levelColor = levelInfo?.current.color     || '#9A9AA8'
   const levelIcon  = levelInfo?.current.icon      || '🌱'
   const streak     = progress?.streak_count       || 0
   const totalXP    = progress?.total_xp           || 0
@@ -51,7 +51,7 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="min-h-screen" style={{ background: '#050810' }}>
+    <div className="min-h-screen" style={{ background: '#0A0A0C' }}>
 
       {/* Ambient background glows */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden" aria-hidden="true">
@@ -92,7 +92,7 @@ export default function Dashboard() {
         <div
           className="rounded-3xl p-6 text-center mb-5 relative overflow-hidden reveal animate-slide-up"
           style={{
-            background: 'linear-gradient(160deg, #10192E 0%, #0B1220 100%)',
+            background: 'linear-gradient(160deg, #121218 0%, #0C0C10 100%)',
             border: `1px solid ${levelColor}40`,
             boxShadow: `0 0 80px ${levelColor}18, inset 0 1px 0 rgba(255,255,255,0.07)`,
           }}
@@ -153,7 +153,7 @@ export default function Dashboard() {
           {[
             { icon: '🎯', label: 'San4 Score',
               value: computeSan4Score(sessions, user?.id) ?? '?',
-              color: computeSan4Score(sessions, user?.id) != null ? scoreBand(computeSan4Score(sessions, user?.id)).color : '#6B8CAE' },
+              color: computeSan4Score(sessions, user?.id) != null ? scoreBand(computeSan4Score(sessions, user?.id)).color : '#9A9AA8' },
             { icon: '🔥', label: 'Streak',   value: streak > 0 ? `${streak}d` : '0',  color: '#7B5EA7' },
             { icon: '⭐', label: 'Total XP', value: totalXP,          color: '#F59E0B' },
             { icon: '🎭', label: 'Sessions', value: sessions.length,  color: '#00C49A' },
@@ -192,7 +192,7 @@ export default function Dashboard() {
             </div>
           </div>
           <span className="text-xs font-bold px-2.5 py-1 rounded-full"
-            style={{ background: 'rgba(139,92,246,0.2)', color: '#A78BFA' }}>FREE</span>
+            style={{ background: 'rgba(139,92,246,0.2)', color: '#A98CE0' }}>FREE</span>
         </Link>
 
         {/* Meeting Prep quick link */}
@@ -237,7 +237,7 @@ export default function Dashboard() {
             <div className="min-w-0">
               <div className="text-white font-semibold text-xs flex items-center gap-1.5">
                 Call Analyzer
-                <span className="text-xs font-bold px-1.5 rounded-full" style={{ background: 'rgba(139,92,246,0.2)', color: '#A78BFA' }}>Elite</span>
+                <span className="text-xs font-bold px-1.5 rounded-full" style={{ background: 'rgba(139,92,246,0.2)', color: '#A98CE0' }}>Elite</span>
               </div>
               <div className="text-xs truncate" style={{ color: 'rgba(255,255,255,0.35)' }}>Real meeting feedback</div>
             </div>
@@ -266,7 +266,7 @@ export default function Dashboard() {
             <div
               className="rounded-2xl p-8 text-center"
               style={{
-                background: 'linear-gradient(160deg, #10192E 0%, #0B1220 100%)',
+                background: 'linear-gradient(160deg, #121218 0%, #0C0C10 100%)',
                 border: '1px solid rgba(255,255,255,0.09)',
                 boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.05)',
               }}
@@ -291,7 +291,7 @@ export default function Dashboard() {
                   key={s.id}
                   className="flex items-center gap-3 px-4 py-3.5 rounded-2xl transition-all"
                   style={{
-                    background: 'linear-gradient(160deg, #10192E 0%, #0B1220 100%)',
+                    background: 'linear-gradient(160deg, #121218 0%, #0C0C10 100%)',
                     border: '1px solid rgba(255,255,255,0.09)',
                     boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.05)',
                   }}
