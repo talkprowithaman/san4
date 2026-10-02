@@ -1,0 +1,29 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <style>
+    body { width: 260px; margin: 0; font-family: system-ui, sans-serif; background: #0B1220; color: #F1F5F9; }
+    .wrap { padding: 16px; }
+    .row { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+    .logo { font-size: 20px; }
+    h1 { font-size: 15px; margin: 0; }
+    p { font-size: 12px; color: #94A3B8; line-height: 1.5; margin: 0 0 12px; }
+    .status { font-size: 12px; padding: 8px 10px; border-radius: 10px; background: rgba(0,196,154,.08);
+      border: 1px solid rgba(0,196,154,.25); color: #6ee7c0; margin-bottom: 12px; }
+    a.btn { display: block; text-align: center; text-decoration: none; padding: 10px; border-radius: 100px;
+      background: linear-gradient(135deg,#7B5EA7,#4FACFE); color: #fff; font-weight: 700; font-size: 13px; }
+    .fine { font-size: 11px; color: #6B8CAE; margin-top: 10px; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="row"><span class="logo">🦢</span><h1>San4 Live Coach</h1></div>
+    <div class="status" id="status">Ready. Join a Google Meet call and San4 will offer to coach you.</div>
+    <p>Only <b>your microphone</b> is analysed. You get a rating, filler count, fixes, and videos to improve.</p>
+    <a class="btn" href="https://san4.vercel.app/call-analyzer" target="_blank">Open San4</a>
+    <p class="fine">MVP: Google Meet. Zoom &amp; FaceTime need the native app (coming next).</p>
+  </div>
+  <script src="popup.js"></script>
+</body>
+</html>
