@@ -1,502 +1,358 @@
-// Landing.jsx — Full redesign
-// Pure React + CSS animations (IntersectionObserver, no framer-motion).
+// Landing.jsx — Homepage v2 (Nocturne). Goal: get visitors to take the free San4 Score.
 import { useState, useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
-import VakMascot       from '../components/VakMascot'
-import HeroWaveform    from '../components/HeroWaveform'
-import IntroReveal     from '../components/IntroReveal'
-import DraggableMarquee from '../components/DraggableMarquee'
-import ProductShowcase  from '../components/ProductShowcase'
-import FillerWords      from '../components/FillerWords'
-import Testimonials     from '../components/Testimonials'
-import SoundToggle      from '../components/SoundToggle'
-import { playTick }     from '../lib/sound'
-import { useSmoothScroll } from '../hooks/useSmoothScroll'
-import { useParallax }     from '../hooks/useParallax'
+import {
+  ArrowRight, ArrowUpRight, Headphones,
+  XLogo, InstagramLogo, LinkedinLogo, YoutubeLogo,
+} from '@phosphor-icons/react'
+import VakMascot from '../components/VakMascot'
 import './landing.css'
 
-// ── Count-up stat ─────────────────────────────────────────────────────────────
-function CountUp({ to, suffix = '' }) {
-  const ref = useRef(null)
-  const [val, setVal] = useState(0)
-  useEffect(() => {
-    const el = ref.current; if (!el) return
-    const obs = new IntersectionObserver(([entry]) => {
-      if (!entry.isIntersecting) return
-      obs.disconnect()
-      const t0  = performance.now()
-      const dur = 2000
-      const tick = now => {
-        const p = Math.min((now - t0) / dur, 1)
-        setVal(Math.round((1 - Math.pow(1 - p, 3)) * to))
-        if (p < 1) requestAnimationFrame(tick)
-      }
-      requestAnimationFrame(tick)
-    }, { threshold: 0.5 })
-    obs.observe(el)
-    return () => obs.disconnect()
-  }, [to])
-  return <span ref={ref}>{val.toLocaleString('en-IN')}{suffix}</span>
-}
+const reducedMotion = () =>
+  typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
-// ── Scenario ticker data ──────────────────────────────────────────────────────
-const ROW1 = ['💼 HR Interview','💰 Salary Negotiation','📊 Client Presentation','👥 Daily Standup','⭐ Performance Review','🗣️ Group Discussion','🤝 Cold Networking']
-const ROW2 = ['📈 Leadership Update','🎯 Pitch to a Skeptic','🚫 Say No Professionally','⚖️ Conflict Mediation','💬 Sensitive Conversation','❤️ First Date','📜 Script Reading']
+// `_` marks a filler word; `~` is a space inside a multi-word filler.
+const P = s => s.split(' ').map(w => w.startsWith('_') ? [w.slice(1).replace(/~/g, ' '), 1] : [w, 0])
+const SENTENCES = [
+  { tag: 'Job interview',      w: P('So _umm, the project was _matlab really hard, _you~know, but we _like finished it.') },
+  { tag: 'Team meeting',       w: P('_Basically the numbers are _aah up this week, _jaise~ki ten percent.') },
+  { tag: 'Asking for a raise', w: P('I _actually feel, _haan, I have done _kind~of more than my role.') },
+  { tag: 'Client call',        w: P('_So~yeah, our plan is, _kya~kehte~hain, faster and _like cheaper.') },
+]
+const LEVEL_NAMES = ['Hesitant', 'Aware', 'Expressive', 'Influential', 'Vaksiddha']
 
-// ── India stats ───────────────────────────────────────────────────────────────
 const STATS = [
-  { to:93, suf:'%', label:'% of Indian graduates not industry-ready' },
-  { to:78, suf:'%', label:'% of hiring managers rank communication as the #1 skill gap' },
-  { to:0,  suf:'',  label:'AI coaches built specifically for India. Until now.' },
+  { n: 67, suffix: '%', cap: 'of all jobs will need strong soft skills by 2030.', src: 'Deloitte Access Economics',
+    href: 'https://www.deloitte.com/au/en/services/economics/perspectives/soft-skills-business-success.html' },
+  { hash: true, n: 1, cap: 'Communication is the most wanted skill at work.', src: 'LinkedIn, Most In-Demand Skills 2024',
+    href: 'https://www.cnbc.com/2024/02/09/the-no-1-soft-skill-you-need-to-get-hired-now-according-to-linkedin.html' },
+  { n: 59, suffix: '%', cap: 'of companies have no set way to measure it.', src: 'LinkedIn, Global Talent Trends 2019',
+    href: 'https://www.linkedin.com/business/talent/blog/talent-strategy/global-recruiting-trends' },
+  { n: 57, suffix: '%', cap: 'of Indian graduates are not job-ready.', src: 'Mercer Mettl, Graduate Skill Index 2025',
+    href: 'https://www.business-standard.com/industry/news/india-job-market-graduate-skill-gap-ai-automation-employability-2025-125021800437_1.html' },
 ]
 
-// ── Main component ────────────────────────────────────────────────────────────
+const SOCIALS = [
+  ['X', 'https://x.com/talkprowithaman', XLogo],
+  ['Instagram', 'https://instagram.com/talkprowithaman', InstagramLogo],
+  ['LinkedIn', 'https://linkedin.com/in/amann-jindal', LinkedinLogo],
+  ['YouTube', 'https://youtube.com/@talkprowithaman', YoutubeLogo],
+]
+
+// ── Voice wave canvas ────────────────────────────────────────────────────────
+// Returns a cleanup function.
+function initWave(c, reduced) {
+  const ctx = c.getContext('2d')
+  const css = getComputedStyle(document.documentElement)
+  const cols = ['--a300', '--color-accent', '--a600', '--n400']
+    .map(v => css.getPropertyValue(v).trim() || '#9184d9')
+  let mx = -1, energy = 0.15, target = 0.15, raf = 0
+
+  const onMove = e => {
+    const r = c.getBoundingClientRect()
+    const inY = e.clientY > r.top - 400 && e.clientY < r.bottom
+    mx = (e.clientX - r.left) / r.width
+    target = inY ? 1 : 0.15
+  }
+
+  const draw = t => {
+    const dpr = window.devicePixelRatio || 1, w = c.clientWidth, h = c.clientHeight
+    if (c.width !== w * dpr) { c.width = w * dpr; c.height = h * dpr }
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, w, h)
+    energy += (target - energy) * 0.04
+    ctx.globalCompositeOperation = 'lighter'
+    for (let k = 0; k < 4; k++) {
+      ctx.beginPath()
+      for (let x = 0; x <= w; x += 4) {
+        const u = x / w, edge = Math.sin(Math.PI * u)
+        const near = mx < 0 ? 0 : Math.exp(-Math.pow((u - mx) * 4, 2))
+        const amp = h * 0.32 * edge * (0.18 + energy * (0.35 + near * 0.9))
+        const y = h / 2 + amp * Math.sin(u * (6 + k * 1.7) + t / (700 - k * 90) + k) * Math.sin(u * 2.3 + t / 1900 + k * 0.6)
+        x === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y)
+      }
+      ctx.strokeStyle = cols[k]; ctx.globalAlpha = k === 3 ? 0.25 : 0.55; ctx.lineWidth = k === 1 ? 1.6 : 1
+      ctx.shadowColor = cols[k]; ctx.shadowBlur = 14; ctx.stroke()
+    }
+    if (!reduced) raf = requestAnimationFrame(draw)
+  }
+
+  if (reduced) {
+    draw(1500) // one static frame
+    const redraw = () => draw(1500)
+    window.addEventListener('resize', redraw)
+    return () => window.removeEventListener('resize', redraw)
+  }
+  window.addEventListener('mousemove', onMove)
+  raf = requestAnimationFrame(draw)
+  return () => { cancelAnimationFrame(raf); window.removeEventListener('mousemove', onMove) }
+}
+
 export default function Landing() {
+  const rootRef = useRef(null)
+  const waveRef = useRef(null)
+  const vakRef = useRef(null)
+  const statsRef = useRef(null)
+  const [reduced] = useState(reducedMotion)
+  const [{ tick, si }, setTs] = useState({ tick: 0, si: 0 })
+  const [lvl, setLvl] = useState(reduced ? 5 : 1)
+  const [stats, setStats] = useState(reduced ? 1 : 0)
 
-  useSmoothScroll()  // Lenis momentum scroll (desktop only)
-  useParallax()      // subtle scroll-depth on [data-parallax] elements
-
-  // ── Scroll animator — observes all .sa/.clip-line/.ai-feat elements ───────
+  // Transcript loop
   useEffect(() => {
-    const sel = '.sa,.sa-sc,.sa-l,.sa-r,.clip-line,.ai-feat'
-    const els = document.querySelectorAll(sel)
-    const obs = new IntersectionObserver(entries => {
-      entries.forEach(e => {
-        if (!e.isIntersecting) return
-        const delay = Number(e.target.dataset.delay || 0)
-        setTimeout(() => e.target.classList.add('in'), delay)
-        obs.unobserve(e.target)
-      })
-    }, { threshold: 0.15, rootMargin: '0px 0px -8% 0px' })
-    els.forEach(el => obs.observe(el))
-    return () => obs.disconnect()
-  }, [])
+    if (reduced) return
+    const id = setInterval(() => setTs(s =>
+      s.tick >= SENTENCES[s.si].w.length + 10
+        ? { tick: 0, si: (s.si + 1) % SENTENCES.length }
+        : { ...s, tick: s.tick + 1 }), 420)
+    return () => clearInterval(id)
+  }, [reduced])
 
+  // Vak level cycle
+  useEffect(() => {
+    if (reduced) return
+    const id = setInterval(() => setLvl(l => (l >= 5 ? 1 : l + 1)), 2400)
+    return () => clearInterval(id)
+  }, [reduced])
 
-  // ─────────────────────────────────────────────────────────────────────────
+  // Wave canvas
+  useEffect(() => {
+    const c = waveRef.current
+    return c ? initWave(c, reduced) : undefined
+  }, [reduced])
+
+  // Scroll reveal + stats count-up
+  useEffect(() => {
+    if (reduced) return
+    let raf = 0
+    const countUp = () => {
+      const t0 = performance.now()
+      const step = now => {
+        const p = Math.min((now - t0) / 2200, 1)
+        setStats(1 - Math.pow(1 - p, 3))
+        if (p < 1) raf = requestAnimationFrame(step)
+      }
+      raf = requestAnimationFrame(step)
+    }
+    const io = new IntersectionObserver(es => es.forEach(e => {
+      if (!e.isIntersecting) return
+      if (e.target === statsRef.current) countUp()
+      else e.target.classList.add('in')
+      io.unobserve(e.target)
+    }), { threshold: 0.2 })
+    rootRef.current.querySelectorAll('[data-reveal]').forEach(el => io.observe(el))
+    if (statsRef.current) io.observe(statsRef.current)
+    return () => { io.disconnect(); cancelAnimationFrame(raf) }
+  }, [reduced])
+
+  // Vak cursor parallax
+  useEffect(() => {
+    if (reduced) return
+    const onMove = e => {
+      const v = vakRef.current; if (!v) return
+      const r = v.getBoundingClientRect()
+      const dx = (e.clientX - (r.left + r.width / 2)) / window.innerWidth
+      const dy = (e.clientY - (r.top + r.height / 2)) / window.innerHeight
+      v.style.transform = `translate(${dx * 24}px, ${dy * 18}px) rotate(${dx * 4}deg)`
+    }
+    window.addEventListener('mousemove', onMove)
+    return () => window.removeEventListener('mousemove', onMove)
+  }, [reduced])
+
+  // Transcript state. Reduced motion: final cleaned sentence, statically.
+  const cur = SENTENCES[reduced ? 0 : si]
+  const t = reduced ? cur.w.length + 10 : tick
+  let caught = 0, kept = 0
+  const words = cur.w.map(([text, f], i) => {
+    const shown = i < t, struck = f && t - i > 2, gone = f && t - i > 5
+    if (struck) caught++
+    if (shown && !f) kept++
+    return { text, struck, gone, shown }
+  })
+
   return (
-    <div style={{ background:'#050810', color:'#F1F5F9' }}>
-
-      {/* Branded intro reveal (first visit per session) */}
-      <IntroReveal />
-
-      {/* Opt-in UI sound toggle (off by default) */}
-      <SoundToggle />
-
-      {/* Cinematic overlay: film grain */}
-      <div className="film-grain" aria-hidden="true" />
-
-      {/* ══ NAVBAR ════════════════════════════════════════════════════════ */}
-      <nav className="landing-nav fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-6 lg:px-10 h-16"
-        style={{
-          background:'rgba(4,8,16,0.88)',
-          backdropFilter:'blur(24px)',
-          WebkitBackdropFilter:'blur(24px)',
-          borderBottom:'1px solid rgba(255,255,255,0.07)',
-        }}>
-        <span className="flex items-center gap-2 text-xl font-black tracking-tight text-white" style={{ fontFamily:'Outfit, sans-serif' }}>
-          <img src="/san4-icon.png" alt="San4" width={30} height={30} className="rounded-lg" />
-          <span>SAN<span style={{ color:'#7B5EA7' }}>4</span></span>
-        </span>
-
-        <div className="hidden md:flex items-center gap-6">
-          {[['San4 Score','/san4-score'],['How it works','/how-it-works'],['Pricing','/pricing']].map(([t, to]) => (
-            <Link key={t} to={to} className="text-sm transition-colors"
-              style={{ color:'rgba(255,255,255,0.45)' }}
-              onMouseEnter={e=>e.currentTarget.style.color='white'}
-              onMouseLeave={e=>e.currentTarget.style.color='rgba(255,255,255,0.45)'}>
-              {t}
-            </Link>
-          ))}
-          {/* Ribbon button for the Chrome extension */}
-          <Link to="/extension"
-            className="inline-flex items-center gap-1.5 text-sm font-bold px-3.5 py-1.5 rounded-full transition-all hover:opacity-90"
-            style={{ background:'rgba(0,196,154,0.14)', color:'#34E0B0', border:'1px solid rgba(0,196,154,0.35)' }}>
-            🎧 Vak Extension
+    <div ref={rootRef} className="hp">
+      {/* ── Nav ── */}
+      <nav className="nav">
+        <div className="wrap nav-in">
+          <Link to="/" className="brand">
+            <img src="/san4-icon.png" alt="San4" width={24} height={24} />
+            <span>SAN<b>4</b></span>
           </Link>
+          <div className="nav-links">
+            <Link to="/san4-score">San4 Score</Link>
+            <Link to="/how-it-works">How it works</Link>
+            <Link to="/pricing">Pricing</Link>
+            <Link to="/extension"><Headphones size={15} aria-hidden="true" />Vak Extension</Link>
+          </div>
+          <div className="nav-right">
+            <Link to="/auth" className="signin">Sign in</Link>
+            <Link to="/assessment" className="btn btn-primary btn-sm">Get your score</Link>
+          </div>
         </div>
-
-        <div className="flex items-center gap-3">
-          <Link to="/auth"
-            className="hidden sm:block text-sm font-medium px-4 py-2 transition-colors"
-            style={{ color:'rgba(255,255,255,0.5)' }}
-            onMouseEnter={e=>e.currentTarget.style.color='white'}
-            onMouseLeave={e=>e.currentTarget.style.color='rgba(255,255,255,0.5)'}>
-            Sign in
-          </Link>
-          <Link to="/auth?mode=signup"
-            className="text-sm font-bold text-white px-5 py-2 rounded-full transition-all hover:opacity-90 active:scale-95"
-            style={{ background:'#7B5EA7', boxShadow:'0 4px 18px rgba(123,94,167,0.4)' }}>
-            Try free →
-          </Link>
-        </div>
+        <div className="rule" />
       </nav>
 
-      {/* ══ HERO ══════════════════════════════════════════════════════════ */}
-      <section className="relative min-h-screen flex items-center pt-16 overflow-hidden">
-        {/* Ambient orbs */}
-        <div className="amb-orb-1 absolute pointer-events-none"
-          style={{ top:-220, right:-180, width:750, height:750, borderRadius:'50%',
-            background:'radial-gradient(circle, rgba(123,94,167,0.22) 0%, transparent 65%)' }}/>
-        <div className="amb-orb-2 absolute pointer-events-none"
-          style={{ bottom:-220, left:-120, width:650, height:650, borderRadius:'50%',
-            background:'radial-gradient(circle, rgba(139,92,246,0.14) 0%, transparent 65%)' }}/>
-        {/* Grid texture */}
-        <div className="absolute inset-0 pointer-events-none"
-          style={{
-            backgroundImage:'linear-gradient(rgba(255,255,255,0.018) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.018) 1px,transparent 1px)',
-            backgroundSize:'72px 72px',
-          }}/>
-
-        {/* Living voice waveform */}
-        <HeroWaveform />
-
-        <div className="max-w-7xl mx-auto px-6 lg:px-10 w-full grid lg:grid-cols-2 gap-12 items-center py-24 relative z-10">
-
-          {/* ── Left column ─────────────────────────────────────────────── */}
-          <div className="hero-left-col">
-            {/* Headline */}
-            <h1 className="font-black leading-[1.05] tracking-tight mb-6"
-              style={{ fontSize:'clamp(52px,7vw,88px)' }}>
-              <div className="sa" data-delay="0">
-                <span className="text-white">One Coach.</span>
-              </div>
-              <div className="sa grad-text grad-flow" data-delay="250">
-                Every Voice.
-              </div>
-            </h1>
-
-            {/* Body */}
-            <p className="sa text-lg leading-relaxed mb-8 max-w-lg" data-delay="440"
-              style={{ color:'rgba(255,255,255,0.55)' }}>
-              Your AI practice partner for interviews, meetings, and tough conversations.
-              Honest, specific feedback instead of empty praise. The more you practise,
-              the sharper it gets.
-            </p>
-
-            {/* CTA row */}
-            <div className="sa flex flex-wrap gap-3 mb-8 hero-btns" data-delay="600">
-              <Link to="/assessment"
-                onMouseEnter={() => playTick('hover')}
-                className="btn-aura text-sm font-bold text-white px-7 py-4 rounded-full transition-all hover:opacity-90 active:scale-95"
-                style={{ background:'linear-gradient(135deg,#7B5EA7,#9B7EC8)' }}>
-                🎯 Get your San4 Score →
-              </Link>
-              <Link to="/auth?mode=signup"
-                className="text-sm font-semibold px-7 py-4 rounded-full transition-all hover:opacity-80"
-                style={{ color:'rgba(255,255,255,0.7)', border:'1px solid rgba(255,255,255,0.2)' }}>
-                Start practising
-              </Link>
-            </div>
-
-            {/* Tag pills */}
-            <div className="sa flex flex-wrap gap-2 mb-12" data-delay="730">
-              {['✅ Free to start','🇮🇳 Built for India','🎯 AI feedback','🔒 Private sessions'].map(p=>(
-                <span key={p} className="glass-chip text-xs font-semibold px-4 py-1.5"
-                  style={{ color:'rgba(255,255,255,0.7)' }}>
-                  {p}
-                </span>
-              ))}
-            </div>
-
-            {/* ── Scenario reel (drag to explore) ──────────────────────────── */}
-            <div className="sa" data-delay="900">
-              <p className="text-xs font-bold uppercase tracking-widest mb-4 text-center"
-                style={{ color:'rgba(107,140,174,0.75)' }}>
-                14 scenarios to practise · drag to explore
-              </p>
-              <div className="mb-3">
-                <DraggableMarquee items={ROW1} accent="#A78BFA" direction="left"  speed={42} />
-              </div>
-              <DraggableMarquee items={ROW2} accent="#00C49A" direction="right" speed={36} />
-            </div>
+      {/* ── Hero ── */}
+      <section className="hero">
+        <div className="hero-stack">
+          <span className="overline">The AI speaking coach</span>
+          <h1 className="h1">
+            <span className="l1">One Coach.</span>
+            <span className="l2">Every Voice.</span>
+          </h1>
+          <p className="hero-sub">Talk. Vak listens. You get better.</p>
+          <div className="hero-btns">
+            <Link to="/assessment" className="btn btn-primary btn-glow">Get your San4 Score<ArrowRight size={16} aria-hidden="true" /></Link>
+            <Link to="/auth?mode=signup" className="btn btn-secondary">Start practising</Link>
           </div>
+          <span className="micro">Free · 2 minutes · Private</span>
+        </div>
+        <div className="wave-box">
+          <canvas ref={waveRef} className="wave" aria-hidden="true" />
+          <span className="wave-cap">Move to speak</span>
+        </div>
+      </section>
 
-          {/* ── Right column: Vak + evolution cards ────────────────────── */}
-          <div className="hero-right-col flex flex-col items-center gap-6" data-parallax="0.05">
-
-            {/* Vak character */}
-            <div className="relative flex flex-col items-center">
-              <div className="absolute inset-0 pointer-events-none"
-                style={{
-                  background:'radial-gradient(circle, rgba(139,92,246,0.28) 0%, transparent 60%)',
-                  transform:'scale(1.7)',
-                }}/>
-              <div className="animate-float relative z-10">
-                <VakMascot level={5} size={190} />
-              </div>
-
-              {/* Name tag */}
-              <div className="flex items-baseline justify-center gap-3 mt-4 relative z-10">
-                <span className="font-black text-white" style={{ fontSize:'1.6rem' }}>Vak</span>
-                <span className="font-semibold" style={{ fontSize:'1.1rem', color:'#A78BFA' }}>वाक्</span>
-              </div>
-              <p className="text-xs mt-1 text-center relative z-10" style={{ color:'#6B8CAE' }}>
-                Sanskrit · "Speech" · Vehicle of Saraswati
-              </p>
-            </div>
-
+      {/* ── Filler words ── */}
+      <section className="fill">
+        <div className="fill-head" data-reveal>
+          <span className="overline acc">Live, as you talk</span>
+          <h2 className="fill-h2">Stop saying “umm”.</h2>
+          <p className="fill-sub">Vak hears the words you don't.</p>
+        </div>
+        <div className="card" data-reveal>
+          <div className="card-head">
+            <span className="dot" aria-hidden="true"><s /><i /></span>
+            Listening
+            <span className="scene">{cur.tag}</span>
           </div>
-        </div>
-      </section>
-
-      {/* ══ FILLER WORDS — the problem we catch ════════════════════════════ */}
-      <FillerWords />
-
-      {/* ══ THE SAN4 SCORE — compact band, full story lives on /san4-score ══ */}
-      <section className="py-16 px-6 lg:px-10" style={{ background: 'linear-gradient(180deg,#06091C,#050810)' }}>
-        <div className="sa max-w-3xl mx-auto text-center">
-          <p className="text-xs font-bold uppercase tracking-widest mb-3" style={{ color: '#7B5EA7' }}>The San4 Score</p>
-          <h2 className="text-2xl md:text-3xl font-black text-white leading-tight mb-3">
-            One number for how you communicate.
-          </h2>
-          <p className="text-base leading-relaxed mb-6 max-w-xl mx-auto" style={{ color: '#94A3B8' }}>
-            CIBIL scores your credit. IELTS scores your English. The San4 Score is the one for how you actually come across, and you can put it on your CV.
-          </p>
-          <Link to="/san4-score"
-            className="inline-block text-sm font-bold text-white px-7 py-4 rounded-full transition-all hover:opacity-90"
-            style={{ background: 'linear-gradient(135deg,#7B5EA7,#9B7EC8)' }}>
-            Get your San4 Score →
-          </Link>
-        </div>
-      </section>
-
-      {/* ══ PRODUCT SHOWCASE — see the app before signing up ═══════════════ */}
-      <ProductShowcase />
-
-      {/* ══ SECTION 4 — WHY IT MATTERS ════════════════════════════════════ */}
-      <section className="py-28 px-6 lg:px-10 relative overflow-hidden"
-        style={{ background:'linear-gradient(180deg,#050810 0%,#06091C 100%)' }}>
-
-        <p className="sa text-xs font-bold uppercase tracking-widest text-center mb-5"
-          style={{ color:'#6B8CAE' }}>Why it matters</p>
-
-        <div className="text-center mb-16">
-          <h2 className="sa font-black leading-tight" data-delay="0"
-            style={{ fontSize:'clamp(30px,5vw,56px)', color:'white' }}>
-            No shortcuts.{' '}
-            <span className="grad-text">Real skills.</span>
-          </h2>
-          <p className="sa text-lg mt-4 max-w-xl mx-auto" data-delay="140"
-            style={{ color:'rgba(255,255,255,0.5)' }}>
-            India produces millions of graduates every year. Only a fraction can communicate
-            confidently under pressure. San4 is built to close that gap.
-          </p>
-        </div>
-
-
-        {/* ── Stat counters ──────────────────────────────────────────────── */}
-        <div className="max-w-5xl mx-auto grid md:grid-cols-3 gap-12 text-center mb-12">
-          {STATS.map(({ to, suf, label }, i) => (
-            <div key={label} className="sa" data-delay={i * 120}>
-              <div className="font-black grad-text mb-2"
-                style={{ fontSize:'clamp(2.5rem,5vw,4rem)' }}>
-                <CountUp to={to} suffix={suf} />
-              </div>
-              <p className="text-sm leading-relaxed" style={{ color:'#6B8CAE' }}>{label}</p>
-            </div>
-          ))}
-        </div>
-
-        <div className="sa text-center">
-          <Link to="/why-it-matters" className="inline-block text-sm font-semibold px-6 py-3 rounded-full transition-all hover:opacity-85"
-            style={{ color:'white', border:'1px solid rgba(255,255,255,0.2)' }}>
-            Why it matters →
-          </Link>
-        </div>
-      </section>
-
-      {/* ══ TESTIMONIALS ═══════════════════════════════════════════════════ */}
-      <Testimonials />
-
-      {/* ══ SECTION 7 — CTA ═════════════════════════════════════════════════ */}
-      <section className="py-40 px-6 lg:px-10 relative text-center overflow-hidden"
-        style={{ background:'#050810' }}>
-
-        {/* Radial purple glow */}
-        <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
-          <div style={{
-            width:700, height:700, borderRadius:'50%',
-            background:'radial-gradient(circle, rgba(139,92,246,0.13) 0%, transparent 65%)',
-          }}/>
-        </div>
-
-        <div className="relative z-10 max-w-3xl mx-auto">
-          <h2 className="sa-sc font-black mb-6"
-            style={{ fontSize:'clamp(36px,6.5vw,82px)', lineHeight:1.05 }}>
-            <span className="grad-text">Speak with Confidence.</span>
-            <br />
-            <span className="text-white">Starting Today.</span>
-          </h2>
-
-          <p className="sa text-lg mb-8 max-w-xl mx-auto" data-delay="150"
-            style={{ color:'rgba(255,255,255,0.5)' }}>
-            Join thousands of Indian professionals practising with Vak,
-            the AI coach that actually gets you.
-          </p>
-
-          {/* Tag pills */}
-          <div className="sa flex flex-wrap justify-center gap-2 mb-10" data-delay="250">
-            {['✅ Free to start','🇮🇳 Built for India','🎯 AI feedback','🔒 Private sessions'].map(p=>(
-              <span key={p} className="text-xs font-semibold px-4 py-1.5"
-                style={{ border:'1px solid rgba(255,255,255,0.15)', color:'rgba(255,255,255,0.6)', borderRadius:100 }}>
-                {p}
-              </span>
+          <div className="transcript" aria-live="off">
+            {words.map((w, i) => (
+              <span key={`${si}-${i}`} className="w" style={{
+                maxWidth: w.gone || !w.shown ? 0 : '8em',
+                marginRight: w.gone || !w.shown ? 0 : '0.28em',
+                opacity: w.gone || !w.shown ? 0 : 1,
+                color: w.struck ? 'var(--a400)' : 'var(--n100)',
+                textDecoration: w.struck ? 'line-through' : 'none',
+              }}>{w.text}</span>
             ))}
           </div>
-
-          {/* CTA buttons */}
-          <div className="sa flex flex-wrap justify-center gap-4 cta-btns" data-delay="350">
-            <Link to="/auth?mode=signup"
-              className="btn-aura text-base font-bold text-white px-10 py-5 rounded-full transition-all hover:opacity-90 active:scale-95"
-              style={{ background:'linear-gradient(135deg,#7B5EA7,#9B7EC8)' }}>
-              Start practising →
-            </Link>
-            <Link to="/how-it-works"
-              className="text-base font-semibold px-10 py-5 rounded-full transition-all hover:opacity-80"
-              style={{ color:'white', border:'1px solid rgba(255,255,255,0.25)' }}>
-              See how it works
-            </Link>
-          </div>
-
-          {/* Quiet link to the technical breakdown */}
-          <Link to="/how-it-works"
-            className="sa inline-block mt-8 text-sm transition-colors" data-delay="450"
-            style={{ color:'rgba(255,255,255,0.4)' }}
-            onMouseEnter={e=>e.currentTarget.style.color='rgba(255,255,255,0.75)'}
-            onMouseLeave={e=>e.currentTarget.style.color='rgba(255,255,255,0.4)'}>
-            Curious what powers Vak? See what's under the hood →
-          </Link>
-        </div>
-
-        {/* Deco phone (desktop only) */}
-        <div className="deco-phone absolute left-8 bottom-14 opacity-55 hidden lg:block"
-          style={{ width:130, height:260, borderRadius:28,
-            background:'rgba(8,14,26,0.85)', border:'5px solid rgba(255,255,255,0.09)' }}/>
-
-        {/* Deco cards (desktop only) */}
-        <div className="deco-card absolute hidden lg:block" style={{ left:80, top:'28%' }}>
-          <div className="deco-card-1 px-4 py-2.5 rounded-xl text-sm font-bold text-white whitespace-nowrap"
-            style={{ background:'rgba(123,94,167,0.22)', border:'1px solid rgba(123,94,167,0.38)', backdropFilter:'blur(8px)' }}>
-            🏆 Top performer this week
-          </div>
-        </div>
-        <div className="deco-card absolute hidden lg:block" style={{ left:48, top:'55%' }}>
-          <div className="deco-card-2 px-4 py-2.5 rounded-xl text-sm font-bold text-white whitespace-nowrap"
-            style={{ background:'rgba(0,196,154,0.14)', border:'1px solid rgba(0,196,154,0.3)', backdropFilter:'blur(8px)' }}>
-            +176 XP · Session complete
+          <div className="rule" />
+          <div className="card-foot">
+            <div className="counts">
+              <div className="count"><b>{caught}</b><span>Fillers caught</span></div>
+              <div className="count"><b>{kept}</b><span>Words that matter</span></div>
+            </div>
+            <span className="card-note">Knowing is not enough. Say it well.</span>
           </div>
         </div>
       </section>
 
-      {/* ══ FOOTER ═════════════════════════════════════════════════════════ */}
-      <footer style={{ background:'#08080e', borderTop:'1px solid rgba(255,255,255,0.07)' }}>
-        <div className="max-w-6xl mx-auto px-6 lg:px-10 py-16 grid md:grid-cols-[2fr_1fr_1fr_1fr] gap-10 lg:gap-14">
-
-          {/* Col 1 — brand */}
-          <div>
-            <div className="flex items-center gap-3 mb-4">
-              <img src="/san4-icon.png" alt="San4" width={40} height={40} className="rounded-xl" />
-              <span className="text-xl font-black text-white" style={{ fontFamily:'Outfit, sans-serif' }}>
-                SAN<span style={{ color:'#7B5EA7' }}>4</span>
-              </span>
+      {/* ── Meet Vak ── */}
+      <section className="vak">
+        <div className="stage" data-reveal>
+          <div className="glow" />
+          <div className="ring r1" />
+          <div className="ring r2" />
+          <div ref={vakRef} className="par">
+            <div className="flt">
+              <div className="grow" style={{ transform: `scale(${0.82 + lvl * 0.045})` }}>
+                <VakMascot size={280} level={lvl} mood={lvl === 5 ? 'celebrating' : lvl >= 3 ? 'proud' : 'neutral'} />
+              </div>
             </div>
-            <p className="text-sm leading-relaxed max-w-xs" style={{ color:'#6B8CAE' }}>
-              The AI communication coach built for Indian professionals.
-              Powered by Gemini.
-            </p>
           </div>
-
-          {/* Col 2 — Product links */}
-          <div>
-            <h4 className="text-white font-bold text-xs uppercase tracking-widest mb-5">Product</h4>
-            <ul className="space-y-3">
-              {[['How it works','/how-it-works'],['Why it matters','/why-it-matters'],['San4 Score','/san4-score'],['Vak Extension','/extension'],['Free ATS Resume Builder','/resume-builder'],['Pricing','/pricing']].map(([t, to])=>(
-                <li key={t}>
-                  <Link to={to} className="text-sm transition-colors"
-                    style={{ color:'#6B8CAE' }}
-                    onMouseEnter={e=>e.currentTarget.style.color='white'}
-                    onMouseLeave={e=>e.currentTarget.style.color='#6B8CAE'}>
-                    {t}
-                  </Link>
-                </li>
-              ))}
-            </ul>
+          <div className="lvl">
+            <div className="bars">
+              {[1, 2, 3, 4, 5].map(n => <i key={n} className={n <= lvl ? 'on' : ''} />)}
+            </div>
+            <span>Level {lvl} · <b>{LEVEL_NAMES[lvl - 1]}</b></span>
           </div>
+        </div>
+        <div className="vak-copy" data-reveal>
+          <span className="overline acc">Your coach</span>
+          <h2 className="vak-h2">Meet Vak.<br /><small>वाक् means speech.</small></h2>
+          <p className="vak-p">Honest tips. Never fake praise. Vak grows as you do.</p>
+        </div>
+      </section>
 
-          {/* Col 3 — Legal & AI */}
-          <div>
-            <h4 className="text-white font-bold text-xs uppercase tracking-widest mb-5">Legal</h4>
-            <ul className="space-y-3">
-              {[['Terms & Conditions','/terms'],['Privacy Policy','/privacy'],['Responsible AI','/responsible-ai']].map(([t, to])=>(
-                <li key={t}>
-                  <Link to={to} className="text-sm transition-colors"
-                    style={{ color:'#6B8CAE' }}
-                    onMouseEnter={e=>e.currentTarget.style.color='white'}
-                    onMouseLeave={e=>e.currentTarget.style.color='#6B8CAE'}>
-                    {t}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-            <p className="text-xs mt-4 leading-relaxed" style={{ color:'rgba(107,140,174,0.6)' }}>
-              Built under India's DPDP Act, IT Rules, and BNS.
-            </p>
+      {/* ── Stats ── */}
+      <section ref={statsRef} className="stats">
+        <div className="stats-in">
+          <div className="stats-head">
+            <h2 className="stats-h2">The most wanted skill has no score.</h2>
+            <p className="stats-sub">Until now. <Link to="/san4-score">Meet the San4 Score.</Link></p>
           </div>
+          <div className="stat-grid">
+            {STATS.map(s => (
+              <div className="stat" key={s.src}>
+                <span className="stat-n">
+                  {s.hash
+                    ? <><em className="hash">#</em>1</>
+                    : <>{Math.round(s.n * stats)}<em>{s.suffix}</em></>}
+                </span>
+                <div className="stat-rule" />
+                <span className="stat-cap">{s.cap}</span>
+                <a className="stat-src" href={s.href} target="_blank" rel="noopener noreferrer">
+                  {s.src}<ArrowUpRight size={13} aria-hidden="true" />
+                </a>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
 
-          {/* Col 4 — Social */}
-          <div>
-            <h4 className="text-white font-bold text-xs uppercase tracking-widest mb-5">Social</h4>
-            <div className="flex flex-wrap gap-2">
-              {[
-                { label:'X',  href:'https://x.com/talkprowithaman',            icon:'𝕏' },
-                { label:'IG', href:'https://instagram.com/talkprowithaman',    icon:'📸' },
-                { label:'LI', href:'https://linkedin.com/in/amann-jindal',     icon:'💼' },
-                { label:'DC', href:'#',                                         icon:'💬' },
-                { label:'YT', href:'https://youtube.com/@talkprowithaman',     icon:'▶' },
-              ].map(({ label, href, icon }) => (
-                <a key={label} href={href} target="_blank" rel="noopener noreferrer"
-                  aria-label={label}
-                  className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold transition-all"
-                  style={{ background:'rgba(255,255,255,0.06)', color:'#94A3B8', border:'1px solid rgba(255,255,255,0.08)' }}
-                  onMouseEnter={e=>{
-                    e.currentTarget.style.background='rgba(139,92,246,0.2)'
-                    e.currentTarget.style.borderColor='rgba(139,92,246,0.4)'
-                    e.currentTarget.style.color='#A78BFA'
-                    e.currentTarget.style.transform='translateY(-2px)'
-                  }}
-                  onMouseLeave={e=>{
-                    e.currentTarget.style.background='rgba(255,255,255,0.06)'
-                    e.currentTarget.style.borderColor='rgba(255,255,255,0.08)'
-                    e.currentTarget.style.color='#94A3B8'
-                    e.currentTarget.style.transform=''
-                  }}>
-                  {icon}
+      {/* ── Final CTA ── */}
+      <section className="cta">
+        <div className="cta-in" data-reveal>
+          <h2 className="cta-h2">Speak with<br />confidence.</h2>
+          <p className="cta-sub">Your score in 2 minutes. Free.</p>
+          <Link to="/assessment" className="btn btn-primary btn-glow">Get your San4 Score<ArrowRight size={16} aria-hidden="true" /></Link>
+        </div>
+      </section>
+
+      {/* ── Footer ── */}
+      <footer className="foot">
+        <div className="foot-grid">
+          <div className="foot-brand">
+            <Link to="/" className="brand">
+              <img src="/san4-icon.png" alt="San4" width={28} height={28} />
+              <span>SAN<b>4</b></span>
+            </Link>
+            <p className="foot-tag">The AI speaking coach made for India.</p>
+          </div>
+          <div className="foot-col">
+            <h3>Product</h3>
+            <Link to="/how-it-works">How it works</Link>
+            <Link to="/san4-score">San4 Score</Link>
+            <Link to="/extension">Vak Extension</Link>
+            <Link to="/resume-builder">Free resume builder</Link>
+            <Link to="/pricing">Pricing</Link>
+          </div>
+          <div className="foot-col">
+            <h3>Legal</h3>
+            <Link to="/terms">Terms</Link>
+            <Link to="/privacy">Privacy</Link>
+            <Link to="/responsible-ai">Responsible AI</Link>
+          </div>
+          <div className="foot-col">
+            <h3>Follow</h3>
+            <div className="socials">
+              {SOCIALS.map(([label, href, Icon]) => (
+                <a key={label} href={href} target="_blank" rel="noopener noreferrer" aria-label={label}>
+                  <Icon size={17} aria-hidden="true" />
                 </a>
               ))}
             </div>
           </div>
         </div>
-
-        {/* Bottom bar */}
-        <div className="max-w-6xl mx-auto px-6 lg:px-10 pb-8">
-          <div className="pt-6 flex flex-wrap items-center justify-between gap-3"
-            style={{ borderTop:'1px solid rgba(255,255,255,0.06)' }}>
-            <p className="text-xs" style={{ color:'rgba(107,140,174,0.45)' }}>
-              © 2025 San4 Inc. All rights reserved. Made in India 🇮🇳
-            </p>
-            <div className="flex items-center gap-5">
-              <Link to="/privacy" className="text-xs transition-colors"
-                style={{ color:'rgba(107,140,174,0.45)' }}
-                onMouseEnter={e=>e.currentTarget.style.color='rgba(255,255,255,0.6)'}
-                onMouseLeave={e=>e.currentTarget.style.color='rgba(107,140,174,0.45)'}>
-                Privacy Policy
-              </Link>
-            </div>
+        <div className="foot-bottom">
+          <div className="rule" />
+          <div className="foot-bar">
+            <span>© 2026 San4 Inc. Made in India.</span>
+            <span>Built under India's DPDP Act.</span>
           </div>
         </div>
       </footer>
-
     </div>
   )
 }
