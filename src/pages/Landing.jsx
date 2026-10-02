@@ -195,7 +195,7 @@ export default function Landing() {
       {/* ── Hero ── */}
       <section className="hero">
         <div className="hero-stack">
-          <span className="overline">The AI speaking coach</span>
+          <span className="eyebrow">The AI speaking coach</span>
           <h1 className="h1">
             <span className="l1">One Coach.</span>
             <span className="l2">Every Voice.</span>
@@ -216,7 +216,7 @@ export default function Landing() {
       {/* ── Filler words ── */}
       <section className="fill">
         <div className="fill-head" data-reveal>
-          <span className="overline acc">Live, as you talk</span>
+          <span className="eyebrow acc">Live, as you talk</span>
           <h2 className="fill-h2">Stop saying “umm”.</h2>
           <p className="fill-sub">Vak hears the words you don't.</p>
         </div>
@@ -269,7 +269,7 @@ export default function Landing() {
           </div>
         </div>
         <div className="vak-copy" data-reveal>
-          <span className="overline acc">Your coach</span>
+          <span className="eyebrow acc">Your coach</span>
           <h2 className="vak-h2">Meet Vak.<br /><small>वाक् means speech.</small></h2>
           <p className="vak-p">Honest tips. Never fake praise. Vak grows as you do.</p>
         </div>
