@@ -19,6 +19,17 @@ export function isRateLimited(err) {
   return /rate limit|too many|for security purposes/i.test(err.message || '')
 }
 
+// A failed fetch, not a rejected request. supabase-js wraps these as
+// AuthRetryableFetchError, and the message differs per browser ("Failed to
+// fetch" in Chrome, "Load failed" in Safari, "NetworkError" in Firefox). These
+// are the only auth errors worth retrying: a 400 or a 429 means the server
+// answered, and retrying a rate limit makes it worse.
+export function isNetworkError(err) {
+  if (!err) return false
+  if (err.status && err.status !== 0) return false
+  return /failed to fetch|networkerror|load failed|network request failed/i.test(err.message || '')
+}
+
 // "For security purposes, you can only request this after 43 seconds."
 // That one IS per-user and genuinely short, so we can promise a real wait.
 function secondsToWait(err) {
@@ -61,9 +72,14 @@ export function friendlyAuthError(err, context = 'signin') {
   if (/signups not allowed|signup is disabled/i.test(msg))
     return `New signups are paused right now. Email ${SUPPORT} if you need access.`
 
-  // Network / project-paused: Supabase surfaces this as a generic fetch failure.
-  if (/failed to fetch|networkerror|load failed/i.test(msg))
-    return 'We can’t reach our servers right now. Check your connection and try again in a moment.'
+  // A failed fetch. Being offline and our servers being unreachable look
+  // identical to fetch, but they need different advice, so ask the browser.
+  if (isNetworkError(err)) {
+    const offline = typeof navigator !== 'undefined' && navigator.onLine === false
+    return offline
+      ? 'You appear to be offline. Reconnect and try again — nothing was lost.'
+      : 'That didn’t get through. We already retried once, so it is likely a weak connection — try once more.'
+  }
 
   // Anything unmapped: keep the technical detail in the console for us, and
   // give the user a plain sentence rather than an API string.

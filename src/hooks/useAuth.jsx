@@ -3,6 +3,21 @@ import { supabase } from '../lib/supabase'
 import { create } from 'zustand'
 import { migrateGuestScores } from '../lib/san4Score'
 import { identifyUser, resetAnalytics, track, EV } from '../lib/analytics'
+import { isNetworkError } from '../lib/authErrors'
+
+// A single dropped request should not cost someone their sign-in. On patchy
+// mobile data a fetch fails often enough that "try again" is the whole fix, so
+// we do it for them once before surfacing anything.
+//
+// ONLY network failures are retried. A wrong password, an unconfirmed email or
+// a 429 are all answers from the server: repeating them wastes the user's time
+// and, for the email rate limit, actively makes things worse.
+async function withNetworkRetry(call, { delayMs = 1200 } = {}) {
+  const first = await call()
+  if (!isNetworkError(first?.error)) return first
+  await new Promise(r => setTimeout(r, delayMs))
+  return call()
+}
 
 // ── Global auth store ────────────────────────────────────────────────────────
 export const useAuthStore = create((set) => ({
@@ -102,7 +117,7 @@ export function useAuth() {
   }
 
   async function signUp(email, password, name, consent) {
-    const { data, error } = await supabase.auth.signUp({
+    const { data, error } = await withNetworkRetry(() => supabase.auth.signUp({
       email, password,
       options: {
         // consent.version/consentedAt are written into profiles by the
@@ -115,7 +130,7 @@ export function useAuth() {
         },
         emailRedirectTo: `${window.location.origin}/auth/callback`,
       },
-    })
+    }))
     if (!error) track(EV.SIGNUP_COMPLETED)
     return { data, error }
   }
@@ -143,8 +158,7 @@ export function useAuth() {
   }
 
   async function signIn(email, password) {
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password })
-    return { data, error }
+    return withNetworkRetry(() => supabase.auth.signInWithPassword({ email, password }))
   }
 
   // Sends a one-tap sign-in link.
@@ -153,23 +167,21 @@ export function useAuth() {
   // consent checkbox and the disposable-email block. New users must sign up
   // properly; this only lets existing ones back in without a password.
   async function signInWithMagicLink(email) {
-    const { error } = await supabase.auth.signInWithOtp({
+    return withNetworkRetry(() => supabase.auth.signInWithOtp({
       email,
       options: {
         shouldCreateUser: false,
         emailRedirectTo: `${window.location.origin}/auth/callback`,
       },
-    })
-    return { error }
+    }))
   }
 
   // Sends the "reset your password" email. The link lands on /auth/reset, which
   // exchanges the code for a short-lived session and lets them set a new one.
   async function resetPassword(email) {
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+    return withNetworkRetry(() => supabase.auth.resetPasswordForEmail(email, {
       redirectTo: `${window.location.origin}/auth/reset`,
-    })
-    return { error }
+    }))
   }
 
   // Sets a new password for the user in the current (recovery) session.
