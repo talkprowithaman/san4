@@ -1,0 +1,47 @@
+# ── Chief of Staff: nightly WhatsApp digest ──────────────────────────────────
+# Sends the founder a short status report on WhatsApp every night. See
+# agents/README.md for the secrets this needs and how replies become backlog.
+#
+# 15:37 UTC = 21:07 IST. Off the hour on purpose: GitHub's cron queue is most
+# congested at :00, and scheduled runs can be delayed by hours under load.
+name: Nightly report
+
+on:
+  schedule:
+    - cron: '37 15 * * *'
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Print the digest in the log instead of sending it'
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+  actions: read
+  pull-requests: read
+  issues: read
+
+jobs:
+  report:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Build and send the digest
+        env:
+          # Scheduled runs always send; manual runs default to a dry run.
+          DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run && '1' || '0' }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          TWILIO_ACCOUNT_SID: ${{ secrets.TWILIO_ACCOUNT_SID }}
+          TWILIO_AUTH_TOKEN: ${{ secrets.TWILIO_AUTH_TOKEN }}
+          TWILIO_WHATSAPP_FROM: ${{ secrets.TWILIO_WHATSAPP_FROM }}
+          TWILIO_CONTENT_SID: ${{ secrets.TWILIO_CONTENT_SID }}
+          OWNER_WHATSAPP_TO: ${{ secrets.OWNER_WHATSAPP_TO }}
+        run: node agents/chief-of-staff/report.mjs
